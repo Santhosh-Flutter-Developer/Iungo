@@ -1,17 +1,13 @@
+import 'dart:developer';
+
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:iungo/core/routes/app_routes.dart';
+import 'package:iungo/core/services/session_service.dart';
 import 'package:iungo/core/utils/validators.dart';
-import 'package:iungo/core/widgets/app_snackbar.dart';
-import 'package:iungo/features/auth/data/datasources/auth_exceptions.dart';
-import 'package:iungo/features/auth/domain/usecases/login_usecase.dart';
 import 'package:iungo/features/onboarding/domain/entities/user_role.dart';
 
 class LoginController extends GetxController {
-  LoginController(this._loginUseCase);
-
-  final LoginUseCase _loginUseCase; 
-
   final emailController = TextEditingController();
   final passwordController = TextEditingController();
 
@@ -45,30 +41,21 @@ class LoginController extends GetxController {
     return emailError.value == null && passwordError.value == null;
   }
 
-
   Future<void> submit() async {
     if (!_validate()) return;
 
     isLoading.value = true;
-    try {
-      // await _loginUseCase(
-      //   email: emailController.text.trim(),
-      //   password: passwordController.text,
-      //   role: role.name,
-      // );
-      // Authenticated successfully — hook up navigation to the app's
-      // home/dashboard route here.
-      //  Get.offAllNamed(AppRoutes.home, arguments: role);
-      Get.snackbar('', 'Signed in successfully');
-    } on AccountNotFoundException {
-      AppSnackbar.showError('account_not_found'.tr);
-    } on AuthServerException catch (e) {
-      AppSnackbar.showError(e.message);
-    } catch (_) {
-      AppSnackbar.showError('account_not_found'.tr);
-    } finally {
-      isLoading.value = false;
-    }
+log("1 buddy");
+    final email = emailController.text.trim();
+    log("1 buddy");
+    Get.find<SessionService>().setUser(
+      name: email.split('@').first,
+      email: email,
+    );
+    log("1 buddy");
+
+    isLoading.value = false;
+    Get.offAllNamed(AppRoutes.dashboard);
   }
 
   @override
@@ -77,5 +64,4 @@ class LoginController extends GetxController {
     passwordController.dispose();
     super.onClose();
   }
-      
 }

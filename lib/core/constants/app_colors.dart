@@ -7,9 +7,17 @@ class AppColors {
   static const Color primary = Color(0xFF652E68);
   static const Color primaryDark = Color(0xFF5D2A60);
 
-  /// Screen background (login / forms).
+  /// Screen background (login / forms / dashboard).
   static const Color background = Color(0xFFF4F4F4);
   static const Color scaffoldWhite = Color(0xFFFFFFFF);
+
+  /// Dashboard grid tile background.
+  static const Color cardBackground = Color(0xFFFAFAFA);
+
+  /// Drawer: selected-item highlight and header chrome.
+  static const Color drawerSelectedBackground = Color(0xFFEBE6EC);
+  static const Color drawerCollapseButtonBackground = Color(0xFF808DA0);
+  static const Color divider = Color(0xFFD7D7D7);
 
   /// Heading / label blue-grey used for "Welcome" and subtitles.
   static const Color headingBlueGrey = Color(0xFF61718A);

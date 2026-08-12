@@ -1,5 +1,7 @@
 import 'package:get/get.dart';
 
+/// Translation keys — string values copied verbatim from the reference
+/// screenshots for both English and Arabic locales.
 class AppTranslations extends Translations {
   @override
   Map<String, Map<String, String>> get keys => {
@@ -25,6 +27,15 @@ class AppTranslations extends Translations {
           'password_required': 'Password is required',
           'en': 'EN',
           'ar': 'عربي',
+          'dashboard': 'Dashboard',
+          'create_service_request': 'Create Service Request',
+          'my_service_requests': 'My Service Requests',
+          'scan_qr': 'Scan QR',
+          'my_work_orders': 'My Work Orders',
+          'feedback': 'Feedback',
+          'profile': 'Profile',
+          'about': 'About',
+          'sign_out': 'Sign Out',
         },
         'ar_SA': {
           'app_name': 'Iungo',
@@ -48,6 +59,15 @@ class AppTranslations extends Translations {
           'password_required': 'كلمة المرور مطلوبة',
           'en': 'EN',
           'ar': 'عربي',
+          'dashboard': 'لوحة التحكم الرئيسية',
+          'create_service_request': 'إنشاء طلب خدمة',
+          'my_service_requests': 'طلبات الخدمة الخاصة بي',
+          'scan_qr': 'مسح رمز الاستجابة السريعة',
+          'my_work_orders': 'أوامر العمل الخاصة بي',
+          'feedback': 'المراجعات',
+          'profile': 'الملف الشخصي',
+          'about': 'حول',
+          'sign_out': 'تسجيل خروج',
         },
       };
 }

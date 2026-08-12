@@ -3,10 +3,12 @@ import 'package:get/get.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:iungo/core/routes/app_pages.dart';
 import 'package:iungo/core/routes/app_routes.dart';
+import 'package:iungo/core/services/session_service.dart';
 import 'package:iungo/core/theme/app_theme.dart';
 import 'package:iungo/core/translations/app_translations.dart';
 
 void main() {
+  Get.put<SessionService>(SessionService(), permanent: true);
   runApp(const IungoApp());
 }
 
@@ -16,7 +18,7 @@ class IungoApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return GetMaterialApp(
-      title: 'iungo',
+      title: 'Iungo',
       debugShowCheckedModeBanner: false,
       theme: AppTheme.light,
       translations: AppTranslations(),

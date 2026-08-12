@@ -1,6 +1,8 @@
 import 'package:get/get.dart';
 import 'package:iungo/features/auth/presentation/bindings/login_binding.dart';
 import 'package:iungo/features/auth/presentation/pages/login_page.dart';
+import 'package:iungo/features/dashboard/presentation/bindings/dashboard_binding.dart';
+import 'package:iungo/features/dashboard/presentation/pages/dashboard_page.dart';
 import 'package:iungo/features/onboarding/presentation/bindings/onboarding_binding.dart';
 import 'package:iungo/features/onboarding/presentation/pages/onboarding_page.dart';
 import 'package:iungo/features/splash/presentation/bindings/splash_binding.dart';
@@ -33,5 +35,10 @@ class AppPages {
     //   page: () => const PrivacyPolicyPage(),
     //   transition: Transition.downToUp,
     // ),
+    GetPage(
+      name: AppRoutes.dashboard,
+      page: () => const DashboardPage(),
+      binding: DashboardBinding(),
+    ),
   ];
 }
