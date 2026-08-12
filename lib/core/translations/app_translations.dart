@@ -1,0 +1,53 @@
+import 'package:get/get.dart';
+
+class AppTranslations extends Translations {
+  @override
+  Map<String, Map<String, String>> get keys => {
+        'en_US': {
+          'app_name': 'Iungo',
+          'powered_by': 'Powered by CIT',
+          'welcome': 'Welcome',
+          'which_one_are_you': 'Which one are you?',
+          'tenant': 'Tenant',
+          'client': 'Client',
+          'enter_credentials': 'Enter credentials to continue',
+          'enter_email_label': 'Enter Email',
+          'enter_email_hint': 'Enter Email',
+          'password_label': 'Password',
+          'enter_password_hint': 'Enter Password',
+          'sign_in': 'Sign In',
+          'agree_prefix': 'By continuing, you agree to our ',
+          'privacy_policy': 'Privacy Policy',
+          'privacy_statement': 'Privacy Statement',
+          'account_not_found': 'Account not found',
+          'email_required': 'Email is required',
+          'email_invalid': 'Enter a valid email address',
+          'password_required': 'Password is required',
+          'en': 'EN',
+          'ar': 'عربي',
+        },
+        'ar_SA': {
+          'app_name': 'Iungo',
+          'powered_by': 'Powered by CIT',
+          'welcome': 'مرحبا بكم',
+          'which_one_are_you': 'أيهم أنت؟',
+          'tenant': 'المستأجر',
+          'client': 'المالك',
+          'enter_credentials': 'أدخل كلمة المرور',
+          'enter_email_label': 'أدخل البريد الإلكتروني',
+          'enter_email_hint': 'أدخل البريد الإلكتروني',
+          'password_label': 'كلمة المرور',
+          'enter_password_hint': 'يرجى إدخال كلمة المرور',
+          'sign_in': 'تسجيل الدخول',
+          'agree_prefix': 'By continuing, you agree to our ',
+          'privacy_policy': 'Privacy Policy',
+          'privacy_statement': 'Privacy Statement',
+          'account_not_found': 'الحساب غير موجود',
+          'email_required': 'البريد الإلكتروني مطلوب',
+          'email_invalid': 'أدخل بريدًا إلكترونيًا صحيحًا',
+          'password_required': 'كلمة المرور مطلوبة',
+          'en': 'EN',
+          'ar': 'عربي',
+        },
+      };
+}
