@@ -5,6 +5,7 @@ import 'package:iungo/core/widgets/app_drawer.dart';
 import 'package:iungo/features/dashboard/domain/entities/dashboard_action.dart';
 import 'package:iungo/features/dashboard/presentation/controllers/dashboard_controller.dart';
 import 'package:iungo/features/dashboard/presentation/widgets/dashboard_card.dart';
+import 'package:iungo/features/service_request/presentation/widgets/create_service_request_sheet.dart';
 
 class DashboardPage extends GetView<DashboardController> {
   const DashboardPage({super.key});
@@ -58,7 +59,9 @@ class DashboardPage extends GetView<DashboardController> {
                 (action) => DashboardCard(
                   icon: action.icon,
                   label: action.labelKey.tr,
-                  onTap: () => controller.onActionTap(action),
+                  onTap: () => action == DashboardAction.createServiceRequest
+                      ? CreateServiceRequestSheet.show(context)
+                      : controller.onActionTap(action),
                 ),
               )
               .toList(),

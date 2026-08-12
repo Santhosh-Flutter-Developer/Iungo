@@ -14,6 +14,12 @@ class AppColors {
   /// Dashboard grid tile background.
   static const Color cardBackground = Color(0xFFFAFAFA);
 
+  /// "New Service Request" form header background (lighter than primary AppBar).
+  static const Color formHeaderBackground = Color(0xFFEAEAEC);
+
+  /// Shadow used behind the white "User Location" card.
+  static const Color cardShadow = Color(0x1A000000);
+
   /// Drawer: selected-item highlight and header chrome.
   static const Color drawerSelectedBackground = Color(0xFFEBE6EC);
   static const Color drawerCollapseButtonBackground = Color(0xFF808DA0);

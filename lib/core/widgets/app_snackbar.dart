@@ -35,4 +35,32 @@ class AppSnackbar {
       isDismissible: true,
     );
   }
+
+  static void showSuccess(String message) {
+    Get.rawSnackbar(
+      messageText: Row(
+        children: [
+          const Icon(Icons.check_circle, color: AppColors.white, size: 22),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Text(
+              message,
+              style: const TextStyle(
+                color: AppColors.white,
+                fontSize: 15,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+          ),
+        ],
+      ),
+      backgroundColor: AppColors.primary,
+      borderRadius: 8,
+      margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+      snackPosition: SnackPosition.TOP,
+      duration: const Duration(seconds: 2),
+      isDismissible: true,
+    );
+  }
 }
