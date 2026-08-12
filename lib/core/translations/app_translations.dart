@@ -1,7 +1,5 @@
 import 'package:get/get.dart';
 
-/// Translation keys — string values copied verbatim from the reference
-/// screenshots for both English and Arabic locales.
 class AppTranslations extends Translations {
   @override
   Map<String, Map<String, String>> get keys => {
@@ -29,6 +27,9 @@ class AppTranslations extends Translations {
           'ar': 'عربي',
           'dashboard': 'Dashboard',
           'create_service_request': 'Create Service Request',
+          'service_request': 'Service Request',
+          'catering_request': 'Catering Request',
+          'laundry_request': 'Laundry Request',
           'my_service_requests': 'My Service Requests',
           'scan_qr': 'Scan QR',
           'my_work_orders': 'My Work Orders',
@@ -61,6 +62,9 @@ class AppTranslations extends Translations {
           'ar': 'عربي',
           'dashboard': 'لوحة التحكم الرئيسية',
           'create_service_request': 'إنشاء طلب خدمة',
+          'service_request': 'طلب الخدمة',
+          'catering_request': 'طلب الطعام',
+          'laundry_request': 'طلب ملابس',
           'my_service_requests': 'طلبات الخدمة الخاصة بي',
           'scan_qr': 'مسح رمز الاستجابة السريعة',
           'my_work_orders': 'أوامر العمل الخاصة بي',
