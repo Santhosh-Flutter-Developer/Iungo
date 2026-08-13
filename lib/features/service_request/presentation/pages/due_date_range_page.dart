@@ -103,7 +103,7 @@ class _DueDateRangePageState extends State<DueDateRangePage> {
                       'save'.tr,
                       style: TextStyle(
                         fontSize: 15,
-                        fontWeight: FontWeight.w700,
+                        fontWeight: FontWeight.w500,
                         color: (_start != null && _end != null)
                             ? AppColors.primary
                             : AppColors.textMuted,
@@ -122,7 +122,7 @@ class _DueDateRangePageState extends State<DueDateRangePage> {
                     'select_range'.tr,
                     style: const TextStyle(
                       fontSize: 20,
-                      fontWeight: FontWeight.w700,
+                      fontWeight: FontWeight.w500,
                       color: AppColors.textDark,
                     ),
                   ),
@@ -135,7 +135,7 @@ class _DueDateRangePageState extends State<DueDateRangePage> {
                               ? 'start_date_end_date'.tr
                               : '${_fmt(_start)} — ${_fmt(_end)}',
                           style: TextStyle(
-                            fontSize: 22,
+                            fontSize: 20,
                             fontWeight: FontWeight.w400,
                             color: (_start == null)
                                 ? AppColors.textMuted
@@ -162,7 +162,7 @@ class _DueDateRangePageState extends State<DueDateRangePage> {
                           label,
                           style: const TextStyle(
                             fontSize: 14,
-                            fontWeight: FontWeight.w700,
+                            fontWeight: FontWeight.w600,
                             color: AppColors.headingBlueGrey,
                           ),
                         ),
@@ -192,7 +192,7 @@ class _DueDateRangePageState extends State<DueDateRangePage> {
           '${_monthNames[month.month - 1]} ${month.year}',
           style: const TextStyle(
             fontSize: 16,
-            fontWeight: FontWeight.w600,
+            fontWeight: FontWeight.w500,
             color: AppColors.headingBlueGrey,
           ),
         ),

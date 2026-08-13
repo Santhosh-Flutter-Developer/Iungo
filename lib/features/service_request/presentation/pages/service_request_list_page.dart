@@ -32,21 +32,21 @@ class ServiceRequestListPage extends GetView<ServiceRequestListController> {
           overflow: TextOverflow.ellipsis,
           style: const TextStyle(
             color: AppColors.white,
-            fontSize: 19,
-            fontWeight: FontWeight.w700,
+            fontWeight: FontWeight.w500,
           ),
         ),
         actions: [
-          IconButton(
-            icon: const Icon(Icons.notifications_none),
-            onPressed: () {},
-          ),
+          // IconButton(
+          //   icon: const Icon(Icons.notifications_none),
+          //   onPressed: () {},
+          // ),
           IconButton(icon: const Icon(Icons.search), onPressed: () {}),
         ],
       ),
       drawer: const AppDrawer(selected: DrawerMenuItem.myServiceRequests),
       floatingActionButton: FloatingActionButton(
         backgroundColor: AppColors.primary,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
         onPressed: () {
           CreateServiceRequestSheet.show(context);
           //   Get.to(
@@ -60,7 +60,7 @@ class ServiceRequestListPage extends GetView<ServiceRequestListController> {
         child: Column(
           children: [
             Padding(
-              padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
+              padding: const EdgeInsets.fromLTRB(16, 16, 16, 16),
               child: Align(
                 alignment: Alignment.centerRight,
                 child: Obx(

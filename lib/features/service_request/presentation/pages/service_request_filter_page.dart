@@ -109,7 +109,7 @@ class _ServiceRequestFilterPageState extends State<ServiceRequestFilterPage>
                       textAlign: TextAlign.center,
                       style: const TextStyle(
                         fontSize: 18,
-                        fontWeight: FontWeight.w700,
+                        fontWeight: FontWeight.w500,
                         color: AppColors.headingBlueGrey,
                       ),
                     ),
@@ -120,7 +120,7 @@ class _ServiceRequestFilterPageState extends State<ServiceRequestFilterPage>
                       'clear'.tr,
                       style: const TextStyle(
                         fontSize: 15,
-                        fontWeight: FontWeight.w700,
+                        fontWeight: FontWeight.w500,
                         color: AppColors.primary,
                       ),
                     ),
@@ -136,7 +136,7 @@ class _ServiceRequestFilterPageState extends State<ServiceRequestFilterPage>
               indicatorWeight: 2.5,
               labelStyle: const TextStyle(
                 fontSize: 15,
-                fontWeight: FontWeight.w700,
+                fontWeight: FontWeight.w500,
               ),
               unselectedLabelStyle: const TextStyle(
                 fontSize: 15,
@@ -201,7 +201,7 @@ class _ServiceRequestFilterPageState extends State<ServiceRequestFilterPage>
             'set_due_date'.tr,
             style: const TextStyle(
               fontSize: 15,
-              fontWeight: FontWeight.w700,
+              fontWeight: FontWeight.w500,
               color: AppColors.textDark,
             ),
           ),
@@ -270,7 +270,7 @@ class _ServiceRequestFilterPageState extends State<ServiceRequestFilterPage>
             'find_ticket_by_id'.tr,
             style: const TextStyle(
               fontSize: 15,
-              fontWeight: FontWeight.w700,
+              fontWeight: FontWeight.w500,
               color: AppColors.textDark,
             ),
           ),

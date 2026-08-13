@@ -23,7 +23,7 @@ class StatusBadge extends StatelessWidget {
         overflow: TextOverflow.ellipsis,
         style: const TextStyle(
           fontSize: 13,
-          fontWeight: FontWeight.w700,
+          fontWeight: FontWeight.w600,
           color: AppColors.white,
         ),
       ),
@@ -44,13 +44,13 @@ class TicketIdChip extends StatelessWidget {
       decoration: BoxDecoration(
         color: AppColors.cardBackground,
         borderRadius: BorderRadius.circular(6),
-        border: Border.all(color: AppColors.divider),
+        border: Border.all(color: AppColors.divider.withOpacity(0.1)),
       ),
       child: Text(
         '# $id',
         style: const TextStyle(
           fontSize: 13,
-          fontWeight: FontWeight.w600,
+          fontWeight: FontWeight.w500,
           color: AppColors.textDark,
         ),
       ),

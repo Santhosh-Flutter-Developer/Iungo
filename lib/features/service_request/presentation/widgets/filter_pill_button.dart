@@ -19,7 +19,7 @@ class FilterPillButton extends StatelessWidget {
       borderRadius: BorderRadius.circular(24),
       onTap: onTap,
       child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 10),
+        padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 6),
         decoration: BoxDecoration(
           color: AppColors.white,
           borderRadius: BorderRadius.circular(24),
@@ -32,13 +32,13 @@ class FilterPillButton extends StatelessWidget {
           mainAxisSize: MainAxisSize.min,
           children: [
             Icon(Icons.filter_alt_outlined,
-                size: 18, color: AppColors.headingBlueGrey),
+                size: 17, color: AppColors.headingBlueGrey),
             const SizedBox(width: 6),
             Text(
               'filter'.tr,
               style: const TextStyle(
-                fontSize: 15,
-                fontWeight: FontWeight.w600,
+                fontSize: 14,
+                fontWeight: FontWeight.w500,
                 color: AppColors.headingBlueGrey,
               ),
             ),

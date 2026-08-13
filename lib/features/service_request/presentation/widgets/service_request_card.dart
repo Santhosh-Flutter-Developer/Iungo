@@ -48,8 +48,8 @@ class ServiceRequestCard extends StatelessWidget {
               maxLines: 2,
               overflow: TextOverflow.ellipsis,
               style: const TextStyle(
-                fontSize: 17,
-                fontWeight: FontWeight.w700,
+                fontSize: 16,
+                fontWeight: FontWeight.w600,
                 color: AppColors.textDark,
                 height: 1.25,
               ),
