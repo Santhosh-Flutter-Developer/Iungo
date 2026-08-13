@@ -26,10 +26,10 @@ class CreateServiceRequestSheet extends StatelessWidget {
           binding: NewServiceRequestBinding(),
         );
         break;
-      case ServiceRequestOption.cateringRequest:
-      case ServiceRequestOption.laundryRequest:
-        // Static UI only — no dedicated screens for these yet.
-        break;
+      // case ServiceRequestOption.cateringRequest:
+      // case ServiceRequestOption.laundryRequest:
+      //   // Static UI only — no dedicated screens for these yet.
+      //   break;
     }
   }
 

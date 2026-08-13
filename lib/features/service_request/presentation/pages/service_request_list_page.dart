@@ -2,10 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:iungo/core/constants/app_colors.dart';
 import 'package:iungo/core/widgets/app_drawer.dart';
-import 'package:iungo/features/service_request/presentation/bindings/new_service_request_binding.dart';
 import 'package:iungo/features/service_request/presentation/controllers/service_request_list_controller.dart';
-import 'package:iungo/features/service_request/presentation/pages/new_service_request_page.dart';
 import 'package:iungo/features/service_request/presentation/pages/service_request_filter_page.dart';
+import 'package:iungo/features/service_request/presentation/widgets/create_service_request_sheet.dart';
 import 'package:iungo/features/service_request/presentation/widgets/filter_pill_button.dart';
 import 'package:iungo/features/service_request/presentation/widgets/service_request_card.dart';
 import 'package:iungo/features/service_request/presentation/widgets/service_request_empty_state.dart';
@@ -42,19 +41,19 @@ class ServiceRequestListPage extends GetView<ServiceRequestListController> {
             icon: const Icon(Icons.notifications_none),
             onPressed: () {},
           ),
-          IconButton(
-            icon: const Icon(Icons.search),
-            onPressed: () {},
-          ),
+          IconButton(icon: const Icon(Icons.search), onPressed: () {}),
         ],
       ),
       drawer: const AppDrawer(selected: DrawerMenuItem.myServiceRequests),
       floatingActionButton: FloatingActionButton(
         backgroundColor: AppColors.primary,
-        onPressed: () => Get.to(
-          () => const NewServiceRequestPage(),
-          binding: NewServiceRequestBinding(),
-        ),
+        onPressed: () {
+          CreateServiceRequestSheet.show(context);
+          //   Get.to(
+          //   () => const NewServiceRequestPage(),
+          //   binding: NewServiceRequestBinding(),
+          // );
+        },
         child: const Icon(Icons.add, color: AppColors.white),
       ),
       body: SafeArea(
