@@ -23,17 +23,17 @@ class NewServiceRequestPage extends GetView<NewServiceRequestController> {
       appBar: AppBar(
         backgroundColor: AppColors.formHeaderBackground,
         elevation: 0,
-        centerTitle: true,
+        centerTitle: false,
         leading: IconButton(
           icon: const Icon(Icons.close, color: AppColors.primary),
           onPressed: () => Get.back(),
         ),
+        titleSpacing: 0,
         title: Text(
           'new_service_request'.tr,
           style: const TextStyle(
             color: AppColors.primary,
-            fontSize: 20,
-            fontWeight: FontWeight.w700,
+            fontWeight: FontWeight.w600,
           ),
         ),
       ),
@@ -49,7 +49,7 @@ class NewServiceRequestPage extends GetView<NewServiceRequestController> {
                 'subject'.tr,
                 style: const TextStyle(
                   fontSize: 15,
-                  fontWeight: FontWeight.w700,
+                  fontWeight: FontWeight.w500,
                   color: AppColors.textDark,
                 ),
               ),
@@ -65,7 +65,7 @@ class NewServiceRequestPage extends GetView<NewServiceRequestController> {
                 'description'.tr,
                 style: const TextStyle(
                   fontSize: 15,
-                  fontWeight: FontWeight.w700,
+                  fontWeight: FontWeight.w500,
                   color: AppColors.textDark,
                 ),
               ),
@@ -112,7 +112,7 @@ class NewServiceRequestPage extends GetView<NewServiceRequestController> {
                 'user_location'.tr,
                 style: const TextStyle(
                   fontSize: 15,
-                  fontWeight: FontWeight.w700,
+                  fontWeight: FontWeight.w500,
                   color: AppColors.textDark,
                 ),
               ),
@@ -131,7 +131,7 @@ class NewServiceRequestPage extends GetView<NewServiceRequestController> {
                 'attachments'.tr,
                 style: const TextStyle(
                   fontSize: 15,
-                  fontWeight: FontWeight.w700,
+                  fontWeight: FontWeight.w500,
                   color: AppColors.textDark,
                 ),
               ),

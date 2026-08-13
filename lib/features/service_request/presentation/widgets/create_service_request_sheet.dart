@@ -42,6 +42,7 @@ class CreateServiceRequestSheet extends StatelessWidget {
           color: AppColors.cardBackground,
           borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
         ),
+        height:300,
         padding: const EdgeInsets.fromLTRB(20, 24, 20, 12),
         child: Column(
           mainAxisSize: MainAxisSize.min,
@@ -50,12 +51,12 @@ class CreateServiceRequestSheet extends StatelessWidget {
             Text(
               'create_service_request'.tr,
               style: const TextStyle(
-                fontSize: 26,
-                fontWeight: FontWeight.w700,
+                fontSize: 20,
+                fontWeight: FontWeight.w600,
                 color: AppColors.textDark,
               ),
             ),
-            const SizedBox(height: 8),
+            const SizedBox(height: 14),
             for (final option in ServiceRequestOption.values)
               _OptionRow(
                 option: option,

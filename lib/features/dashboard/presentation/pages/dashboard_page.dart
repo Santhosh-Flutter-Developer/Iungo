@@ -34,8 +34,7 @@ class DashboardPage extends GetView<DashboardController> {
           'dashboard'.tr,
           style: const TextStyle(
             color: AppColors.white,
-            // fontSize: 24,
-            // fontWeight: FontWeight.w700,
+            fontWeight: FontWeight.w500,
           ),
         ),
         actions: [

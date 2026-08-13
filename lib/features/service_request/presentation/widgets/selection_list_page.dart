@@ -58,8 +58,7 @@ class _SelectionListPageState extends State<SelectionListPage> {
           widget.title,
           style: const TextStyle(
             color: AppColors.white,
-            fontSize: 20,
-            fontWeight: FontWeight.w700,
+            fontWeight: FontWeight.w500,
           ),
         ),
         actions: [

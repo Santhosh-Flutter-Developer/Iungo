@@ -4,9 +4,6 @@ import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:iungo/core/constants/app_colors.dart';
 import 'package:iungo/features/service_request/presentation/controllers/new_service_request_controller.dart';
 
-/// Real Google Map location picker. The map pans freely while a pin stays
-/// fixed at screen-centre; whatever coordinate sits under the pin becomes
-/// the picked location, with the address resolved via reverse geocoding.
 class SelectLocationPage extends GetView<NewServiceRequestController> {
   const SelectLocationPage({super.key});
 
@@ -96,15 +93,8 @@ class _LocationCard extends StatelessWidget {
           children: [
             Row(
               children: [
-                Obx(
-                  () => _RoundIconButton(
-                    icon: Icons.my_location,
-                    small: true,
-                    loading: controller.isLocatingDevice.value,
-                    onTap: controller.useCurrentLocation,
-                  ),
-                ),
-                const SizedBox(width: 12),
+                
+                
                 Expanded(
                   child: Text(
                     'select_location'.tr,
@@ -113,6 +103,15 @@ class _LocationCard extends StatelessWidget {
                       fontWeight: FontWeight.w700,
                       color: AppColors.textDark,
                     ),
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Obx(
+                  () => _RoundIconButton(
+                    icon: Icons.my_location,
+                    small: true,
+                    loading: controller.isLocatingDevice.value,
+                    onTap: controller.useCurrentLocation,
                   ),
                 ),
               ],

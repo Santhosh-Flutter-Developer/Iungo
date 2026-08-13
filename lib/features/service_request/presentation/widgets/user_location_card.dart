@@ -85,6 +85,7 @@ class UserLocationCard extends StatelessWidget {
           const Divider(color: AppColors.divider, height: 1),
           const SizedBox(height: 12),
           Row(
+            mainAxisAlignment: MainAxisAlignment.end,
             children: [
               _LinkButton(
                 icon: Icons.refresh,
