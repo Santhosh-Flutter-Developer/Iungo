@@ -31,7 +31,7 @@ class OnboardingPage extends StatelessWidget {
                   'welcome'.tr,
                   style: const TextStyle(
                     fontSize: 34,
-                    fontWeight: FontWeight.w700,
+                    fontWeight: FontWeight.w600,
                     color: AppColors.headingBlueGrey,
                   ),
                 ),
@@ -67,7 +67,7 @@ class OnboardingPage extends StatelessWidget {
                   'which_one_are_you'.tr,
                   style: const TextStyle(
                     fontSize: 17,
-                    fontWeight: FontWeight.w700,
+                    fontWeight: FontWeight.w600,
                     color: AppColors.headingBlueGrey,
                   ),
                 ),
@@ -91,7 +91,7 @@ class OnboardingPage extends StatelessWidget {
                       'tenant'.tr,
                       style: const TextStyle(
                         fontSize: 16,
-                        fontWeight: FontWeight.w700,
+                        fontWeight: FontWeight.w600,
                       ),
                     ),
                   ),
@@ -114,7 +114,7 @@ class OnboardingPage extends StatelessWidget {
                       'client'.tr,
                       style: const TextStyle(
                         fontSize: 16,
-                        fontWeight: FontWeight.w700,
+                        fontWeight: FontWeight.w600,
                       ),
                     ),
                   ),

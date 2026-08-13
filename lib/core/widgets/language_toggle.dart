@@ -63,7 +63,17 @@ class _Segment extends StatelessWidget {
         width: 88,
         height: 40,
         alignment: Alignment.center,
-        color: selected ? AppColors.primary : AppColors.white,
+        decoration: BoxDecoration(
+          borderRadius:selected ? BorderRadius.only(
+            topRight: Radius.circular(7.0),
+            bottomRight: Radius.circular(7.0),
+          ):BorderRadius.only(
+            topLeft: Radius.circular(7.0),
+            bottomLeft: Radius.circular(7.0),
+          ),
+          color: selected ? AppColors.primary : AppColors.white,
+        ),
+
         child: Text(
           label,
           style: TextStyle(
