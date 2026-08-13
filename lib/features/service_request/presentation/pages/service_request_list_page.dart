@@ -2,8 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:iungo/core/constants/app_colors.dart';
 import 'package:iungo/core/widgets/app_drawer.dart';
+import 'package:iungo/features/service_request/presentation/bindings/ticket_search_binding.dart';
 import 'package:iungo/features/service_request/presentation/controllers/service_request_list_controller.dart';
 import 'package:iungo/features/service_request/presentation/pages/service_request_filter_page.dart';
+import 'package:iungo/features/service_request/presentation/pages/ticket_search_page.dart';
 import 'package:iungo/features/service_request/presentation/widgets/create_service_request_sheet.dart';
 import 'package:iungo/features/service_request/presentation/widgets/filter_pill_button.dart';
 import 'package:iungo/features/service_request/presentation/widgets/service_request_card.dart';
@@ -40,7 +42,13 @@ class ServiceRequestListPage extends GetView<ServiceRequestListController> {
           //   icon: const Icon(Icons.notifications_none),
           //   onPressed: () {},
           // ),
-          IconButton(icon: const Icon(Icons.search), onPressed: () {}),
+          IconButton(
+            icon: const Icon(Icons.search),
+            onPressed: () => Get.to(
+              () => const TicketSearchPage(),
+              binding: TicketSearchBinding(),
+            ),
+          ),
         ],
       ),
       drawer: const AppDrawer(selected: DrawerMenuItem.myServiceRequests),

@@ -104,6 +104,11 @@ class AppTranslations extends Translations {
           'start_date_end_date': 'Start Date – End Date',
           'save': 'Save',
 
+          // Search screen
+          'search': 'Search',
+          'all_fields': 'All Fields',
+          'try_different_keywords': 'Try different keywords',
+
           // Statuses
           'status_acknowledged': 'Acknowledged',
           'status_awaiting_approval': 'Awaiting Approval',
@@ -234,6 +239,11 @@ class AppTranslations extends Translations {
           'select_range': 'اختر النطاق',
           'start_date_end_date': 'تاريخ البدء – تاريخ الانتهاء',
           'save': 'حفظ',
+
+          // Search screen
+          'search': 'بحث',
+          'all_fields': 'جميع الحقول',
+          'try_different_keywords': 'حاول استخدام كلمات مختلفة',
 
           // Statuses
           'status_acknowledged': 'تم الإقرار',
