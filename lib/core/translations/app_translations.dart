@@ -118,6 +118,23 @@ class AppTranslations extends Translations {
           'priority_routine': 'Routine',
           'priority_urgent': 'Urgent',
           'priority_emergency': 'Emergency',
+
+          // Detail View
+          'detail_view': 'Detail View',
+          'overview': 'Overview',
+          'comments': 'Comments',
+          'assigned_technician': 'Assigned Technician',
+          'not_assigned': 'Not Assigned',
+          'other_information': 'Other Information',
+          'space_asset': 'Space/Asset',
+          'priority': 'Priority',
+          'view': 'View',
+          'delete': 'Delete',
+          'add_comment': 'Add Comment',
+          'enter_your_comment': 'Enter your comment...',
+          'add_comments_hint': 'Add comments by pressing the "+" button',
+          'today': 'Today',
+          'no_attachments_hint': 'Add attachments by pressing the "+" button',
         },
         'ar_SA': {
           'app_name': 'Iungo',
@@ -232,6 +249,23 @@ class AppTranslations extends Translations {
           'priority_routine': 'روتيني',
           'priority_urgent': 'عاجل',
           'priority_emergency': 'طارئ',
+
+          // Detail View
+          'detail_view': 'عرض التفاصيل',
+          'overview': 'الملخص',
+          'comments': 'التعليقات',
+          'assigned_technician': 'الفني المعين',
+          'not_assigned': 'غير معين',
+          'other_information': 'معلومات أخرى',
+          'space_asset': 'المساحة/الأصل',
+          'priority': 'الأولوية',
+          'view': 'منظر',
+          'delete': 'حذف',
+          'add_comment': 'إضافة تعليق',
+          'enter_your_comment': 'أدخل تعليقك...',
+          'add_comments_hint': 'أضف تعليقات بالضغط على زر "+"',
+          'today': 'اليوم',
+          'no_attachments_hint': 'أضف مرفقات بالضغط على زر "+"',
         },
       };
 }

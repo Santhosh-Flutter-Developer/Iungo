@@ -1,5 +1,8 @@
 import 'package:get/get.dart';
+import 'package:iungo/features/service_request/domain/entities/request_classification.dart';
 import 'package:iungo/features/service_request/domain/entities/service_request.dart';
+import 'package:iungo/features/service_request/domain/entities/service_request_attachment.dart';
+import 'package:iungo/features/service_request/domain/entities/service_request_comment.dart';
 import 'package:iungo/features/service_request/domain/entities/service_request_option.dart';
 import 'package:iungo/features/service_request/domain/entities/service_request_priority.dart';
 import 'package:iungo/features/service_request/domain/entities/service_request_status.dart';
@@ -38,6 +41,7 @@ class ServiceRequestRepository extends GetxService {
         status: ServiceRequestStatus.open,
         type: ServiceRequestOption.serviceRequest,
         dueDate: DateTime.now(),
+        building: site,
       ),
     );
   }
@@ -54,6 +58,31 @@ class ServiceRequestRepository extends GetxService {
       type: ServiceRequestOption.serviceRequest,
       dueDate: DateTime(2026, 8, 5),
       isArabicTitle: true,
+      raisedAt: DateTime(2026, 7, 9, 19, 11),
+      assignedTechnician: 'MD Saiful Islam',
+      building: 'Ibrahim Palace',
+      classification: RequestClassification.problem,
+      comments: const [
+        ServiceRequestComment(
+          author: 'Dinesh',
+          dateLabel: 'Today',
+          message: 'Hi',
+        ),
+      ],
+      attachments: const [
+        ServiceRequestAttachment(
+          name: 'image_picker_C8828A4D-CD3F-49C1-A341-79B2C4D9E001.jpg',
+          extension: 'JPG',
+          sizeLabel: '1.20 MB',
+          dateLabel: 'Jul 9, 2026',
+        ),
+        ServiceRequestAttachment(
+          name: 'image_picker_9DA33402-C882-4984-9E1B-9245B7D3E002.jpg',
+          extension: 'JPG',
+          sizeLabel: '1.27 MB',
+          dateLabel: 'Jul 9, 2026',
+        ),
+      ],
     ),
     ServiceRequest(
       id: 836,
@@ -67,6 +96,9 @@ class ServiceRequestRepository extends GetxService {
       status: ServiceRequestStatus.awaitingApproval,
       type: ServiceRequestOption.serviceRequest,
       dueDate: DateTime(2026, 8, 6),
+      raisedAt: DateTime(2026, 8, 6, 10, 24),
+      building: 'Ibrahim Palace',
+      classification: RequestClassification.problem,
     ),
     ServiceRequest(
       id: 674,
@@ -79,6 +111,9 @@ class ServiceRequestRepository extends GetxService {
       status: ServiceRequestStatus.convertedAsWorkorder,
       type: ServiceRequestOption.serviceRequest,
       dueDate: DateTime(2026, 7, 30),
+      building: 'Salwa Entrance',
+      classification: RequestClassification.problem,
+      assignedTechnician: 'MD Saiful Islam',
     ),
     ServiceRequest(
       id: 292,
@@ -90,6 +125,9 @@ class ServiceRequestRepository extends GetxService {
       status: ServiceRequestStatus.closed,
       type: ServiceRequestOption.serviceRequest,
       dueDate: DateTime(2026, 7, 20),
+      building: 'ZONE4-Roads & Open Area',
+      classification: RequestClassification.problem,
+      assignedTechnician: 'MD Saiful Islam',
     ),
     ServiceRequest(
       id: 290,
@@ -101,6 +139,9 @@ class ServiceRequestRepository extends GetxService {
       status: ServiceRequestStatus.convertedAsWorkorder,
       type: ServiceRequestOption.serviceRequest,
       dueDate: DateTime(2026, 7, 18),
+      building: 'Salwa Museum (Addiriya)',
+      classification: RequestClassification.problem,
+      assignedTechnician: 'MD Saiful Islam',
     ),
     ServiceRequest(
       id: 289,
@@ -112,6 +153,9 @@ class ServiceRequestRepository extends GetxService {
       status: ServiceRequestStatus.convertedAsWorkorder,
       type: ServiceRequestOption.serviceRequest,
       dueDate: DateTime(2026, 7, 15),
+      building: 'Salwa Museum (Addiriya)',
+      classification: RequestClassification.problem,
+      assignedTechnician: 'MD Saiful Islam',
     ),
     ServiceRequest(
       id: 263,
@@ -123,6 +167,9 @@ class ServiceRequestRepository extends GetxService {
       status: ServiceRequestStatus.convertedAsWorkorder,
       type: ServiceRequestOption.serviceRequest,
       dueDate: DateTime(2026, 7, 10),
+      building: 'Ibrahim Palace',
+      classification: RequestClassification.problem,
+      assignedTechnician: 'MD Saiful Islam',
     ),
     ServiceRequest(
       id: 262,
@@ -135,6 +182,9 @@ class ServiceRequestRepository extends GetxService {
       status: ServiceRequestStatus.convertedAsWorkorder,
       type: ServiceRequestOption.serviceRequest,
       dueDate: DateTime(2026, 7, 8),
+      building: 'Salwa Palace',
+      classification: RequestClassification.problem,
+      assignedTechnician: 'MD Saiful Islam',
     ),
   ];
 }

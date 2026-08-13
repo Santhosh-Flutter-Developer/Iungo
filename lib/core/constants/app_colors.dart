@@ -50,4 +50,13 @@ class AppColors {
 
   static const Color white = Color(0xFFFFFFFF);
   static const Color black = Color(0xFF000000);
+
+  /// Detail View — Attachments tab: "View" / "Delete" pill buttons.
+  static const Color attachmentViewBackground = Color(0xFFE9E3EA);
+  static const Color attachmentDeleteBackground = Color(0xFFF8DCDA);
+  static const Color attachmentDeleteText = Color(0xFFB3261E);
+
+  /// Detail View — faint grey used for field labels like "Description",
+  /// "Assigned Technician", "Other Information".
+  static const Color labelGrey = Color(0xFFB3B3B3);
 }
