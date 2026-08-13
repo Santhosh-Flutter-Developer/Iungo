@@ -59,4 +59,10 @@ class AppColors {
   /// Detail View — faint grey used for field labels like "Description",
   /// "Assigned Technician", "Other Information".
   static const Color labelGrey = Color(0xFFB3B3B3);
+
+  /// Profile screen — neutral icon color for Name/Email/Language/Bell.
+  static const Color profileIconGrey = Color(0xFF717179);
+
+  /// Profile screen — "Push Notifications" enabled toggle fill.
+  static const Color toggleOnGreen = Color(0xFF23C55E);
 }

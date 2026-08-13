@@ -59,7 +59,7 @@ class AppDrawer extends StatelessWidget {
     DrawerMenuItem.myServiceRequests,
     // DrawerMenuItem.myWorkOrders,
     // DrawerMenuItem.feedback,
-    // DrawerMenuItem.profile,
+    DrawerMenuItem.profile,
     // DrawerMenuItem.about,
   ];
 
@@ -71,6 +71,8 @@ class AppDrawer extends StatelessWidget {
       Get.offAllNamed(AppRoutes.dashboard);
     } else if (item == DrawerMenuItem.myServiceRequests) {
       Get.offAllNamed(AppRoutes.serviceRequestList);
+    } else if (item == DrawerMenuItem.profile) {
+      Get.toNamed(AppRoutes.profile);
     } else {}
   }
 

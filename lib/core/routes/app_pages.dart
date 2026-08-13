@@ -5,6 +5,8 @@ import 'package:iungo/features/dashboard/presentation/bindings/dashboard_binding
 import 'package:iungo/features/dashboard/presentation/pages/dashboard_page.dart';
 import 'package:iungo/features/onboarding/presentation/bindings/onboarding_binding.dart';
 import 'package:iungo/features/onboarding/presentation/pages/onboarding_page.dart';
+import 'package:iungo/features/profile/presentation/bindings/profile_binding.dart';
+import 'package:iungo/features/profile/presentation/pages/profile_page.dart';
 import 'package:iungo/features/service_request/presentation/bindings/service_request_list_binding.dart';
 import 'package:iungo/features/service_request/presentation/pages/service_request_list_page.dart';
 import 'package:iungo/features/splash/presentation/bindings/splash_binding.dart';
@@ -46,6 +48,12 @@ class AppPages {
       name: AppRoutes.serviceRequestList,
       page: () => const ServiceRequestListPage(),
       binding: ServiceRequestListBinding(),
+      transition: Transition.rightToLeft,
+    ),
+    GetPage(
+      name: AppRoutes.profile,
+      page: () => const ProfilePage(),
+      binding: ProfileBinding(),
       transition: Transition.rightToLeft,
     ),
   ];

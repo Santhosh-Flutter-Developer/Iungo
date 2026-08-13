@@ -109,6 +109,19 @@ class AppTranslations extends Translations {
           'all_fields': 'All Fields',
           'try_different_keywords': 'Try different keywords',
 
+          // Profile screen
+          'name': 'Name',
+          'email': 'Email',
+          'language': 'Language',
+          'select_your_preferred_language': 'Select your preferred language',
+          'push_notifications': 'Push Notifications',
+          'push_notifications_description':
+              'You will receive updates about your service requests and announcements.',
+          'language_arabic_native': 'عربي',
+          'language_arabic_full': 'Arabic',
+          'language_english_native': 'English',
+          'language_english_full': 'English',
+
           // Statuses
           'status_acknowledged': 'Acknowledged',
           'status_awaiting_approval': 'Awaiting Approval',
@@ -244,6 +257,19 @@ class AppTranslations extends Translations {
           'search': 'بحث',
           'all_fields': 'جميع الحقول',
           'try_different_keywords': 'حاول استخدام كلمات مختلفة',
+
+          // Profile screen
+          'name': 'الاسم',
+          'email': 'البريد الإلكتروني',
+          'language': 'اللغة',
+          'select_your_preferred_language': 'اختر لغتك المفضلة',
+          'push_notifications': 'الإشعارات الفورية',
+          'push_notifications_description':
+              'ستتلقى تحديثات حول طلبات الخدمة والإعلانات.',
+          'language_arabic_native': 'عربي',
+          'language_arabic_full': 'العربية',
+          'language_english_native': 'الإنجليزية',
+          'language_english_full': 'الإنجليزية',
 
           // Statuses
           'status_acknowledged': 'تم الإقرار',
