@@ -78,6 +78,11 @@ class AppTranslations extends Translations {
           'open_gallery': 'Open Gallery',
           'cancel': 'Cancel',
           'request_submitted': 'Request submitted successfully',
+          'location_permission_denied':
+              'Location permission is required to pick your current location',
+          'location_service_disabled':
+              'Please enable location services to use this feature',
+          'location_fetch_failed': 'Could not fetch your current location',
         },
         'ar_SA': {
           'app_name': 'Iungo',
@@ -152,6 +157,11 @@ class AppTranslations extends Translations {
           'open_gallery': 'افتح المخزون',
           'cancel': 'إلغاء',
           'request_submitted': 'تم إرسال الطلب بنجاح',
+          'location_permission_denied':
+              'يلزم إذن الموقع لاختيار موقعك الحالي',
+          'location_service_disabled':
+              'يرجى تفعيل خدمة الموقع لاستخدام هذه الميزة',
+          'location_fetch_failed': 'تعذر جلب موقعك الحالي',
         },
       };
 }

@@ -1,5 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:geocoding/geocoding.dart';
+import 'package:geolocator/geolocator.dart';
 import 'package:get/get.dart';
+import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:iungo/core/widgets/app_snackbar.dart';
 import 'package:iungo/features/service_request/domain/entities/request_classification.dart';
 
@@ -22,6 +25,15 @@ class NewServiceRequestController extends GetxController {
       '2nd Street, Madurai, beside Muthu Patti, Tamil Nadu, IN, - 625003'.obs;
   final RxString latitude = '9.888988'.obs;
   final RxString longitude = '78.095726'.obs;
+
+  /// Live Google Map state for [SelectLocationPage]. The map keeps a pin
+  /// fixed at screen-centre and the camera position becomes the picked
+  /// coordinate; [address]/[latitude]/[longitude] above only get written
+  /// back to the form once the user taps Submit there.
+  GoogleMapController? mapController;
+  final Rxn<LatLng> mapPosition = Rxn<LatLng>();
+  final RxBool isResolvingAddress = false.obs;
+  final RxBool isLocatingDevice = false.obs;
 
   final RxList<String> attachments = <String>[].obs;
 
@@ -95,6 +107,98 @@ class NewServiceRequestController extends GetxController {
     this.longitude.value = longitude;
   }
 
+  /// Starting camera position for the map picker — parsed from whatever
+  /// address/lat/lng the form already holds, falling back to Madurai.
+  LatLng get initialMapPosition {
+    final lat = double.tryParse(latitude.value) ?? 9.888988;
+    final lng = double.tryParse(longitude.value) ?? 78.095726;
+    return LatLng(lat, lng);
+  }
+
+  void onMapCreated(GoogleMapController controller) {
+    mapController = controller;
+    mapPosition.value ??= initialMapPosition;
+  }
+
+  /// Called on every camera frame while dragging — cheap, no network call.
+  void onMapCameraMove(CameraPosition position) {
+    mapPosition.value = position.target;
+  }
+
+  /// Called once the camera settles — this is when we resolve the address.
+  Future<void> onMapCameraIdle() async {
+    final position = mapPosition.value;
+    if (position == null) return;
+    await _reverseGeocode(position);
+  }
+
+  Future<void> _reverseGeocode(LatLng position) async {
+    isResolvingAddress.value = true;
+    try {
+      final placemarks = await placemarkFromCoordinates(
+        position.latitude,
+        position.longitude,
+      );
+      if (placemarks.isNotEmpty) {
+        final p = placemarks.first;
+        final parts = [
+          p.name,
+          p.subLocality,
+          p.locality,
+          p.administrativeArea,
+          p.country,
+          p.postalCode,
+        ].where((part) => part != null && part.trim().isNotEmpty).toSet();
+        if (parts.isNotEmpty) {
+          address.value = parts.join(', ');
+        }
+      }
+    } catch (_) {
+      // Reverse geocoding can fail offline or if no result is found —
+      // keep whatever address was already shown rather than blanking it.
+    } finally {
+      isResolvingAddress.value = false;
+    }
+  }
+
+  /// Moves the map to the device's current GPS location, requesting
+  /// permission first if needed.
+  Future<void> useCurrentLocation() async {
+    if (isLocatingDevice.value) return;
+    isLocatingDevice.value = true;
+    try {
+      final serviceEnabled = await Geolocator.isLocationServiceEnabled();
+      if (!serviceEnabled) {
+        AppSnackbar.showError('location_service_disabled'.tr);
+        return;
+      }
+
+      var permission = await Geolocator.checkPermission();
+      if (permission == LocationPermission.denied) {
+        permission = await Geolocator.requestPermission();
+      }
+      if (permission == LocationPermission.denied ||
+          permission == LocationPermission.deniedForever) {
+        AppSnackbar.showError('location_permission_denied'.tr);
+        return;
+      }
+
+      final position = await Geolocator.getCurrentPosition(
+        locationSettings: const LocationSettings(
+          accuracy: LocationAccuracy.high,
+        ),
+      );
+      final latLng = LatLng(position.latitude, position.longitude);
+      mapPosition.value = latLng;
+      await mapController?.animateCamera(CameraUpdate.newLatLng(latLng));
+      await _reverseGeocode(latLng);
+    } catch (_) {
+      AppSnackbar.showError('location_fetch_failed'.tr);
+    } finally {
+      isLocatingDevice.value = false;
+    }
+  }
+
   void addMockAttachment() {
     attachments.add('attachment_${attachments.length + 1}.jpg');
   }
@@ -112,6 +216,7 @@ class NewServiceRequestController extends GetxController {
   void onClose() {
     subjectController.dispose();
     descriptionController.dispose();
+    mapController?.dispose();
     super.onClose();
   }
 }
