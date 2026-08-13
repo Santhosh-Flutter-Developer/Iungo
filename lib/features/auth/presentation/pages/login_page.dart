@@ -32,7 +32,7 @@ class LoginPage extends GetView<LoginController> {
                 'welcome'.tr,
                 style: const TextStyle(
                   fontSize: 34,
-                  fontWeight: FontWeight.w700,
+                  fontWeight: FontWeight.w600,
                   color: AppColors.headingBlueGrey,
                 ),
               ),
