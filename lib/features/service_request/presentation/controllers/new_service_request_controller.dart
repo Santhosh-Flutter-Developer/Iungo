@@ -1,9 +1,13 @@
+import 'package:file_picker/file_picker.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:geocoding/geocoding.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:get/get.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
+import 'package:image_picker/image_picker.dart';
 import 'package:iungo/core/widgets/app_snackbar.dart';
+import 'package:iungo/features/service_request/domain/entities/attachment_file.dart';
 import 'package:iungo/features/service_request/domain/entities/request_classification.dart';
 
 /// Holds all state for the (static/UI-only) "New Service Request" form.
@@ -35,7 +39,9 @@ class NewServiceRequestController extends GetxController {
   final RxBool isResolvingAddress = false.obs;
   final RxBool isLocatingDevice = false.obs;
 
-  final RxList<String> attachments = <String>[].obs;
+  final RxList<AttachmentFile> attachments = <AttachmentFile>[].obs;
+  final RxBool isPickingAttachment = false.obs;
+  final ImagePicker _imagePicker = ImagePicker();
 
   static const List<String> sites = ['Diriyah At Turaif'];
 
@@ -199,12 +205,54 @@ class NewServiceRequestController extends GetxController {
     }
   }
 
-  void addMockAttachment() {
-    attachments.add('attachment_${attachments.length + 1}.jpg');
+  /// Opens the device camera and appends the captured photo, if any.
+  Future<void> pickFromCamera() async {
+    if (isPickingAttachment.value) return;
+    isPickingAttachment.value = true;
+    try {
+      final photo = await _imagePicker.pickImage(source: ImageSource.camera);
+      if (photo == null) return;
+      final bytes = kIsWeb ? await photo.readAsBytes() : null;
+      attachments.add(AttachmentFile(
+        name: photo.name,
+        path: kIsWeb ? null : photo.path,
+        bytes: bytes,
+      ));
+    } catch (_) {
+      AppSnackbar.showError('attachment_camera_failed'.tr);
+    } finally {
+      isPickingAttachment.value = false;
+    }
   }
 
-  void removeAttachment(String name) {
-    attachments.remove(name);
+  /// Opens the system file/photo picker — any file type, images included —
+  /// and appends whatever the user selects (multiple selection allowed).
+  Future<void> pickFileOrImage() async {
+    if (isPickingAttachment.value) return;
+    isPickingAttachment.value = true;
+    try {
+      final result = await FilePicker.platform.pickFiles(
+        allowMultiple: true,
+        type: FileType.any,
+        withData: kIsWeb,
+      );
+      if (result == null) return;
+      for (final file in result.files) {
+        attachments.add(AttachmentFile(
+          name: file.name,
+          path: kIsWeb ? null : file.path,
+          bytes: kIsWeb ? file.bytes : null,
+        ));
+      }
+    } catch (_) {
+      AppSnackbar.showError('attachment_pick_failed'.tr);
+    } finally {
+      isPickingAttachment.value = false;
+    }
+  }
+
+  void removeAttachment(AttachmentFile attachment) {
+    attachments.remove(attachment);
   }
 
   void submit() {

@@ -136,11 +136,14 @@ class NewServiceRequestPage extends GetView<NewServiceRequestController> {
                 ),
               ),
               const SizedBox(height: 8),
-              AttachmentUploadBox(
-                onTap: () => AddAttachmentSheet.show(
-                  context,
-                  onCameraTap: controller.addMockAttachment,
-                  onGalleryTap: controller.addMockAttachment,
+              Obx(
+                () => AttachmentUploadBox(
+                  loading: controller.isPickingAttachment.value,
+                  onTap: () => AddAttachmentSheet.show(
+                    context,
+                    onCameraTap: controller.pickFromCamera,
+                    onGalleryTap: controller.pickFileOrImage,
+                  ),
                 ),
               ),
               Obx(
@@ -151,11 +154,11 @@ class NewServiceRequestPage extends GetView<NewServiceRequestController> {
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.stretch,
                           children: [
-                            for (final name in controller.attachments)
+                            for (final attachment in controller.attachments)
                               _AttachmentTile(
-                                name: name,
+                                name: attachment.name,
                                 onRemove: () =>
-                                    controller.removeAttachment(name),
+                                    controller.removeAttachment(attachment),
                               ),
                           ],
                         ),

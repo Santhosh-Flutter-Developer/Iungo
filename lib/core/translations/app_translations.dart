@@ -83,6 +83,8 @@ class AppTranslations extends Translations {
           'location_service_disabled':
               'Please enable location services to use this feature',
           'location_fetch_failed': 'Could not fetch your current location',
+          'attachment_camera_failed': 'Could not open the camera',
+          'attachment_pick_failed': 'Could not open the file picker',
         },
         'ar_SA': {
           'app_name': 'Iungo',
@@ -162,6 +164,8 @@ class AppTranslations extends Translations {
           'location_service_disabled':
               'يرجى تفعيل خدمة الموقع لاستخدام هذه الميزة',
           'location_fetch_failed': 'تعذر جلب موقعك الحالي',
+          'attachment_camera_failed': 'تعذر فتح الكاميرا',
+          'attachment_pick_failed': 'تعذر فتح منتقي الملفات',
         },
       };
 }

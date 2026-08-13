@@ -28,6 +28,10 @@
 	<true/>
 	<key>NSLocationWhenInUseUsageDescription</key>
 	<string>Iungo uses your location to pin the exact site address on the map for your service request.</string>
+	<key>NSCameraUsageDescription</key>
+	<string>Iungo uses your camera to attach a photo to your service request.</string>
+	<key>NSPhotoLibraryUsageDescription</key>
+	<string>Iungo needs access to your photos so you can attach one to your service request.</string>
 	<key>UIApplicationSceneManifest</key>
 	<dict>
 		<key>UIApplicationSupportsMultipleScenes</key>

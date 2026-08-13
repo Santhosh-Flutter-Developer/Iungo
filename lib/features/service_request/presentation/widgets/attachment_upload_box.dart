@@ -3,14 +3,19 @@ import 'package:get/get.dart';
 import 'package:iungo/core/constants/app_colors.dart';
 
 class AttachmentUploadBox extends StatelessWidget {
-  const AttachmentUploadBox({super.key, required this.onTap});
+  const AttachmentUploadBox({
+    super.key,
+    required this.onTap,
+    this.loading = false,
+  });
 
   final VoidCallback onTap;
+  final bool loading;
 
   @override
   Widget build(BuildContext context) {
     return InkWell(
-      onTap: onTap,
+      onTap: loading ? null : onTap,
       borderRadius: BorderRadius.circular(6),
       child: CustomPaint(
         painter: _DashedBorderPainter(color: AppColors.inputBorder),
@@ -18,23 +23,32 @@ class AttachmentUploadBox extends StatelessWidget {
           width: double.infinity,
           padding: const EdgeInsets.symmetric(vertical: 28),
           alignment: Alignment.center,
-          child: Column(
-            children: [
-              const Icon(
-                Icons.cloud_upload_outlined,
-                size: 26,
-                color: AppColors.textMuted,
-              ),
-              const SizedBox(height: 10),
-              Text(
-                'click_here_to_upload'.tr,
-                style: const TextStyle(
-                  fontSize: 15,
-                  color: AppColors.textMuted,
+          child: loading
+              ? const SizedBox(
+                  width: 22,
+                  height: 22,
+                  child: CircularProgressIndicator(
+                    strokeWidth: 2,
+                    color: AppColors.primary,
+                  ),
+                )
+              : Column(
+                  children: [
+                    const Icon(
+                      Icons.cloud_upload_outlined,
+                      size: 26,
+                      color: AppColors.textMuted,
+                    ),
+                    const SizedBox(height: 10),
+                    Text(
+                      'click_here_to_upload'.tr,
+                      style: const TextStyle(
+                        fontSize: 15,
+                        color: AppColors.textMuted,
+                      ),
+                    ),
+                  ],
                 ),
-              ),
-            ],
-          ),
         ),
       ),
     );
