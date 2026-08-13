@@ -50,6 +50,8 @@ class _ServiceRequestFilterPageState extends State<ServiceRequestFilterPage>
       _draft = const ServiceRequestFilter();
       _ticketIdController.clear();
     });
+    widget.controller.clearFilter();
+    Get.back();
   }
 
   Future<void> _pickDueDateRange() async {
