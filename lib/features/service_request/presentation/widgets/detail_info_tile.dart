@@ -21,7 +21,8 @@ class DetailInfoTile extends StatelessWidget {
     return Padding(
       padding: const EdgeInsets.only(bottom: 22),
       child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
+        crossAxisAlignment: CrossAxisAlignment.center,
+        mainAxisAlignment: MainAxisAlignment.start,
         children: [
           Icon(icon, size: 22, color: AppColors.textMuted),
           const SizedBox(width: 14),
@@ -36,7 +37,7 @@ class DetailInfoTile extends StatelessWidget {
                     color: AppColors.labelGrey,
                   ),
                 ),
-                const SizedBox(height: 4),
+                const SizedBox(height: 2),
                 Text(
                   value,
                   style: const TextStyle(

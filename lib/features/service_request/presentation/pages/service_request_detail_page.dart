@@ -36,18 +36,18 @@ class ServiceRequestDetailPage extends GetView<ServiceRequestDetailController> {
             overflow: TextOverflow.ellipsis,
             style: const TextStyle(
               color: AppColors.white,
-              fontSize: 19,
-              fontWeight: FontWeight.w700,
+              fontWeight: FontWeight.w500,
             ),
           ),
           bottom: TabBar(
             indicatorColor: AppColors.white,
             indicatorWeight: 3,
+            isScrollable: true,
             labelColor: AppColors.white,
             unselectedLabelColor: Colors.white70,
             labelStyle: const TextStyle(
               fontSize: 13,
-              fontWeight: FontWeight.w700,
+              fontWeight: FontWeight.w600,
               letterSpacing: 0.4,
             ),
             unselectedLabelStyle: const TextStyle(
@@ -79,6 +79,9 @@ class ServiceRequestDetailPage extends GetView<ServiceRequestDetailController> {
                 return FloatingActionButton(
                   heroTag: 'detail_fab',
                   backgroundColor: AppColors.primary,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
                   onPressed: () => index == 1
                       ? Get.to(() => const AddCommentPage())
                       : AddAttachmentSheet.show(

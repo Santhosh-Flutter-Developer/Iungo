@@ -18,7 +18,11 @@ class DetailOverviewTab extends StatelessWidget {
     return ListView(
       padding: const EdgeInsets.fromLTRB(20, 20, 20, 40),
       children: [
-        StatusBadge(status: request.status),
+        Row(
+          children: [
+            StatusBadge(status: request.status),
+          ],
+        ),
         const SizedBox(height: 14),
         Row(
           children: [

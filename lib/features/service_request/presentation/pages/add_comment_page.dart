@@ -23,8 +23,7 @@ class AddCommentPage extends GetView<ServiceRequestDetailController> {
           'add_comment'.tr,
           style: const TextStyle(
             color: AppColors.white,
-            fontSize: 19,
-            fontWeight: FontWeight.w700,
+            fontWeight: FontWeight.w500,
           ),
         ),
         actions: [

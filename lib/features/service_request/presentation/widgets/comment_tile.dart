@@ -24,7 +24,7 @@ class CommentTile extends StatelessWidget {
                   comment.author,
                   style: const TextStyle(
                     fontSize: 15,
-                    fontWeight: FontWeight.w700,
+                    fontWeight: FontWeight.w600,
                     color: AppColors.textDark,
                   ),
                 ),
