@@ -1,4 +1,5 @@
 import 'package:get/get.dart';
+import 'package:iungo/core/routes/app_routes.dart';
 import 'package:iungo/features/dashboard/domain/entities/dashboard_action.dart';
 
 class DashboardController extends GetxController {
@@ -8,7 +9,7 @@ class DashboardController extends GetxController {
        
         break;
       case DashboardAction.myServiceRequests:
-        
+        Get.toNamed(AppRoutes.serviceRequestList);
         break;
       case DashboardAction.scanQr:
        

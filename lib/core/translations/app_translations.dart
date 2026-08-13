@@ -85,6 +85,39 @@ class AppTranslations extends Translations {
           'location_fetch_failed': 'Could not fetch your current location',
           'attachment_camera_failed': 'Could not open the camera',
           'attachment_pick_failed': 'Could not open the file picker',
+
+          // My Service Requests list
+          'filter': 'Filter',
+          'clear': 'Clear',
+          'find_ticket': 'Find Ticket',
+          'find_ticket_by_id': 'Find Ticket by Id',
+          'ticket_id': 'Ticket Id',
+          'service_request_type': 'Service Request Type',
+          'select_service_request_type': 'Select Service Request Type',
+          'select_status': 'Select Status',
+          'select_priority': 'Select Priority',
+          'set_due_date': 'Set Due-Date',
+          'apply_filter': 'Apply Filter',
+          'no_results_found': 'No Results Found',
+          'try_adjusting_filters': 'Try adjusting your filters',
+          'select_range': 'Select range',
+          'start_date_end_date': 'Start Date – End Date',
+          'save': 'Save',
+
+          // Statuses
+          'status_acknowledged': 'Acknowledged',
+          'status_awaiting_approval': 'Awaiting Approval',
+          'status_closed': 'Closed',
+          'status_converted_as_workorder': 'Converted as Workorder',
+          'status_on_hold': 'On Hold',
+          'status_open': 'Open',
+          'status_rejected': 'Rejected',
+
+          // Priorities
+          'priority_no_priority': 'No priority',
+          'priority_routine': 'Routine',
+          'priority_urgent': 'Urgent',
+          'priority_emergency': 'Emergency',
         },
         'ar_SA': {
           'app_name': 'Iungo',
@@ -166,6 +199,39 @@ class AppTranslations extends Translations {
           'location_fetch_failed': 'تعذر جلب موقعك الحالي',
           'attachment_camera_failed': 'تعذر فتح الكاميرا',
           'attachment_pick_failed': 'تعذر فتح منتقي الملفات',
+
+          // My Service Requests list
+          'filter': 'تصفية',
+          'clear': 'مسح',
+          'find_ticket': 'البحث عن تذكرة',
+          'find_ticket_by_id': 'البحث عن تذكرة برقم التعريف',
+          'ticket_id': 'رقم التذكرة',
+          'service_request_type': 'نوع طلب الخدمة',
+          'select_service_request_type': 'اختر نوع طلب الخدمة',
+          'select_status': 'اختر الحالة',
+          'select_priority': 'اختر الأولوية',
+          'set_due_date': 'تحديد تاريخ الاستحقاق',
+          'apply_filter': 'تطبيق التصفية',
+          'no_results_found': 'لا توجد نتائج',
+          'try_adjusting_filters': 'حاول تعديل عوامل التصفية',
+          'select_range': 'اختر النطاق',
+          'start_date_end_date': 'تاريخ البدء – تاريخ الانتهاء',
+          'save': 'حفظ',
+
+          // Statuses
+          'status_acknowledged': 'تم الإقرار',
+          'status_awaiting_approval': 'بانتظار الموافقة',
+          'status_closed': 'مغلق',
+          'status_converted_as_workorder': 'تم التحويل إلى أمر عمل',
+          'status_on_hold': 'قيد الانتظار',
+          'status_open': 'مفتوح',
+          'status_rejected': 'مرفوض',
+
+          // Priorities
+          'priority_no_priority': 'بدون أولوية',
+          'priority_routine': 'روتيني',
+          'priority_urgent': 'عاجل',
+          'priority_emergency': 'طارئ',
         },
       };
 }

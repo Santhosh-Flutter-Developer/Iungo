@@ -69,6 +69,8 @@ class AppDrawer extends StatelessWidget {
 
     if (item == DrawerMenuItem.dashboard) {
       Get.offAllNamed(AppRoutes.dashboard);
+    } else if (item == DrawerMenuItem.myServiceRequests) {
+      Get.offAllNamed(AppRoutes.serviceRequestList);
     } else {}
   }
 

@@ -7,6 +7,7 @@ import 'package:get/get.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:iungo/core/widgets/app_snackbar.dart';
+import 'package:iungo/features/service_request/data/service_request_repository.dart';
 import 'package:iungo/features/service_request/domain/entities/attachment_file.dart';
 import 'package:iungo/features/service_request/domain/entities/request_classification.dart';
 
@@ -256,6 +257,17 @@ class NewServiceRequestController extends GetxController {
   }
 
   void submit() {
+    final repository = Get.isRegistered<ServiceRequestRepository>()
+        ? Get.find<ServiceRequestRepository>()
+        : Get.put(ServiceRequestRepository(), permanent: true);
+
+    final subject = subjectController.text.trim();
+    repository.addFromSubmission(
+      subject: subject.isEmpty ? 'new_service_request'.tr : subject,
+      description: descriptionController.text.trim(),
+      site: selectedSite.value,
+    );
+
     AppSnackbar.showSuccess('request_submitted'.tr);
     Get.back();
   }
