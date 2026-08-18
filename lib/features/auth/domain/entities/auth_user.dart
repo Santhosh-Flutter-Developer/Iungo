@@ -6,6 +6,7 @@ class AuthUser extends Equatable {
     required this.email,
     required this.token,
     required this.role,
+    this.name,
   });
 
   final String id;
@@ -13,6 +14,10 @@ class AuthUser extends Equatable {
   final String token;
   final String role;
 
+  /// Display name, when the API returns one. Falls back to the local
+  /// part of the email in the UI when absent.
+  final String? name;
+
   @override
-  List<Object?> get props => [id, email, token, role];
+  List<Object?> get props => [id, email, token, role, name];
 }

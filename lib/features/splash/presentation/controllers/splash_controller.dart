@@ -1,5 +1,6 @@
 import 'package:get/get.dart';
 import 'package:iungo/core/routes/app_routes.dart';
+import 'package:iungo/core/services/session_service.dart';
 
 class SplashController extends GetxController {
   @override
@@ -10,6 +11,8 @@ class SplashController extends GetxController {
 
   Future<void> _navigateNext() async {
     await Future.delayed(const Duration(seconds: 2));
-    Get.offAllNamed(AppRoutes.onboarding);
+
+    final isLoggedIn = Get.find<SessionService>().isLoggedIn.value;
+    Get.offAllNamed(isLoggedIn ? AppRoutes.dashboard : AppRoutes.onboarding);
   }
 }

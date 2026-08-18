@@ -3,6 +3,7 @@ import 'package:get/get.dart';
 import 'package:iungo/core/constants/app_colors.dart';
 import 'package:iungo/core/routes/app_routes.dart';
 import 'package:iungo/core/services/session_service.dart';
+import 'package:iungo/core/widgets/app_snackbar.dart';
 
 enum DrawerMenuItem {
   dashboard,
@@ -76,10 +77,11 @@ class AppDrawer extends StatelessWidget {
     } else {}
   }
 
-  void _signOut(BuildContext context) {
+  void _signOut(BuildContext context) async {
     Navigator.of(context).pop();
-    Get.find<SessionService>().clear();
-    Get.offAllNamed(AppRoutes.onboarding);
+    await Get.find<SessionService>().clear();
+    AppSnackbar.showSuccess('logged_out_success'.tr);
+    Get.offAllNamed(AppRoutes.login);
   }
 
   @override

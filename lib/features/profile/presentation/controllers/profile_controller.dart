@@ -31,8 +31,10 @@ class ProfileController extends GetxController {
   }
 
   /// Applies a newly chosen locale app-wide (mirrors the whole UI —
-  /// same mechanism used from onboarding's language toggle).
+  /// same mechanism used from onboarding's language toggle) and
+  /// persists it so it is restored on the next app launch.
   void applyLocale(Locale locale) {
     Get.updateLocale(locale);
+    _session.saveLocale(locale);
   }
 }

@@ -30,18 +30,18 @@ class SplashPage extends StatelessWidget {
                 fit: BoxFit.cover,
               ),
               Spacer(),
-              const Text(
-                'Iungo',
-                style: TextStyle(
+              Text(
+                'app_name'.tr,
+                style: const TextStyle(
                   fontSize: 40,
                   fontWeight: FontWeight.w700,
                   color: AppColors.black,
                 ),
               ),
               const SizedBox(height: 6),
-              const Text(
-                'Powered by CIT',
-                style: TextStyle(fontSize: 15, color: AppColors.textMuted),
+              Text(
+                'powered_by'.tr,
+                style: const TextStyle(fontSize: 15, color: AppColors.textMuted),
               ),
               const SizedBox(height: 20),
             ],

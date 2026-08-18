@@ -54,7 +54,7 @@ class AppSnackbar {
           ),
         ],
       ),
-      backgroundColor: AppColors.primary,
+      backgroundColor: AppColors.snackbarBackground,
       borderRadius: 8,
       margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
