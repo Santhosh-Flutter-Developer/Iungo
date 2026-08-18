@@ -63,40 +63,41 @@ class OnboardingPage extends StatelessWidget {
                   ),
                 ),
                 const SizedBox(height: 48),
-                Text(
-                  'which_one_are_you'.tr,
-                  style: const TextStyle(
-                    fontSize: 17,
-                    fontWeight: FontWeight.w600,
-                    color: AppColors.headingBlueGrey,
-                  ),
-                ),
-                const SizedBox(height: 20),
-                SizedBox(
-                  width: double.infinity,
-                  height: 52,
-                  child: ElevatedButton(
-                    onPressed: () {
-                      // controller.chooseRole(UserRole.tenant);
-                    },
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: AppColors.primary,
-                      foregroundColor: AppColors.white,
-                      elevation: 0,
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(6),
-                      ),
-                    ),
-                    child: Text(
-                      'tenant'.tr,
-                      style: const TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
-                  ),
-                ),
-                const SizedBox(height: 14),
+                 Spacer(),
+                // Text(
+                //   'which_one_are_you'.tr,
+                //   style: const TextStyle(
+                //     fontSize: 17,
+                //     fontWeight: FontWeight.w600,
+                //     color: AppColors.headingBlueGrey,
+                //   ),
+                // ),
+                // const SizedBox(height: 20),
+                // SizedBox(
+                //   width: double.infinity,
+                //   height: 52,
+                //   child: ElevatedButton(
+                //     onPressed: () {
+                //       // controller.chooseRole(UserRole.tenant);
+                //     },
+                //     style: ElevatedButton.styleFrom(
+                //       backgroundColor: AppColors.primary,
+                //       foregroundColor: AppColors.white,
+                //       elevation: 0,
+                //       shape: RoundedRectangleBorder(
+                //         borderRadius: BorderRadius.circular(6),
+                //       ),
+                //     ),
+                //     child: Text(
+                //       'tenant'.tr,
+                //       style: const TextStyle(
+                //         fontSize: 16,
+                //         fontWeight: FontWeight.w600,
+                //       ),
+                //     ),
+                //   ),
+                // ),
+                // const SizedBox(height: 14),
                 SizedBox(
                   width: double.infinity,
                   height: 52,
