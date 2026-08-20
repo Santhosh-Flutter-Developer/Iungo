@@ -36,7 +36,9 @@ class _ServiceRequestFilterPageState extends State<ServiceRequestFilterPage>
       TabController(length: 2, vsync: this);
 
   late ServiceRequestFilter _draft = widget.controller.filter.value;
-  final _ticketIdController = TextEditingController();
+  late final _ticketIdController = TextEditingController(
+    text: widget.controller.findTicketId.value?.toString() ?? '',
+  );
 
   @override
   void initState() {
