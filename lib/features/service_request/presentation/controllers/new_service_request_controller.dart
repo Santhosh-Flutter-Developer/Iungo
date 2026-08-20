@@ -10,6 +10,7 @@ import 'package:iungo/core/widgets/app_snackbar.dart';
 import 'package:iungo/features/service_request/data/service_request_repository.dart';
 import 'package:iungo/features/service_request/domain/entities/attachment_file.dart';
 import 'package:iungo/features/service_request/domain/entities/request_classification.dart';
+import 'package:iungo/features/service_request/presentation/bindings/service_request_list_binding.dart';
 
 /// Holds all state for the (static/UI-only) "New Service Request" form.
 /// Nothing here talks to a real API — every list and default value is
@@ -257,9 +258,8 @@ class NewServiceRequestController extends GetxController {
   }
 
   void submit() {
-    final repository = Get.isRegistered<ServiceRequestRepository>()
-        ? Get.find<ServiceRequestRepository>()
-        : Get.put(ServiceRequestRepository(), permanent: true);
+    ServiceRequestListBinding.ensureRepositoryRegistered();
+    final repository = Get.find<ServiceRequestRepository>();
 
     final subject = subjectController.text.trim();
     repository.addFromSubmission(
