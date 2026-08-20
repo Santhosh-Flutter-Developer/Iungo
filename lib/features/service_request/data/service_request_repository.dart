@@ -41,11 +41,13 @@ class ServiceRequestRepository extends GetxService {
     required int page,
     required int perPage,
     Map<String, List<String>>? quickFilter,
+    String? search,
   }) {
     return _remoteDataSource.fetchServiceRequests(
       page: page,
       perPage: perPage,
       quickFilter: quickFilter,
+      search: search,
     );
   }
 

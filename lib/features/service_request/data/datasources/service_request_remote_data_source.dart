@@ -12,11 +12,18 @@ abstract class ServiceRequestRemoteDataSource {
   /// [quickFilter], when non-empty, narrows the results server-side —
   /// e.g. `{'moduleState': ['2355'], 'priority_serviceRequest': ['43'],
   /// 'id': ['292']}` — matching the exact `quickFilter` JSON shape the
-  /// real app sends (confirmed via Postman capture).
+  /// real app sends (confirmed via Postman capture), e.g. field-specific
+  /// lookups such as `{'subject': ['Service Request Test 1']}` or
+  /// `{'id': ['1226']}`.
+  ///
+  /// [search], when non-empty, is sent as the plain `search` query
+  /// param instead of `quickFilter` — used for the "All Fields" scope,
+  /// which searches broadly rather than against one specific field.
   Future<ServiceRequestListPageResult> fetchServiceRequests({
     required int page,
     required int perPage,
     Map<String, List<String>>? quickFilter,
+    String? search,
   });
 }
 
@@ -43,11 +50,14 @@ class ServiceRequestRemoteDataSourceImpl
     required int page,
     required int perPage,
     Map<String, List<String>>? quickFilter,
+    String? search,
   }) async {
     try {
       final token = _session.token.value;
 
       final hasQuickFilter = quickFilter != null && quickFilter.isNotEmpty;
+      final hasSearch = search != null && search.isNotEmpty;
+      final hasFilterOrSearch = hasQuickFilter || hasSearch;
 
       final response = await _dio.get<dynamic>(
         _baseUrl,
@@ -57,14 +67,14 @@ class ServiceRequestRemoteDataSourceImpl
           'viewName': 'allservicerequests',
           'page': page,
           'perPage': perPage,
-          if (hasQuickFilter) 'search': '',
+          if (hasFilterOrSearch) 'search': hasSearch ? search : '',
           if (hasQuickFilter)
             'quickFilter': jsonEncode({
               for (final entry in quickFilter.entries)
                 entry.key: {'value': entry.value},
             }),
           'withoutCustomButtons': true,
-          if (!hasQuickFilter)
+          if (!hasFilterOrSearch)
             'expand': 'moduleState,priority_serviceRequest,sysCreatedBy',
         },
         options: Options(
