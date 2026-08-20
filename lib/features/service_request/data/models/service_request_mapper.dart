@@ -172,53 +172,21 @@ class ServiceRequestListPageResult {
     return null;
   }
 
-  static String _normalize(String? value) {
-    return (value ?? '').toLowerCase().replaceAll(RegExp(r'[^a-z]'), '');
-  }
-
   static ServiceRequestPriority _mapPriority(
     Map<String, dynamic>? priorityInfo,
   ) {
     if (priorityInfo == null) return ServiceRequestPriority.noPriority;
-    final label = _normalize(
+    return ServiceRequestPriorityX.fromApiLabel(
       (priorityInfo['displayName'] ?? priorityInfo['primaryValue']) as String?,
     );
-    switch (label) {
-      case 'routine':
-        return ServiceRequestPriority.routine;
-      case 'urgent':
-        return ServiceRequestPriority.urgent;
-      case 'emergency':
-        return ServiceRequestPriority.emergency;
-      default:
-        return ServiceRequestPriority.noPriority;
-    }
   }
 
   static ServiceRequestStatus _mapStatus(
     Map<String, dynamic>? moduleStateInfo,
   ) {
     if (moduleStateInfo == null) return ServiceRequestStatus.open;
-    final normalized = _normalize(
+    return ServiceRequestStatusX.fromApiLabel(
       (moduleStateInfo['status'] ?? moduleStateInfo['displayName']) as String?,
     );
-    switch (normalized) {
-      case 'acknowledged':
-        return ServiceRequestStatus.acknowledged;
-      case 'awaitingapproval':
-        return ServiceRequestStatus.awaitingApproval;
-      case 'closed':
-        return ServiceRequestStatus.closed;
-      case 'convertedasworkorder':
-        return ServiceRequestStatus.convertedAsWorkorder;
-      case 'onhold':
-        return ServiceRequestStatus.onHold;
-      case 'open':
-        return ServiceRequestStatus.open;
-      case 'rejected':
-        return ServiceRequestStatus.rejected;
-      default:
-        return ServiceRequestStatus.open;
-    }
   }
 }

@@ -1,6 +1,8 @@
 import 'package:get/get.dart';
+import 'package:iungo/features/service_request/data/datasources/service_request_picklist_remote_data_source.dart';
 import 'package:iungo/features/service_request/data/datasources/service_request_remote_data_source.dart';
 import 'package:iungo/features/service_request/data/models/service_request_mapper.dart';
+import 'package:iungo/features/service_request/domain/entities/pick_list_option.dart';
 import 'package:iungo/features/service_request/domain/entities/request_classification.dart';
 import 'package:iungo/features/service_request/domain/entities/service_request.dart';
 import 'package:iungo/features/service_request/domain/entities/service_request_option.dart';
@@ -19,9 +21,10 @@ import 'package:iungo/features/service_request/domain/entities/service_request_s
 /// page/loading state for infinite scroll) and pushed in here via
 /// [replaceWithPage] / [appendPage].
 class ServiceRequestRepository extends GetxService {
-  ServiceRequestRepository(this._remoteDataSource);
+  ServiceRequestRepository(this._remoteDataSource, this._pickListDataSource);
 
   final ServiceRequestRemoteDataSource _remoteDataSource;
+  final ServiceRequestPickListRemoteDataSource _pickListDataSource;
 
   final RxList<ServiceRequest> tickets = <ServiceRequest>[].obs;
 
@@ -29,14 +32,39 @@ class ServiceRequestRepository extends GetxService {
   /// sheet) before a refresh pulls the real record down from the server.
   int _nextLocalId = -1;
 
+  // Cached so the Filter screen's dropdowns don't re-hit the pickList
+  // APIs every time it's opened during a session.
+  List<PickListOption>? _cachedStatusOptions;
+  List<PickListOption>? _cachedPriorityOptions;
+
   Future<ServiceRequestListPageResult> fetchPage({
     required int page,
     required int perPage,
+    Map<String, List<String>>? quickFilter,
   }) {
     return _remoteDataSource.fetchServiceRequests(
       page: page,
       perPage: perPage,
+      quickFilter: quickFilter,
     );
+  }
+
+  Future<List<PickListOption>> fetchStatusOptions({bool forceRefresh = false}) async {
+    if (!forceRefresh && _cachedStatusOptions != null) {
+      return _cachedStatusOptions!;
+    }
+    final options = await _pickListDataSource.fetchStatusOptions();
+    _cachedStatusOptions = options;
+    return options;
+  }
+
+  Future<List<PickListOption>> fetchPriorityOptions({bool forceRefresh = false}) async {
+    if (!forceRefresh && _cachedPriorityOptions != null) {
+      return _cachedPriorityOptions!;
+    }
+    final options = await _pickListDataSource.fetchPriorityOptions();
+    _cachedPriorityOptions = options;
+    return options;
   }
 
   /// Replaces the whole list with a freshly-fetched first page (initial

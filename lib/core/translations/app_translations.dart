@@ -140,6 +140,7 @@ class AppTranslations extends Translations {
           'priority_routine': 'Routine',
           'priority_urgent': 'Urgent',
           'priority_emergency': 'Emergency',
+          'priority_ppm': 'PPM',
 
           // Detail View
           'detail_view': 'Detail View',
@@ -293,6 +294,7 @@ class AppTranslations extends Translations {
           'priority_routine': 'روتيني',
           'priority_urgent': 'عاجل',
           'priority_emergency': 'طارئ',
+          'priority_ppm': 'الصيانة الوقائية',
 
           // Detail View
           'detail_view': 'عرض التفاصيل',

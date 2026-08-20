@@ -39,6 +39,12 @@ class _ServiceRequestFilterPageState extends State<ServiceRequestFilterPage>
   final _ticketIdController = TextEditingController();
 
   @override
+  void initState() {
+    super.initState();
+    widget.controller.ensureFilterOptionsLoaded();
+  }
+
+  @override
   void dispose() {
     _tabController.dispose();
     _ticketIdController.dispose();
@@ -177,24 +183,32 @@ class _ServiceRequestFilterPageState extends State<ServiceRequestFilterPage>
             onChanged: (v) => setState(() => _draft = _draft.copyWith(type: v)),
           ),
           const SizedBox(height: 20),
-          FilterSelectField<ServiceRequestStatus>(
-            label: 'select_status'.tr,
-            hint: 'select_status'.tr,
-            options: ServiceRequestStatusX.filterOptions,
-            optionLabel: (o) => o.labelKey.tr,
-            value: _draft.status,
-            onChanged: (v) =>
-                setState(() => _draft = _draft.copyWith(status: v)),
+          Obx(
+            () => FilterSelectField<ServiceRequestStatus>(
+              label: 'select_status'.tr,
+              hint: 'select_status'.tr,
+              options: widget.controller.statusFilterOptions.isNotEmpty
+                  ? widget.controller.statusFilterOptions
+                  : ServiceRequestStatusX.filterOptions,
+              optionLabel: (o) => o.labelKey.tr,
+              value: _draft.status,
+              onChanged: (v) =>
+                  setState(() => _draft = _draft.copyWith(status: v)),
+            ),
           ),
           const SizedBox(height: 20),
-          FilterSelectField<ServiceRequestPriority>(
-            label: 'select_priority'.tr,
-            hint: 'select_priority'.tr,
-            options: ServiceRequestPriority.values,
-            optionLabel: (o) => o.labelKey.tr,
-            value: _draft.priority,
-            onChanged: (v) =>
-                setState(() => _draft = _draft.copyWith(priority: v)),
+          Obx(
+            () => FilterSelectField<ServiceRequestPriority>(
+              label: 'select_priority'.tr,
+              hint: 'select_priority'.tr,
+              options: widget.controller.priorityFilterOptions.isNotEmpty
+                  ? widget.controller.priorityFilterOptions
+                  : ServiceRequestPriority.values,
+              optionLabel: (o) => o.labelKey.tr,
+              value: _draft.priority,
+              onChanged: (v) =>
+                  setState(() => _draft = _draft.copyWith(priority: v)),
+            ),
           ),
           const SizedBox(height: 20),
           Text(

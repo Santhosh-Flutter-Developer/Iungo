@@ -124,12 +124,22 @@ class _ServiceRequestListPageState extends State<ServiceRequestListPage> {
                   return const ServiceRequestShimmerList();
                 }
 
+                if (controller.hasActiveFilter &&
+                    controller.isFilterLoading.value) {
+                  return const ServiceRequestShimmerList();
+                }
+
                 final tickets = controller.filteredTickets;
 
                 if (tickets.isEmpty) {
-                  if (controller.hasError.value) {
+                  final failed = controller.hasActiveFilter
+                      ? controller.filterHasError.value
+                      : controller.hasError.value;
+                  if (failed) {
                     return _ServiceRequestErrorState(
-                      onRetry: controller.reload,
+                      onRetry: controller.hasActiveFilter
+                          ? controller.retryFilter
+                          : controller.reload,
                     );
                   }
                   return const ServiceRequestEmptyState();
@@ -143,7 +153,9 @@ class _ServiceRequestListPageState extends State<ServiceRequestListPage> {
                 final itemCount = tickets.length + (showLoadMoreSpinner ? 1 : 0);
 
                 return RefreshIndicator(
-                  onRefresh: controller.reload,
+                  onRefresh: controller.hasActiveFilter
+                      ? controller.retryFilter
+                      : controller.reload,
                   color: AppColors.primary,
                   child: ListView.builder(
                     controller: _scrollController,

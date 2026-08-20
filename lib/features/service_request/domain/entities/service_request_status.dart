@@ -54,7 +54,8 @@ extension ServiceRequestStatusX on ServiceRequestStatus {
   }
 
   /// Statuses offered in the filter dropdown, alphabetically — matches the
-  /// reference screenshot ordering exactly.
+  /// reference screenshot ordering exactly. Used as a fallback if the
+  /// live `pickList/.../moduleState` fetch fails.
   static const List<ServiceRequestStatus> filterOptions = [
     ServiceRequestStatus.acknowledged,
     ServiceRequestStatus.awaitingApproval,
@@ -64,4 +65,31 @@ extension ServiceRequestStatusX on ServiceRequestStatus {
     ServiceRequestStatus.open,
     ServiceRequestStatus.rejected,
   ];
+
+  /// Maps a label as returned by the server (either the ticket's expanded
+  /// `moduleState.status`/`displayName`, or a `pickList/.../moduleState`
+  /// option's `label`) onto the fixed enum. Unknown/blank labels fall
+  /// back to [open].
+  static ServiceRequestStatus fromApiLabel(String? label) {
+    final normalized =
+        (label ?? '').toLowerCase().replaceAll(RegExp(r'[^a-z]'), '');
+    switch (normalized) {
+      case 'acknowledged':
+        return ServiceRequestStatus.acknowledged;
+      case 'awaitingapproval':
+        return ServiceRequestStatus.awaitingApproval;
+      case 'closed':
+        return ServiceRequestStatus.closed;
+      case 'convertedasworkorder':
+        return ServiceRequestStatus.convertedAsWorkorder;
+      case 'onhold':
+        return ServiceRequestStatus.onHold;
+      case 'open':
+        return ServiceRequestStatus.open;
+      case 'rejected':
+        return ServiceRequestStatus.rejected;
+      default:
+        return ServiceRequestStatus.open;
+    }
+  }
 }

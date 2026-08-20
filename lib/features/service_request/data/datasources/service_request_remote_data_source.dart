@@ -8,9 +8,15 @@ import 'service_request_exceptions.dart';
 
 abstract class ServiceRequestRemoteDataSource {
   /// Fetches one page of "My Service Requests" (1-indexed [page]).
+  ///
+  /// [quickFilter], when non-empty, narrows the results server-side —
+  /// e.g. `{'moduleState': ['2355'], 'priority_serviceRequest': ['43'],
+  /// 'id': ['292']}` — matching the exact `quickFilter` JSON shape the
+  /// real app sends (confirmed via Postman capture).
   Future<ServiceRequestListPageResult> fetchServiceRequests({
     required int page,
     required int perPage,
+    Map<String, List<String>>? quickFilter,
   });
 }
 
@@ -36,9 +42,12 @@ class ServiceRequestRemoteDataSourceImpl
   Future<ServiceRequestListPageResult> fetchServiceRequests({
     required int page,
     required int perPage,
+    Map<String, List<String>>? quickFilter,
   }) async {
     try {
       final token = _session.token.value;
+
+      final hasQuickFilter = quickFilter != null && quickFilter.isNotEmpty;
 
       final response = await _dio.get<dynamic>(
         _baseUrl,
@@ -48,8 +57,15 @@ class ServiceRequestRemoteDataSourceImpl
           'viewName': 'allservicerequests',
           'page': page,
           'perPage': perPage,
+          if (hasQuickFilter) 'search': '',
+          if (hasQuickFilter)
+            'quickFilter': jsonEncode({
+              for (final entry in quickFilter.entries)
+                entry.key: {'value': entry.value},
+            }),
           'withoutCustomButtons': true,
-          'expand': 'moduleState,priority_serviceRequest,sysCreatedBy',
+          if (!hasQuickFilter)
+            'expand': 'moduleState,priority_serviceRequest,sysCreatedBy',
         },
         options: Options(
           headers: {

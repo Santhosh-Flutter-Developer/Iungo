@@ -1,6 +1,7 @@
 import 'package:dio/dio.dart';
 import 'package:get/get.dart';
 import 'package:iungo/core/services/session_service.dart';
+import 'package:iungo/features/service_request/data/datasources/service_request_picklist_remote_data_source.dart';
 import 'package:iungo/features/service_request/data/datasources/service_request_remote_data_source.dart';
 import 'package:iungo/features/service_request/data/service_request_repository.dart';
 import 'package:iungo/features/service_request/presentation/controllers/service_request_list_controller.dart';
@@ -44,9 +45,22 @@ class ServiceRequestListBinding extends Bindings {
       );
     }
 
+    if (!Get.isRegistered<ServiceRequestPickListRemoteDataSource>()) {
+      Get.lazyPut<ServiceRequestPickListRemoteDataSource>(
+        () => ServiceRequestPickListRemoteDataSourceImpl(
+          Get.find<Dio>(),
+          Get.find<SessionService>(),
+        ),
+        fenix: true,
+      );
+    }
+
     if (!Get.isRegistered<ServiceRequestRepository>()) {
       Get.put(
-        ServiceRequestRepository(Get.find<ServiceRequestRemoteDataSource>()),
+        ServiceRequestRepository(
+          Get.find<ServiceRequestRemoteDataSource>(),
+          Get.find<ServiceRequestPickListRemoteDataSource>(),
+        ),
         permanent: true,
       );
     }
