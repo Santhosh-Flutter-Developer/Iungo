@@ -53,14 +53,20 @@ class TicketSearchController extends GetxController {
     final tickets = _repository.tickets;
 
     final matches = tickets.where((t) {
-      if (scope.value == SearchScope.ticketId) {
-        return t.id.toString().contains(trimmed);
+      switch (scope.value) {
+        case SearchScope.ticketId:
+          return t.id.toString().contains(trimmed);
+        case SearchScope.subject:
+          return t.title.toLowerCase().contains(lower);
+        case SearchScope.description:
+          return t.description.toLowerCase().contains(lower);
+        case SearchScope.allFields:
+          return t.id.toString().contains(trimmed) ||
+              t.title.toLowerCase().contains(lower) ||
+              t.description.toLowerCase().contains(lower) ||
+              t.requester.toLowerCase().contains(lower) ||
+              t.site.toLowerCase().contains(lower);
       }
-      return t.id.toString().contains(trimmed) ||
-          t.title.toLowerCase().contains(lower) ||
-          t.description.toLowerCase().contains(lower) ||
-          t.requester.toLowerCase().contains(lower) ||
-          t.site.toLowerCase().contains(lower);
     }).toList();
 
     results.assignAll(matches);

@@ -1,6 +1,8 @@
 enum SearchScope {
   allFields,
   ticketId,
+  subject,
+  description,
 }
 
 extension SearchScopeX on SearchScope {
@@ -10,6 +12,10 @@ extension SearchScopeX on SearchScope {
         return 'all_fields';
       case SearchScope.ticketId:
         return 'ticket_id';
+      case SearchScope.subject:
+        return 'subject';
+      case SearchScope.description:
+        return 'description';
     }
   }
 }
