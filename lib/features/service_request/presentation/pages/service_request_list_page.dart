@@ -74,10 +74,11 @@ class _ServiceRequestListPageState extends State<ServiceRequestListPage> {
           ),
         ),
         actions: [
-          // IconButton(
-          //   icon: const Icon(Icons.notifications_none),
-          //   onPressed: () {},
-          // ),
+          IconButton(
+            icon: const Icon(Icons.notifications_none),
+            onPressed: controller.onNotificationsTap,
+          ),
+          const SizedBox(width: 4),
           IconButton(
             icon: const Icon(Icons.search),
             onPressed: () => Get.to(

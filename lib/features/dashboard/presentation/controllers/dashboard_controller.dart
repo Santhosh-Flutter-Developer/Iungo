@@ -21,5 +21,6 @@ class DashboardController extends GetxController {
   }
 
   void onNotificationsTap() {
+    Get.toNamed(AppRoutes.notifications);
   }
 }

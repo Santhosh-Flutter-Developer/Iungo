@@ -1,4 +1,5 @@
 import 'package:get/get.dart';
+import 'package:iungo/core/routes/app_routes.dart';
 import 'package:iungo/features/service_request/data/service_request_repository.dart';
 import 'package:iungo/features/service_request/domain/entities/pick_list_option.dart';
 import 'package:iungo/features/service_request/domain/entities/service_request.dart';
@@ -280,5 +281,9 @@ class ServiceRequestListController extends GetxController {
         )
         .map((o) => o.value.toString())
         .toList();
+  }
+
+  void onNotificationsTap() {
+    Get.toNamed(AppRoutes.notifications);
   }
 }

@@ -1,3 +1,5 @@
+import 'package:get/get.dart';
+
 /// Small hand-rolled date formatters — the project has no `intl`
 /// dependency, and the reference design only ever needs these two shapes.
 class AppDateFormat {
@@ -31,5 +33,18 @@ class AppDateFormat {
     final mm = date.minute.toString().padLeft(2, '0');
     final suffix = date.hour >= 12 ? 'PM' : 'AM';
     return '${mediumDate(date)} ($hh:$mm$suffix)';
+  }
+
+  /// "Today" / "Yesterday" / "Jun 30, 2026" — matches the Notification
+  /// list's date column, which only ever spells out the two most recent
+  /// days and falls back to [mediumDate] for anything older.
+  static String relativeDay(DateTime date) {
+    final now = DateTime.now();
+    final today = DateTime(now.year, now.month, now.day);
+    final day = DateTime(date.year, date.month, date.day);
+    final diff = today.difference(day).inDays;
+    if (diff == 0) return 'today'.tr;
+    if (diff == 1) return 'yesterday'.tr;
+    return mediumDate(date);
   }
 }
