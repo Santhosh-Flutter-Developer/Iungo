@@ -1,13 +1,14 @@
 import 'package:get/get.dart';
+import 'package:iungo/features/service_request/data/datasources/service_request_create_remote_data_source.dart';
+import 'package:iungo/features/service_request/data/datasources/service_request_exceptions.dart';
 import 'package:iungo/features/service_request/data/datasources/service_request_picklist_remote_data_source.dart';
 import 'package:iungo/features/service_request/data/datasources/service_request_remote_data_source.dart';
 import 'package:iungo/features/service_request/data/models/service_request_mapper.dart';
+import 'package:iungo/features/service_request/domain/entities/attachment_file.dart';
 import 'package:iungo/features/service_request/domain/entities/pick_list_option.dart';
 import 'package:iungo/features/service_request/domain/entities/request_classification.dart';
 import 'package:iungo/features/service_request/domain/entities/service_request.dart';
-import 'package:iungo/features/service_request/domain/entities/service_request_option.dart';
-import 'package:iungo/features/service_request/domain/entities/service_request_priority.dart';
-import 'package:iungo/features/service_request/domain/entities/service_request_status.dart';
+import 'package:iungo/features/service_request/domain/entities/service_request_attachment.dart';
 
 /// Single in-memory source of truth for "My Service Requests".
 ///
@@ -21,16 +22,17 @@ import 'package:iungo/features/service_request/domain/entities/service_request_s
 /// page/loading state for infinite scroll) and pushed in here via
 /// [replaceWithPage] / [appendPage].
 class ServiceRequestRepository extends GetxService {
-  ServiceRequestRepository(this._remoteDataSource, this._pickListDataSource);
+  ServiceRequestRepository(
+    this._remoteDataSource,
+    this._pickListDataSource,
+    this._createDataSource,
+  );
 
   final ServiceRequestRemoteDataSource _remoteDataSource;
   final ServiceRequestPickListRemoteDataSource _pickListDataSource;
+  final ServiceRequestCreateRemoteDataSource _createDataSource;
 
   final RxList<ServiceRequest> tickets = <ServiceRequest>[].obs;
-
-  /// Ids used for tickets created locally (via the "New Service Request"
-  /// sheet) before a refresh pulls the real record down from the server.
-  int _nextLocalId = -1;
 
   // Cached so the Filter screen's dropdowns don't re-hit the pickList
   // APIs every time it's opened during a session.
@@ -69,6 +71,27 @@ class ServiceRequestRepository extends GetxService {
     return options;
   }
 
+  Future<List<PickListOption>> fetchSiteOptions({String? search}) {
+    return _pickListDataSource.fetchSiteOptions(search: search);
+  }
+
+  Future<List<PickListOption>> fetchBuildingOptions({
+    required int siteId,
+    String? search,
+  }) {
+    return _pickListDataSource.fetchBuildingOptions(
+      siteId: siteId,
+      search: search,
+    );
+  }
+
+  Future<List<PickListOption>> fetchAssetOptions({
+    required int siteId,
+    String? search,
+  }) {
+    return _pickListDataSource.fetchAssetOptions(siteId: siteId, search: search);
+  }
+
   /// Replaces the whole list with a freshly-fetched first page (initial
   /// load / pull-to-refresh).
   void replaceWithPage(List<ServiceRequest> page) {
@@ -83,26 +106,122 @@ class ServiceRequestRepository extends GetxService {
     tickets.addAll(newOnes);
   }
 
-  void addFromSubmission({
+  /// Uploads every picked file (if any), then creates the Service
+  /// Request with those files' ids attached, and inserts the resulting
+  /// ticket at the top of [tickets] so it shows up on "My Service
+  /// Requests" immediately — matching the confirmed Postman flow
+  /// (upload first, collect fileIds, then POST the create call).
+  Future<ServiceRequest> submitNewServiceRequest({
     required String subject,
     required String description,
-    required String site,
-  }) {
-    tickets.insert(
-      0,
-      ServiceRequest(
-        id: _nextLocalId--,
-        title: subject,
-        description: description,
-        requester: 'You',
-        site: site,
-        priority: ServiceRequestPriority.noPriority,
-        status: ServiceRequestStatus.open,
-        type: ServiceRequestOption.serviceRequest,
-        dueDate: DateTime.now(),
-        building: site,
-        classification: RequestClassification.problem,
-      ),
+    required int siteId,
+    required String siteName,
+    int? resourceId,
+    String? buildingName,
+    String? locationFreeText,
+    int? requesterId,
+    String? requesterName,
+    String? requesterEmail,
+    String? requesterPhone,
+    RequestClassification? classification,
+    List<AttachmentFile> attachments = const [],
+    required int formId,
+  }) async {
+    List<int> uploadedFileIds = const [];
+    if (attachments.isNotEmpty) {
+      uploadedFileIds = await _createDataSource.uploadAttachments(attachments);
+      // Every picked file must have a fileId before we create the
+      // record — otherwise the request would go through silently
+      // missing whichever attachment failed to upload.
+      if (uploadedFileIds.length != attachments.length) {
+        throw const ServiceRequestException(
+          'Failed to upload one or more attachments. Please try again.',
+        );
+      }
+    }
+    final nowMs = DateTime.now().millisecondsSinceEpoch;
+
+    final data = <String, dynamic>{
+      'subject': subject,
+      'description': description,
+      'siteId': siteId,
+      if (resourceId != null) 'resource': {'id': resourceId},
+      if (locationFreeText != null && locationFreeText.trim().isNotEmpty)
+        'location___free_text___serviceRequest': locationFreeText,
+      if (requesterId != null) 'requester': {'id': requesterId},
+      if (requesterEmail != null)
+        'requestor_email_serviceRequest': requesterEmail,
+      'requestor_phone_serviceRequest': requesterPhone ?? '',
+      'requestor_address_serviceRequest': null,
+      'escalation_counter_serviceRequest': null,
+      if (classification != null) 'classificationType': classification.apiValue,
+      if (uploadedFileIds.isNotEmpty)
+        'servicerequestsattachments': [
+          for (final fileId in uploadedFileIds)
+            {'fileId': fileId, 'createdTime': nowMs},
+        ],
+      'formId': formId,
+      'actionFormId': formId,
+      'mySignatureApplied': false,
+    };
+
+    final response = await _createDataSource.createServiceRequest(data);
+
+    final ticket = mapCreatedServiceRequest(
+      response,
+      requesterName: requesterName ?? 'You',
+      siteName: siteName,
+      buildingName: buildingName,
+      classification: classification ?? RequestClassification.problem,
+      attachments: _toAttachmentDisplays(attachments),
     );
+
+    tickets.insert(0, ticket);
+    return ticket;
+  }
+
+  /// Turns the locally-picked files into display-ready attachments so
+  /// the just-created ticket shows them immediately, without waiting on
+  /// a refresh — the create response only echoes back fileId/createdTime,
+  /// not name/size, so those come from what was actually picked.
+  List<ServiceRequestAttachment> _toAttachmentDisplays(
+    List<AttachmentFile> attachments,
+  ) {
+    final now = DateTime.now();
+    final dateLabel =
+        '${_month(now.month)} ${now.day}, ${now.year}';
+    return [
+      for (final file in attachments)
+        ServiceRequestAttachment(
+          name: file.name,
+          extension: _extensionOf(file.name),
+          sizeLabel: _sizeLabelFor(file),
+          dateLabel: dateLabel,
+          path: file.path,
+          bytes: file.bytes,
+        ),
+    ];
+  }
+
+  String _extensionOf(String name) {
+    final dotIndex = name.lastIndexOf('.');
+    if (dotIndex < 0 || dotIndex == name.length - 1) return '';
+    return name.substring(dotIndex + 1).toUpperCase();
+  }
+
+  String _sizeLabelFor(AttachmentFile file) {
+    final bytes = file.bytes?.length;
+    if (bytes == null) return '--';
+    if (bytes < 1024) return '$bytes B';
+    if (bytes < 1024 * 1024) return '${(bytes / 1024).toStringAsFixed(1)} KB';
+    return '${(bytes / (1024 * 1024)).toStringAsFixed(2)} MB';
+  }
+
+  String _month(int month) {
+    const names = [
+      'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
+      'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec',
+    ];
+    return names[(month - 1).clamp(0, 11)];
   }
 }

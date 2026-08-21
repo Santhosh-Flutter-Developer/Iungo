@@ -80,6 +80,8 @@ class AppTranslations extends Translations {
           'open_gallery': 'Open Gallery',
           'cancel': 'Cancel',
           'request_submitted': 'Request submitted successfully',
+          'subject_required': 'Subject is required',
+          'site_required': 'Please select a site',
           'location_permission_denied':
               'Location permission is required to pick your current location',
           'location_service_disabled':
@@ -234,6 +236,8 @@ class AppTranslations extends Translations {
           'open_gallery': 'افتح المخزون',
           'cancel': 'إلغاء',
           'request_submitted': 'تم إرسال الطلب بنجاح',
+          'subject_required': 'الموضوع مطلوب',
+          'site_required': 'الرجاء اختيار الموقع',
           'location_permission_denied':
               'يلزم إذن الموقع لاختيار موقعك الحالي',
           'location_service_disabled':

@@ -14,10 +14,29 @@ abstract class ServiceRequestPickListRemoteDataSource {
   /// GET .../pickList/forms/serviceRequest/priority_serviceRequest —
   /// options for the "Select Priority" filter dropdown.
   Future<List<PickListOption>> fetchPriorityOptions();
+
+  /// GET .../pickList/forms/serviceRequest/siteId — options for the
+  /// "New Service Request" form's Site field.
+  Future<List<PickListOption>> fetchSiteOptions({String? search});
+
+  /// GET .../pickList/forms/serviceRequest/resource/building, scoped to
+  /// [siteId] — options for the form's Building field.
+  Future<List<PickListOption>> fetchBuildingOptions({
+    required int siteId,
+    String? search,
+  });
+
+  /// GET .../pickList/forms/serviceRequest/resource/asset, scoped to
+  /// [siteId] — options for the form's Asset field.
+  Future<List<PickListOption>> fetchAssetOptions({
+    required int siteId,
+    String? search,
+  });
 }
 
 /// Talks to the Iungo/Facilio pick-list APIs that back the Status and
-/// Priority filter dropdowns on the "My Service Requests" filter screen.
+/// Priority filter dropdowns on the "My Service Requests" filter screen,
+/// and the Site/Building/Asset choosers on the "New Service Request" form.
 /// Same auth/error handling pattern as [ServiceRequestRemoteDataSourceImpl].
 class ServiceRequestPickListRemoteDataSourceImpl
     implements ServiceRequestPickListRemoteDataSource {
@@ -26,10 +45,17 @@ class ServiceRequestPickListRemoteDataSourceImpl
   final Dio _dio;
   final SessionService _session;
 
-  static const _statusUrl =
-      'https://citgroup.facilioclients.com/client/api/v3/pickList/forms/serviceRequest/moduleState';
-  static const _priorityUrl =
-      'https://citgroup.facilioclients.com/client/api/v3/pickList/forms/serviceRequest/priority_serviceRequest';
+  static const _baseUrl =
+      'https://citgroup.facilioclients.com/client/api/v3/pickList/forms/serviceRequest';
+  static const _statusUrl = '$_baseUrl/moduleState';
+  static const _priorityUrl = '$_baseUrl/priority_serviceRequest';
+  static const _siteUrl = '$_baseUrl/siteId';
+  static const _buildingUrl = '$_baseUrl/resource/building';
+  static const _assetUrl = '$_baseUrl/resource/asset';
+
+  /// operator 36 = lookup "is" (confirmed via the picklist/attachment API
+  /// reference doc).
+  static const _isOperatorId = 36;
 
   @override
   Future<List<PickListOption>> fetchStatusOptions() {
@@ -39,6 +65,68 @@ class ServiceRequestPickListRemoteDataSourceImpl
   @override
   Future<List<PickListOption>> fetchPriorityOptions() {
     return _fetch(_priorityUrl, {'perPage': 50, 'viewName': 'hidden-all'});
+  }
+
+  @override
+  Future<List<PickListOption>> fetchSiteOptions({String? search}) {
+    return _fetch(_siteUrl, _pageOrSearchParams(search)
+      ..addAll({
+        'includeDefaultIdsValue': true,
+        'viewName': 'hidden-all',
+      }));
+  }
+
+  @override
+  Future<List<PickListOption>> fetchBuildingOptions({
+    required int siteId,
+    String? search,
+  }) {
+    return _fetch(
+      _buildingUrl,
+      _pageOrSearchParams(search)
+        ..addAll({
+          'includeDefaultIdsValue': true,
+          'viewName': 'hidden-all',
+          'filters': jsonEncode({
+            'siteId': {
+              'operatorId': _isOperatorId,
+              'value': [siteId.toString()],
+            },
+          }),
+        }),
+    );
+  }
+
+  @override
+  Future<List<PickListOption>> fetchAssetOptions({
+    required int siteId,
+    String? search,
+  }) {
+    return _fetch(
+      _assetUrl,
+      _pageOrSearchParams(search)
+        ..addAll({
+          'includeDefaultIdsValue': true,
+          'viewName': 'hidden-all',
+          'filters': jsonEncode({
+            'siteId': {
+              'operatorId': _isOperatorId,
+              'value': [siteId.toString()],
+            },
+          }),
+        }),
+    );
+  }
+
+  /// Dropdowns load with `page`/`perPage`; once the user types, those are
+  /// dropped in favour of `search` (confirmed via the picklist/attachment
+  /// API reference doc).
+  Map<String, dynamic> _pageOrSearchParams(String? search) {
+    final trimmed = search?.trim();
+    if (trimmed != null && trimmed.isNotEmpty) {
+      return {'search': trimmed};
+    }
+    return {'page': 1, 'perPage': 50};
   }
 
   Future<List<PickListOption>> _fetch(

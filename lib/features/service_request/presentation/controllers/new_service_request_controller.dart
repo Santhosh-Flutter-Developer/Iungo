@@ -1,3 +1,4 @@
+import 'package:collection/collection.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
@@ -6,16 +7,30 @@ import 'package:geolocator/geolocator.dart';
 import 'package:get/get.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:iungo/core/routes/app_routes.dart';
+import 'package:iungo/core/services/session_service.dart';
 import 'package:iungo/core/widgets/app_snackbar.dart';
+import 'package:iungo/features/service_request/data/datasources/service_request_exceptions.dart';
 import 'package:iungo/features/service_request/data/service_request_repository.dart';
 import 'package:iungo/features/service_request/domain/entities/attachment_file.dart';
+import 'package:iungo/features/service_request/domain/entities/pick_list_option.dart';
 import 'package:iungo/features/service_request/domain/entities/request_classification.dart';
 import 'package:iungo/features/service_request/presentation/bindings/service_request_list_binding.dart';
 
-/// Holds all state for the (static/UI-only) "New Service Request" form.
-/// Nothing here talks to a real API — every list and default value is
-/// mocked so the screen matches the reference design pixel-for-pixel.
+/// Holds all state for the "New Service Request" form and now talks to
+/// the real Site/Building/Asset pick-list APIs and the create API
+/// (confirmed via the picklist/attachment API reference doc + Postman
+/// capture of a live create call).
 class NewServiceRequestController extends GetxController {
+  NewServiceRequestController(this._repository, this._session);
+
+  final ServiceRequestRepository _repository;
+  final SessionService _session;
+
+  /// The form's own id (confirmed via Postman capture) — sent as both
+  /// `formId` and `actionFormId` on create.
+  static const _formId = 6785;
+
   final subjectController = TextEditingController();
   final descriptionController = TextEditingController();
 
@@ -23,9 +38,28 @@ class NewServiceRequestController extends GetxController {
       Rxn<RequestClassification>();
   final RxBool isClassificationExpanded = false.obs;
 
-  final RxString selectedSite = 'Diriyah At Turaif'.obs;
+  // --- Site / Building / Asset ------------------------------------------
+  //
+  // Each field keeps the option list from the pickList API, the picked
+  // label (what's shown on the form), and the picked id (what's sent on
+  // create) side by side — [SelectionListPage] only ever deals in labels,
+  // so the id is resolved by matching against the last-fetched list.
+
+  final RxList<PickListOption> siteOptions = <PickListOption>[].obs;
+  final RxList<PickListOption> buildingOptions = <PickListOption>[].obs;
+  final RxList<PickListOption> assetOptions = <PickListOption>[].obs;
+
+  final RxBool isLoadingSites = false.obs;
+  final RxBool isLoadingBuildings = false.obs;
+  final RxBool isLoadingAssets = false.obs;
+
+  final Rxn<String> selectedSite = Rxn<String>();
   final Rxn<String> selectedBuilding = Rxn<String>();
   final Rxn<String> selectedAsset = Rxn<String>();
+
+  int? _selectedSiteId;
+  int? _selectedBuildingId;
+  int? _selectedAssetId;
 
   final RxString address =
       '2nd Street, Madurai, beside Muthu Patti, Tamil Nadu, IN, - 625003'.obs;
@@ -45,43 +79,74 @@ class NewServiceRequestController extends GetxController {
   final RxBool isPickingAttachment = false.obs;
   final ImagePicker _imagePicker = ImagePicker();
 
-  static const List<String> sites = ['Diriyah At Turaif'];
+  final RxBool isSubmitting = false.obs;
 
-  static const List<String> buildings = [
-    'Public Toilets 4',
-    'Public Toilets 3',
-    'Public Toilets 2',
-    'Public Toilets 1',
-    'Cluster3-10',
-    'Archaeological Excavation',
-    'Al-Turaif Bridge',
-    'Military Museum',
-    'Ardah Dance House',
-    'ZONE20-Roads & Open Area',
-  ];
-
-  /// Mocked asset list — generated from the building name so every
-  /// building has a plausible-looking asset code list.
-  List<String> assetsFor(String building) {
-    final match = RegExp(r'\d+').firstMatch(building);
-    final prefix = 'PT${match?.group(0) ?? '1'}';
-    final assets = <String>[
-      for (var i = 1; i <= 7; i++)
-        '$prefix/GF/RM1/MECH/TOFIX/${i.toString().padLeft(3, '0')}',
-    ];
-    if (prefix == 'PT1') {
-      assets.addAll([
-        for (var i = 1; i <= 3; i++)
-          '$prefix/GF/RM1/MECH/WBASIN/${i.toString().padLeft(3, '0')}',
-      ]);
-    } else {
-      assets.addAll([
-        for (var i = 8; i <= 10; i++)
-          '$prefix/GF/RM1/MECH/TOFIX/${i.toString().padLeft(3, '0')}',
-      ]);
-    }
-    return assets;
+  @override
+  void onInit() {
+    super.onInit();
+    _loadSiteOptions();
   }
+
+  Future<void> _loadSiteOptions({String? search}) async {
+    isLoadingSites.value = true;
+    try {
+      final options = await _repository.fetchSiteOptions(search: search);
+      siteOptions.assignAll(options);
+      // Auto-select when there's exactly one site (matches the
+      // single-site org shown in the reference screenshots) and nothing
+      // is picked yet.
+      if (search == null && selectedSite.value == null && options.length == 1) {
+        _applySite(options.first);
+      }
+    } catch (_) {
+      AppSnackbar.showError('something_went_wrong'.tr);
+    } finally {
+      isLoadingSites.value = false;
+    }
+  }
+
+  Future<void> _loadBuildingOptions({String? search}) async {
+    final siteId = _selectedSiteId;
+    if (siteId == null) return;
+    isLoadingBuildings.value = true;
+    try {
+      final options = await _repository.fetchBuildingOptions(
+        siteId: siteId,
+        search: search,
+      );
+      buildingOptions.assignAll(options);
+    } catch (_) {
+      AppSnackbar.showError('something_went_wrong'.tr);
+    } finally {
+      isLoadingBuildings.value = false;
+    }
+  }
+
+  Future<void> _loadAssetOptions({String? search}) async {
+    final siteId = _selectedSiteId;
+    if (siteId == null) return;
+    isLoadingAssets.value = true;
+    try {
+      final options = await _repository.fetchAssetOptions(
+        siteId: siteId,
+        search: search,
+      );
+      assetOptions.assignAll(options);
+    } catch (_) {
+      AppSnackbar.showError('something_went_wrong'.tr);
+    } finally {
+      isLoadingAssets.value = false;
+    }
+  }
+
+  /// Called when the Site selector is opened, so its list is fresh.
+  void onOpenSitePicker() => _loadSiteOptions();
+
+  /// Called when the Building selector is opened.
+  void onOpenBuildingPicker() => _loadBuildingOptions();
+
+  /// Called when the Asset selector is opened.
+  void onOpenAssetPicker() => _loadAssetOptions();
 
   void toggleClassificationExpanded() {
     isClassificationExpanded.toggle();
@@ -92,17 +157,38 @@ class NewServiceRequestController extends GetxController {
     isClassificationExpanded.value = false;
   }
 
-  void selectSite(String value) {
-    selectedSite.value = value;
-  }
-
-  void selectBuilding(String value) {
-    selectedBuilding.value = value;
+  void _applySite(PickListOption option) {
+    selectedSite.value = option.label;
+    _selectedSiteId = option.value;
+    // Site changed — Building/Asset selections no longer apply.
+    selectedBuilding.value = null;
     selectedAsset.value = null;
+    _selectedBuildingId = null;
+    _selectedAssetId = null;
+    buildingOptions.clear();
+    assetOptions.clear();
   }
 
-  void selectAsset(String value) {
-    selectedAsset.value = value;
+  void selectSite(String label) {
+    final match = siteOptions.firstWhereOrNull((o) => o.label == label);
+    if (match != null) _applySite(match);
+  }
+
+  void selectBuilding(String label) {
+    final match = buildingOptions.firstWhereOrNull((o) => o.label == label);
+    if (match == null) return;
+    selectedBuilding.value = match.label;
+    _selectedBuildingId = match.value;
+    // Switching the building discards the previous asset pick.
+    selectedAsset.value = null;
+    _selectedAssetId = null;
+  }
+
+  void selectAsset(String label) {
+    final match = assetOptions.firstWhereOrNull((o) => o.label == label);
+    if (match == null) return;
+    selectedAsset.value = match.label;
+    _selectedAssetId = match.value;
   }
 
   void selectLocation({
@@ -257,19 +343,59 @@ class NewServiceRequestController extends GetxController {
     attachments.remove(attachment);
   }
 
-  void submit() {
-    ServiceRequestListBinding.ensureRepositoryRegistered();
-    final repository = Get.find<ServiceRequestRepository>();
+  Future<void> submit() async {
+    if (isSubmitting.value) return;
 
     final subject = subjectController.text.trim();
-    repository.addFromSubmission(
-      subject: subject.isEmpty ? 'new_service_request'.tr : subject,
-      description: descriptionController.text.trim(),
-      site: selectedSite.value,
-    );
+    if (subject.isEmpty) {
+      AppSnackbar.showError('subject_required'.tr);
+      return;
+    }
+    final siteId = _selectedSiteId;
+    if (siteId == null) {
+      AppSnackbar.showError('site_required'.tr);
+      return;
+    }
 
-    AppSnackbar.showSuccess('request_submitted'.tr);
-    Get.back();
+    isSubmitting.value = true;
+    try {
+      ServiceRequestListBinding.ensureRepositoryRegistered();
+
+      final requesterId = int.tryParse(_session.userId.value ?? '');
+      final resourceId = _selectedAssetId ?? _selectedBuildingId;
+
+      await _repository.submitNewServiceRequest(
+        subject: subject,
+        description: descriptionController.text.trim(),
+        siteId: siteId,
+        siteName: selectedSite.value ?? '',
+        resourceId: resourceId,
+        buildingName: selectedBuilding.value,
+        locationFreeText: address.value,
+        requesterId: requesterId,
+        requesterName: _session.userName.value,
+        requesterEmail: _session.userEmail.value,
+        classification: classification.value,
+        attachments: attachments,
+        formId: _formId,
+      );
+
+      AppSnackbar.showSuccess('request_submitted'.tr);
+      // Go straight to "My Service Requests" — the new ticket is already
+      // at the top of `repository.tickets`, which that list reads from
+      // directly, so it shows up without a manual refresh. Replaces this
+      // form (rather than pushing on top of it) so the person can't
+      // navigate "back" into an already-submitted form.
+      Get.offNamed(AppRoutes.serviceRequestList);
+    } on ServiceRequestException catch (e) {
+      AppSnackbar.showError(
+        e.message.trim().isNotEmpty ? e.message : 'something_went_wrong'.tr,
+      );
+    } catch (_) {
+      AppSnackbar.showError('something_went_wrong'.tr);
+    } finally {
+      isSubmitting.value = false;
+    }
   }
 
   @override

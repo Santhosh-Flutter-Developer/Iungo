@@ -38,7 +38,12 @@ class NewServiceRequestPage extends GetView<NewServiceRequestController> {
         ),
       ),
       floatingActionButtonLocation: FloatingActionButtonLocation.centerFloat,
-      floatingActionButton: SubmitFab(onPressed: controller.submit),
+      floatingActionButton: Obx(
+        () => SubmitFab(
+          onPressed: controller.submit,
+          isLoading: controller.isSubmitting.value,
+        ),
+      ),
       body: SafeArea(
         child: SingleChildScrollView(
           padding: const EdgeInsets.fromLTRB(20, 20, 20, 100),

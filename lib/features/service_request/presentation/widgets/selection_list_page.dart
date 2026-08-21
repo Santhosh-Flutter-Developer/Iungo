@@ -12,6 +12,7 @@ class SelectionListPage extends StatefulWidget {
     required this.items,
     required this.selectedItem,
     required this.onSelected,
+    this.isLoading = false,
   });
 
   final String title;
@@ -20,13 +21,16 @@ class SelectionListPage extends StatefulWidget {
   final String? selectedItem;
   final ValueChanged<String> onSelected;
 
+  /// Shows a spinner in place of the list while the options are still
+  /// being fetched from the server.
+  final bool isLoading;
+
   @override
   State<SelectionListPage> createState() => _SelectionListPageState();
 }
 
 class _SelectionListPageState extends State<SelectionListPage> {
   final _searchController = TextEditingController();
-  late List<String> _filtered = widget.items;
 
   @override
   void dispose() {
@@ -34,17 +38,20 @@ class _SelectionListPageState extends State<SelectionListPage> {
     super.dispose();
   }
 
-  void _onSearchChanged(String query) {
-    setState(() {
-      _filtered = widget.items
-          .where((item) => item.toLowerCase().contains(query.toLowerCase()))
-          .toList();
-    });
-  }
-
   @override
   Widget build(BuildContext context) {
     final isRtl = Directionality.of(context) == TextDirection.rtl;
+
+    // Recomputed on every build (not cached in State) so it always
+    // reflects the latest `widget.items` — including the moment the
+    // options finish loading, without requiring the user to type first.
+    final query = _searchController.text.trim().toLowerCase();
+    final filtered = query.isEmpty
+        ? widget.items
+        : widget.items
+            .where((item) => item.toLowerCase().contains(query))
+            .toList();
+
     return Scaffold(
       backgroundColor: AppColors.background,
       appBar: AppBar(
@@ -75,7 +82,7 @@ class _SelectionListPageState extends State<SelectionListPage> {
               padding: const EdgeInsets.all(16),
               child: TextField(
                 controller: _searchController,
-                onChanged: _onSearchChanged,
+                onChanged: (_) => setState(() {}),
                 style: const TextStyle(fontSize: 15, color: AppColors.textDark),
                 decoration: InputDecoration(
                   hintText: widget.searchHint,
@@ -92,43 +99,49 @@ class _SelectionListPageState extends State<SelectionListPage> {
               ),
             ),
             Expanded(
-              child: ListView.builder(
-                padding: const EdgeInsets.only(bottom: 16),
-                itemCount: _filtered.length,
-                itemBuilder: (context, index) {
-                  final item = _filtered[index];
-                  final isSelected = item == widget.selectedItem;
-                  return InkWell(
-                    onTap: () {
-                      widget.onSelected(item);
-                      Get.back();
-                    },
-                    child: Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 20,
-                        vertical: 18,
+              child: widget.isLoading && widget.items.isEmpty
+                  ? const Center(
+                      child: CircularProgressIndicator(
+                        color: AppColors.primary,
                       ),
-                      color: Colors.transparent,
-                      child: Row(
-                        children: [
-                          Expanded(
-                            child: Text(
-                              item,
-                              style: const TextStyle(
-                                fontSize: 16,
-                                color: AppColors.textDark,
-                              ),
+                    )
+                  : ListView.builder(
+                      padding: const EdgeInsets.only(bottom: 16),
+                      itemCount: filtered.length,
+                      itemBuilder: (context, index) {
+                        final item = filtered[index];
+                        final isSelected = item == widget.selectedItem;
+                        return InkWell(
+                          onTap: () {
+                            widget.onSelected(item);
+                            Get.back();
+                          },
+                          child: Container(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 20,
+                              vertical: 18,
+                            ),
+                            color: Colors.transparent,
+                            child: Row(
+                              children: [
+                                Expanded(
+                                  child: Text(
+                                    item,
+                                    style: const TextStyle(
+                                      fontSize: 16,
+                                      color: AppColors.textDark,
+                                    ),
+                                  ),
+                                ),
+                                if (isSelected)
+                                  const Icon(Icons.check,
+                                      color: AppColors.primary, size: 20),
+                              ],
                             ),
                           ),
-                          if (isSelected)
-                            const Icon(Icons.check,
-                                color: AppColors.primary, size: 20),
-                        ],
-                      ),
+                        );
+                      },
                     ),
-                  );
-                },
-              ),
             ),
           ],
         ),

@@ -1,4 +1,6 @@
+import 'package:iungo/features/service_request/domain/entities/request_classification.dart';
 import 'package:iungo/features/service_request/domain/entities/service_request.dart';
+import 'package:iungo/features/service_request/domain/entities/service_request_attachment.dart';
 import 'package:iungo/features/service_request/domain/entities/service_request_option.dart';
 import 'package:iungo/features/service_request/domain/entities/service_request_priority.dart';
 import 'package:iungo/features/service_request/domain/entities/service_request_status.dart';
@@ -189,4 +191,60 @@ class ServiceRequestListPageResult {
       (moduleStateInfo['status'] ?? moduleStateInfo['displayName']) as String?,
     );
   }
+}
+
+/// Maps the raw `data.serviceRequest` object returned by the create API
+/// (POST /client/api/v3/modules/serviceRequest) into a [ServiceRequest]
+/// for the "My Service Requests" list. Unlike the list API, this response
+/// carries `moduleState` inline (not as an id + supplement lookup), but
+/// has no site/building/asset *names* — those come from whatever the
+/// person had selected on the form, passed in here directly.
+ServiceRequest mapCreatedServiceRequest(
+  Map<String, dynamic> json, {
+  required String requesterName,
+  required String siteName,
+  String? buildingName,
+  RequestClassification classification = RequestClassification.problem,
+  List<ServiceRequestAttachment> attachments = const [],
+}) {
+  final id = ServiceRequestListPageResult._asInt(json['id']) ?? 0;
+  final subject = (json['subject'] as String?)?.trim() ?? '';
+  final description = (json['description'] as String?)?.trim() ?? '';
+
+  final sysCreatedTimeMs =
+      ServiceRequestListPageResult._asInt(json['sysCreatedTime']);
+  final raisedAt = sysCreatedTimeMs != null && sysCreatedTimeMs > 0
+      ? DateTime.fromMillisecondsSinceEpoch(sysCreatedTimeMs)
+      : DateTime.now();
+
+  final dueDateMs = ServiceRequestListPageResult._asInt(json['dueDate']);
+  final dueDate = dueDateMs != null && dueDateMs > 0
+      ? DateTime.fromMillisecondsSinceEpoch(dueDateMs)
+      : raisedAt;
+
+  final moduleState = json['moduleState'];
+  final status = ServiceRequestListPageResult._mapStatus(
+    moduleState is Map<String, dynamic> ? moduleState : null,
+  );
+
+  final priorityInfo = json['priority_serviceRequest'];
+  final priority = ServiceRequestListPageResult._mapPriority(
+    priorityInfo is Map<String, dynamic> ? priorityInfo : null,
+  );
+
+  return ServiceRequest(
+    id: id,
+    title: subject,
+    description: description,
+    requester: requesterName.trim().isEmpty ? '--' : requesterName.trim(),
+    site: siteName.trim().isEmpty ? '--' : siteName.trim(),
+    priority: priority,
+    status: status,
+    type: ServiceRequestOption.serviceRequest,
+    dueDate: dueDate,
+    raisedAt: raisedAt,
+    building: buildingName,
+    classification: classification,
+    attachments: attachments,
+  );
 }
