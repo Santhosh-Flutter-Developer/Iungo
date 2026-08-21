@@ -1,4 +1,3 @@
-import 'package:collection/collection.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
@@ -30,6 +29,10 @@ class NewServiceRequestController extends GetxController {
   /// The form's own id (confirmed via Postman capture) — sent as both
   /// `formId` and `actionFormId` on create.
   static const _formId = 6785;
+
+  /// Matches [ServiceRequestListController]'s own page size, so the
+  /// post-submit refetch loads the same first page the list would.
+  static const _listPerPage = 10;
 
   final subjectController = TextEditingController();
   final descriptionController = TextEditingController();
@@ -380,12 +383,26 @@ class NewServiceRequestController extends GetxController {
         formId: _formId,
       );
 
+      // Re-fetch "My Service Requests" page 1 from the server (rather
+      // than relying solely on the locally-inserted ticket) so the list
+      // reflects the record exactly as the server created it — then
+      // navigate. Best-effort: if this refetch fails, the locally
+      // inserted ticket is still there, and the list page's own onInit
+      // will retry the fetch anyway.
+      try {
+        final result = await _repository.fetchPage(
+          page: 1,
+          perPage: _listPerPage,
+        );
+        _repository.replaceWithPage(result.tickets);
+      } catch (_) {
+        // Ignore — see comment above.
+      }
+
       AppSnackbar.showSuccess('request_submitted'.tr);
-      // Go straight to "My Service Requests" — the new ticket is already
-      // at the top of `repository.tickets`, which that list reads from
-      // directly, so it shows up without a manual refresh. Replaces this
-      // form (rather than pushing on top of it) so the person can't
-      // navigate "back" into an already-submitted form.
+      // Go straight to "My Service Requests" — replaces this form
+      // (rather than pushing on top of it) so the person can't navigate
+      // "back" into an already-submitted form.
       Get.offNamed(AppRoutes.serviceRequestList);
     } on ServiceRequestException catch (e) {
       AppSnackbar.showError(
