@@ -8,7 +8,7 @@
     <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE"
         android:maxSdkVersion="32"/>
     <application
-        android:label="iungo"
+        android:label="Iungo"
         android:name="${applicationName}"
         android:icon="@mipmap/ic_launcher">
         <!-- TODO: replace with a real Google Maps API key (Maps SDK for Android
