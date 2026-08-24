@@ -26,4 +26,20 @@ extension RequestClassificationX on RequestClassification {
         return 3;
     }
   }
+
+  /// Reverse of [apiValue] — used when reading `classificationType` back
+  /// off the Detail View API response. Defaults to [problem] for an
+  /// unrecognized/missing value, matching the rest of this app's
+  /// fallback convention rather than throwing on unexpected server data.
+  static RequestClassification fromApiValue(int? value) {
+    switch (value) {
+      case 1:
+        return RequestClassification.question;
+      case 3:
+        return RequestClassification.feature;
+      case 2:
+      default:
+        return RequestClassification.problem;
+    }
+  }
 }

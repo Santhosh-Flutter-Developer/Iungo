@@ -38,6 +38,7 @@ class ServiceRequestRepository extends GetxService {
   // APIs every time it's opened during a session.
   List<PickListOption>? _cachedStatusOptions;
   List<PickListOption>? _cachedPriorityOptions;
+  List<PickListOption>? _cachedSiteOptionsForNames;
 
   Future<ServiceRequestListPageResult> fetchPage({
     required int page,
@@ -90,6 +91,30 @@ class ServiceRequestRepository extends GetxService {
     String? search,
   }) {
     return _pickListDataSource.fetchAssetOptions(siteId: siteId, search: search);
+  }
+
+  /// Fetches the full record for the Detail View screen. The Detail
+  /// API's response has no site *name* (only `siteId`), so this also
+  /// resolves it against the Site pick-list (cached after the first
+  /// call, same as [fetchStatusOptions]/[fetchPriorityOptions] above).
+  Future<ServiceRequest> fetchServiceRequestDetail(int id) async {
+    final raw = await _remoteDataSource.fetchServiceRequestDetail(id);
+
+    Map<int, String> siteNameById = const {};
+    try {
+      _cachedSiteOptionsForNames ??=
+          await _pickListDataSource.fetchSiteOptions();
+      siteNameById = {
+        for (final option in _cachedSiteOptionsForNames!)
+          option.value: option.label,
+      };
+    } catch (_) {
+      // Best-effort — the detail record itself already loaded fine, so
+      // don't fail the whole screen just because the site name couldn't
+      // be resolved; it falls back to "--" instead.
+    }
+
+    return mapServiceRequestDetail(raw, siteNameById: siteNameById);
   }
 
   /// Replaces the whole list with a freshly-fetched first page (initial

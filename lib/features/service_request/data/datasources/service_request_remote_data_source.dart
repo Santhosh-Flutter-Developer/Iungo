@@ -25,6 +25,16 @@ abstract class ServiceRequestRemoteDataSource {
     Map<String, List<String>>? quickFilter,
     String? search,
   });
+
+  /// Fetches the full record for one ticket — the Detail View screen.
+  ///
+  /// Same endpoint as the list, but with a plain `id` query param
+  /// (confirmed via Postman capture) instead of `quickFilter`; the
+  /// server responds with `data.serviceRequest` as a single object
+  /// (rather than an array) carrying richer inline detail — description,
+  /// classificationType, requester, resource/buildingSpace, etc. — that
+  /// the summary list response doesn't include.
+  Future<Map<String, dynamic>> fetchServiceRequestDetail(int id);
 }
 
 /// Talks to the Iungo/Facilio "My Service Requests" list API:
@@ -99,6 +109,64 @@ class ServiceRequestRemoteDataSourceImpl
       }
 
       return ServiceRequestListPageResult.fromJson(body);
+    } on DioException catch (e) {
+      final errorBody = _asMap(e.response?.data);
+      final message = errorBody != null ? _extractMessage(errorBody) : null;
+      throw ServiceRequestException(
+        message ?? e.message ?? 'Something went wrong',
+      );
+    } on ServiceRequestException {
+      rethrow;
+    } catch (_) {
+      throw const ServiceRequestException('Something went wrong');
+    }
+  }
+
+  @override
+  Future<Map<String, dynamic>> fetchServiceRequestDetail(int id) async {
+    try {
+      final token = _session.token.value;
+
+      final response = await _dio.get<dynamic>(
+        _baseUrl,
+        queryParameters: {
+          'fetchOnlyViewGroupColumn': true,
+          'moduleName': 'serviceRequest',
+          'viewName': 'allservicerequests',
+          'page': 1,
+          'perPage': 50,
+          'search': '',
+          'withoutCustomButtons': true,
+          'id': id,
+        },
+        options: Options(
+          headers: {
+            'Accept': 'application/json',
+            if (token != null && token.isNotEmpty)
+              'Authorization': 'Bearer $token',
+          },
+        ),
+      );
+
+      final body = _asMap(response.data);
+      if (body == null) {
+        throw const ServiceRequestException('Unexpected response from server');
+      }
+
+      final code = body['code'];
+      if (code != null && code != 0) {
+        throw ServiceRequestException(
+          (body['message'] ?? 'Failed to load service request').toString(),
+        );
+      }
+
+      final data = body['data'];
+      final serviceRequest =
+          (data is Map<String, dynamic>) ? data['serviceRequest'] : null;
+      if (serviceRequest is! Map<String, dynamic>) {
+        throw const ServiceRequestException('Unexpected response from server');
+      }
+      return serviceRequest;
     } on DioException catch (e) {
       final errorBody = _asMap(e.response?.data);
       final message = errorBody != null ? _extractMessage(errorBody) : null;

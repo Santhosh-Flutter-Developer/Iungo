@@ -193,7 +193,122 @@ class ServiceRequestListPageResult {
   }
 }
 
-/// Maps the raw `data.serviceRequest` object returned by the create API
+/// Maps the raw `data.serviceRequest` object returned by the Detail
+/// View API (GET .../allservicerequests?...&id=<id>) into a
+/// [ServiceRequest]. Unlike the list API, `moduleState` and `requester`
+/// arrive inline here (not as an id + supplement lookup) and the
+/// response also carries `description`/`classificationType`/`resource`/
+/// `buildingSpace`, none of which the summary list response includes.
+///
+/// The site's *name* isn't in this response (only `siteId`) — pass
+/// [siteNameById], a lookup built from the Site pick-list, to resolve
+/// it; without one the site shows as "--".
+ServiceRequest mapServiceRequestDetail(
+  Map<String, dynamic> json, {
+  Map<int, String> siteNameById = const {},
+}) {
+  final id = ServiceRequestListPageResult._asInt(json['id']) ?? 0;
+  final subject = (json['subject'] as String?)?.trim() ?? '';
+  final description = (json['description'] as String?)?.trim() ?? '';
+
+  final sysCreatedTimeMs =
+      ServiceRequestListPageResult._asInt(json['sysCreatedTime']);
+  final raisedAt = sysCreatedTimeMs != null && sysCreatedTimeMs > 0
+      ? DateTime.fromMillisecondsSinceEpoch(sysCreatedTimeMs)
+      : DateTime.now();
+
+  final dueDateMs = ServiceRequestListPageResult._asInt(json['dueDate']);
+  final dueDate = dueDateMs != null && dueDateMs > 0
+      ? DateTime.fromMillisecondsSinceEpoch(dueDateMs)
+      : raisedAt;
+
+  final moduleState = json['moduleState'];
+  final status = ServiceRequestListPageResult._mapStatus(
+    moduleState is Map<String, dynamic> ? moduleState : null,
+  );
+
+  final priorityInfo = json['priority_serviceRequest'];
+  final priority = ServiceRequestListPageResult._mapPriority(
+    priorityInfo is Map<String, dynamic> ? priorityInfo : null,
+  );
+
+  final requesterInfo = json['requester'];
+  final requesterName = (requesterInfo is Map<String, dynamic>)
+      ? (requesterInfo['name'] as String?)?.trim()
+      : null;
+  final requesterPhone = (requesterInfo is Map<String, dynamic>)
+      ? (requesterInfo['phone'] as String?)?.trim()
+      : null;
+
+  final siteId = ServiceRequestListPageResult._asInt(json['siteId']);
+  final siteName = siteId != null ? siteNameById[siteId] : null;
+
+  final buildingSpace = json['buildingSpace'];
+  final buildingName = (buildingSpace is Map<String, dynamic>)
+      ? (buildingSpace['primaryValue'] as String?)?.trim()
+      : null;
+
+  // The `resource` block represents whichever Space/Asset chooser
+  // selection was made on the form — only surface it under "Space/Asset"
+  // when it's actually an asset (a building-type resource is already
+  // shown via `buildingSpace` above).
+  final resource = json['resource'];
+  String? assetName;
+  if (resource is Map<String, dynamic> &&
+      resource['resourceTypeEnum'] == 'ASSET') {
+    final name = (resource['name'] ?? resource['primaryValue']) as String?;
+    assetName = name?.trim();
+  }
+
+  final classification = RequestClassificationX.fromApiValue(
+    ServiceRequestListPageResult._asInt(json['classificationType']),
+  );
+
+  // No confirmed capture yet includes an assigned technician (the
+  // sample ticket used to build this mapper was still "Awaiting
+  // Approval"), so this checks the couple of plausible key shapes
+  // defensively and otherwise falls back to "Not Assigned" — the
+  // existing, already-correct behavior for a ticket with no technician.
+  final technicianName = _firstNonEmptyName([
+    json['technician'],
+    json['assignedTechnician'],
+    json['assignee'],
+  ]);
+
+  return ServiceRequest(
+    id: id,
+    title: subject,
+    description: description,
+    requester: (requesterName == null || requesterName.isEmpty)
+        ? '--'
+        : requesterName,
+    site: (siteName == null || siteName.isEmpty) ? '--' : siteName,
+    priority: priority,
+    status: status,
+    type: ServiceRequestOption.serviceRequest,
+    dueDate: dueDate,
+    raisedAt: raisedAt,
+    phone: (requesterPhone == null || requesterPhone.isEmpty)
+        ? null
+        : requesterPhone,
+    assignedTechnician: technicianName,
+    building: (buildingName == null || buildingName.isEmpty)
+        ? null
+        : buildingName,
+    classification: classification,
+    spaceAsset: assetName,
+  );
+}
+
+String? _firstNonEmptyName(List<dynamic> candidates) {
+  for (final candidate in candidates) {
+    if (candidate is Map<String, dynamic>) {
+      final name = (candidate['name'] ?? candidate['primaryValue']) as String?;
+      if (name != null && name.trim().isNotEmpty) return name.trim();
+    }
+  }
+  return null;
+}
 /// (POST /client/api/v3/modules/serviceRequest) into a [ServiceRequest]
 /// for the "My Service Requests" list. Unlike the list API, this response
 /// carries `moduleState` inline (not as an id + supplement lookup), but
