@@ -27,31 +27,54 @@ class AddCommentPage extends GetView<ServiceRequestDetailController> {
           ),
         ),
         actions: [
-          IconButton(
-            icon: const Icon(Icons.check, color: AppColors.white),
-            onPressed: () {
-              controller.addComment(textController.text);
-              Get.back();
-            },
-          ),
+          Obx(() {
+            if (controller.isPostingComment.value) {
+              return const Padding(
+                padding: EdgeInsets.all(14),
+                child: SizedBox(
+                  width: 20,
+                  height: 20,
+                  child: CircularProgressIndicator(
+                    strokeWidth: 2,
+                    color: AppColors.white,
+                  ),
+                ),
+              );
+            }
+            return IconButton(
+              icon: const Icon(Icons.check, color: AppColors.white),
+              onPressed: () async {
+                // Only close on a confirmed post — a failed request keeps
+                // the draft on screen (with an error snackbar) instead of
+                // silently losing what was typed.
+                final success = await controller.addComment(
+                  textController.text,
+                );
+                if (success) Get.back();
+              },
+            );
+          }),
         ],
       ),
       body: SafeArea(
         child: Padding(
           padding: const EdgeInsets.all(20),
-          child: TextField(
-            controller: textController,
-            autofocus: true,
-            minLines: 1,
-            maxLines: 12,
-            style: const TextStyle(fontSize: 16, color: AppColors.textDark),
-            decoration: InputDecoration(
-              hintText: 'enter_your_comment'.tr,
-              filled: false,
-              border: InputBorder.none,
-              enabledBorder: InputBorder.none,
-              focusedBorder: InputBorder.none,
-              contentPadding: EdgeInsets.zero,
+          child: Obx(
+            () => TextField(
+              controller: textController,
+              autofocus: true,
+              enabled: !controller.isPostingComment.value,
+              minLines: 1,
+              maxLines: 12,
+              style: const TextStyle(fontSize: 16, color: AppColors.textDark),
+              decoration: InputDecoration(
+                hintText: 'enter_your_comment'.tr,
+                filled: false,
+                border: InputBorder.none,
+                enabledBorder: InputBorder.none,
+                focusedBorder: InputBorder.none,
+                contentPadding: EdgeInsets.zero,
+              ),
             ),
           ),
         ),

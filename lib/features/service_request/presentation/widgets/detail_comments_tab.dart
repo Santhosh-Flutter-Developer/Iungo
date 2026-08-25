@@ -10,26 +10,67 @@ class DetailCommentsTab extends GetView<ServiceRequestDetailController> {
   @override
   Widget build(BuildContext context) {
     return Obx(() {
-      final comments = controller.comments;
-      if (comments.isEmpty) {
+      if (controller.isLoadingComments.value) {
+        return const Center(
+          child: CircularProgressIndicator(color: AppColors.primary),
+        );
+      }
+
+      if (controller.commentsError.value.isNotEmpty) {
         return Center(
           child: Padding(
             padding: const EdgeInsets.symmetric(horizontal: 32),
-            child: Text(
-              'add_comments_hint'.tr,
-              textAlign: TextAlign.center,
-              style: const TextStyle(
-                fontSize: 15,
-                color: AppColors.textDark,
-              ),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(
+                  controller.commentsError.value,
+                  textAlign: TextAlign.center,
+                  style: const TextStyle(fontSize: 15, color: AppColors.textDark),
+                ),
+                const SizedBox(height: 16),
+                ElevatedButton(
+                  onPressed: controller.retryComments,
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: AppColors.primary,
+                    foregroundColor: AppColors.white,
+                  ),
+                  child: Text('retry'.tr),
+                ),
+              ],
             ),
           ),
         );
       }
-      return ListView.builder(
-        padding: const EdgeInsets.fromLTRB(20, 12, 20, 100),
-        itemCount: comments.length,
-        itemBuilder: (context, index) => CommentTile(comment: comments[index]),
+
+      final comments = controller.comments;
+      if (comments.isEmpty) {
+        return RefreshIndicator(
+          color: AppColors.primary,
+          onRefresh: controller.retryComments,
+          child: ListView(
+            physics: const AlwaysScrollableScrollPhysics(),
+            padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 120),
+            children: [
+              Text(
+                'add_comments_hint'.tr,
+                textAlign: TextAlign.center,
+                style: const TextStyle(fontSize: 15, color: AppColors.textDark),
+              ),
+            ],
+          ),
+        );
+      }
+
+      return RefreshIndicator(
+        color: AppColors.primary,
+        onRefresh: controller.retryComments,
+        child: ListView.builder(
+          physics: const AlwaysScrollableScrollPhysics(),
+          padding: const EdgeInsets.fromLTRB(20, 12, 20, 100),
+          itemCount: comments.length,
+          itemBuilder: (context, index) => CommentTile(comment: comments[index]),
+        ),
       );
     });
   }

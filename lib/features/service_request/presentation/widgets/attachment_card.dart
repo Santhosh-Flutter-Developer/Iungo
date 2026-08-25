@@ -9,11 +9,16 @@ class AttachmentCard extends StatelessWidget {
     required this.attachment,
     required this.onView,
     required this.onDelete,
+    this.isDeleting = false,
   });
 
   final ServiceRequestAttachment attachment;
   final VoidCallback onView;
   final VoidCallback onDelete;
+
+  /// True while a delete request for this attachment is in flight —
+  /// swaps the Delete button for a spinner and disables both actions.
+  final bool isDeleting;
 
   @override
   Widget build(BuildContext context) {
@@ -77,38 +82,87 @@ class AttachmentCard extends StatelessWidget {
             ],
           ),
           const SizedBox(height: 10),
-          Text(
-            '${attachment.sizeLabel} | ${attachment.dateLabel}',
-            style: const TextStyle(
-              fontSize: 13,
-              color: AppColors.headingBlueGrey,
+          if (attachment.isUploading)
+            Row(
+              children: [
+                const SizedBox(
+                  width: 14,
+                  height: 14,
+                  child: CircularProgressIndicator(
+                    strokeWidth: 2,
+                    color: AppColors.primary,
+                  ),
+                ),
+                const SizedBox(width: 8),
+                Text(
+                  'uploading'.tr,
+                  style: const TextStyle(
+                    fontSize: 13,
+                    color: AppColors.headingBlueGrey,
+                  ),
+                ),
+              ],
+            )
+          else
+            Text(
+              '${attachment.sizeLabel} | ${attachment.dateLabel}',
+              style: const TextStyle(
+                fontSize: 13,
+                color: AppColors.headingBlueGrey,
+              ),
             ),
-          ),
           const SizedBox(height: 14),
-          Row(
-            children: [
-              Expanded(
-                child: _PillButton(
-                  icon: Icons.visibility_outlined,
-                  label: 'view'.tr,
-                  background: AppColors.attachmentViewBackground,
-                  foreground: AppColors.primary,
-                  onTap: onView,
+          if (!attachment.isUploading)
+            Row(
+              children: [
+                Expanded(
+                  child: _PillButton(
+                    icon: Icons.visibility_outlined,
+                    label: 'view'.tr,
+                    background: AppColors.attachmentViewBackground,
+                    foreground: AppColors.primary,
+                    onTap: isDeleting ? null : onView,
+                  ),
                 ),
-              ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: _PillButton(
-                  icon: Icons.delete_outline,
-                  label: 'delete'.tr,
-                  background: AppColors.attachmentDeleteBackground,
-                  foreground: AppColors.attachmentDeleteText,
-                  onTap: onDelete,
+                const SizedBox(width: 12),
+                Expanded(
+                  child: isDeleting
+                      ? const _PillLoading()
+                      : _PillButton(
+                          icon: Icons.delete_outline,
+                          label: 'delete'.tr,
+                          background: AppColors.attachmentDeleteBackground,
+                          foreground: AppColors.attachmentDeleteText,
+                          onTap: onDelete,
+                        ),
                 ),
-              ),
-            ],
-          ),
+              ],
+            ),
         ],
+      ),
+    );
+  }
+}
+
+class _PillLoading extends StatelessWidget {
+  const _PillLoading();
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(vertical: 12),
+      decoration: BoxDecoration(
+        color: AppColors.attachmentDeleteBackground,
+        borderRadius: BorderRadius.circular(8),
+      ),
+      alignment: Alignment.center,
+      child: const SizedBox(
+        width: 16,
+        height: 16,
+        child: CircularProgressIndicator(
+          strokeWidth: 2,
+          color: AppColors.attachmentDeleteText,
+        ),
       ),
     );
   }
@@ -127,12 +181,13 @@ class _PillButton extends StatelessWidget {
   final String label;
   final Color background;
   final Color foreground;
-  final VoidCallback onTap;
+  final VoidCallback? onTap;
 
   @override
   Widget build(BuildContext context) {
+    final disabled = onTap == null;
     return Material(
-      color: background,
+      color: disabled ? background.withValues(alpha: 0.6) : background,
       borderRadius: BorderRadius.circular(8),
       child: InkWell(
         borderRadius: BorderRadius.circular(8),
@@ -142,14 +197,18 @@ class _PillButton extends StatelessWidget {
           child: Row(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              Icon(icon, size: 18, color: foreground),
+              Icon(
+                icon,
+                size: 18,
+                color: disabled ? foreground.withValues(alpha: 0.6) : foreground,
+              ),
               const SizedBox(width: 6),
               Text(
                 label,
                 style: TextStyle(
                   fontSize: 14,
                   fontWeight: FontWeight.w700,
-                  color: foreground,
+                  color: disabled ? foreground.withValues(alpha: 0.6) : foreground,
                 ),
               ),
             ],

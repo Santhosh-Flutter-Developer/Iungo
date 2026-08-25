@@ -1,5 +1,6 @@
 import 'package:get/get.dart';
 import 'package:iungo/features/service_request/data/datasources/service_request_create_remote_data_source.dart';
+import 'package:iungo/features/service_request/data/datasources/service_request_detail_remote_data_source.dart';
 import 'package:iungo/features/service_request/data/datasources/service_request_exceptions.dart';
 import 'package:iungo/features/service_request/data/datasources/service_request_picklist_remote_data_source.dart';
 import 'package:iungo/features/service_request/data/datasources/service_request_remote_data_source.dart';
@@ -9,6 +10,7 @@ import 'package:iungo/features/service_request/domain/entities/pick_list_option.
 import 'package:iungo/features/service_request/domain/entities/request_classification.dart';
 import 'package:iungo/features/service_request/domain/entities/service_request.dart';
 import 'package:iungo/features/service_request/domain/entities/service_request_attachment.dart';
+import 'package:iungo/features/service_request/domain/entities/service_request_comment.dart';
 
 /// Single in-memory source of truth for "My Service Requests".
 ///
@@ -26,11 +28,13 @@ class ServiceRequestRepository extends GetxService {
     this._remoteDataSource,
     this._pickListDataSource,
     this._createDataSource,
+    this._detailDataSource,
   );
 
   final ServiceRequestRemoteDataSource _remoteDataSource;
   final ServiceRequestPickListRemoteDataSource _pickListDataSource;
   final ServiceRequestCreateRemoteDataSource _createDataSource;
+  final ServiceRequestDetailRemoteDataSource _detailDataSource;
 
   final RxList<ServiceRequest> tickets = <ServiceRequest>[].obs;
 
@@ -115,6 +119,41 @@ class ServiceRequestRepository extends GetxService {
     }
 
     return mapServiceRequestDetail(raw, siteNameById: siteNameById);
+  }
+
+  // ---- Detail View: Comments -----------------------------------------
+
+  Future<List<ServiceRequestComment>> fetchComments(int serviceRequestId) {
+    return _detailDataSource.fetchComments(serviceRequestId);
+  }
+
+  Future<ServiceRequestComment> addComment(
+    int serviceRequestId,
+    String body,
+  ) {
+    return _detailDataSource.addComment(serviceRequestId, body);
+  }
+
+  // ---- Detail View: Attachments ---------------------------------------
+
+  Future<List<ServiceRequestAttachment>> fetchAttachments(
+    int serviceRequestId,
+  ) {
+    return _detailDataSource.fetchAttachments(serviceRequestId);
+  }
+
+  Future<List<ServiceRequestAttachment>> uploadServiceRequestAttachments(
+    int serviceRequestId,
+    List<AttachmentFile> files,
+  ) {
+    return _detailDataSource.uploadAttachments(serviceRequestId, files);
+  }
+
+  Future<void> deleteServiceRequestAttachment(
+    int serviceRequestId,
+    int attachmentId,
+  ) {
+    return _detailDataSource.deleteAttachment(serviceRequestId, attachmentId);
   }
 
   /// Replaces the whole list with a freshly-fetched first page (initial
