@@ -1,4 +1,6 @@
 import 'package:get/get.dart';
+import 'package:iungo/features/asset/presentation/bindings/scan_qr_binding.dart';
+import 'package:iungo/features/asset/presentation/pages/scan_qr_page.dart';
 import 'package:iungo/features/auth/presentation/bindings/login_binding.dart';
 import 'package:iungo/features/auth/presentation/pages/login_page.dart';
 import 'package:iungo/features/dashboard/presentation/bindings/dashboard_binding.dart';
@@ -63,6 +65,12 @@ class AppPages {
       name: AppRoutes.notifications,
       page: () => const NotificationPage(),
       binding: NotificationBinding(),
+      transition: Transition.rightToLeft,
+    ),
+    GetPage(
+      name: AppRoutes.scanQr,
+      page: () => const ScanQrPage(),
+      binding: ScanQrBinding(),
       transition: Transition.rightToLeft,
     ),
   ];

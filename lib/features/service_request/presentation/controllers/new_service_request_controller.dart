@@ -21,10 +21,30 @@ import 'package:iungo/features/service_request/presentation/bindings/service_req
 /// (confirmed via the picklist/attachment API reference doc + Postman
 /// capture of a live create call).
 class NewServiceRequestController extends GetxController {
-  NewServiceRequestController(this._repository, this._session);
+  NewServiceRequestController(
+    this._repository,
+    this._session, {
+    int? prefillSiteId,
+    String? prefillSiteName,
+    int? prefillAssetId,
+    String? prefillAssetLabel,
+  })  : _prefillSiteId = prefillSiteId,
+        _prefillSiteName = prefillSiteName,
+        _prefillAssetId = prefillAssetId,
+        _prefillAssetLabel = prefillAssetLabel;
 
   final ServiceRequestRepository _repository;
   final SessionService _session;
+
+  /// Set when this form was opened from Asset Detail's "create service
+  /// request for this asset" action (reached via Scan QR) — the Site
+  /// and Asset fields are pre-selected from those values in [onInit],
+  /// before the Site pick-list loads, so the single-site auto-select
+  /// there doesn't clobber them.
+  final int? _prefillSiteId;
+  final String? _prefillSiteName;
+  final int? _prefillAssetId;
+  final String? _prefillAssetLabel;
 
   /// The form's own id (confirmed via Postman capture) — sent as both
   /// `formId` and `actionFormId` on create.
@@ -87,7 +107,23 @@ class NewServiceRequestController extends GetxController {
   @override
   void onInit() {
     super.onInit();
+    _applyPrefillIfAny();
     _loadSiteOptions();
+  }
+
+  void _applyPrefillIfAny() {
+    final siteId = _prefillSiteId;
+    final siteName = _prefillSiteName;
+    if (siteId != null && siteName != null && siteName.trim().isNotEmpty) {
+      selectedSite.value = siteName;
+      _selectedSiteId = siteId;
+    }
+    final assetId = _prefillAssetId;
+    final assetLabel = _prefillAssetLabel;
+    if (assetId != null && assetLabel != null && assetLabel.trim().isNotEmpty) {
+      selectedAsset.value = assetLabel;
+      _selectedAssetId = assetId;
+    }
   }
 
   Future<void> _loadSiteOptions({String? search}) async {
@@ -192,6 +228,14 @@ class NewServiceRequestController extends GetxController {
     if (match == null) return;
     selectedAsset.value = match.label;
     _selectedAssetId = match.value;
+  }
+
+  /// Drops the current Asset selection (picked or prefilled from Asset
+  /// Detail's "create request for this asset" action) — the field's
+  /// "X" button.
+  void clearAsset() {
+    selectedAsset.value = null;
+    _selectedAssetId = null;
   }
 
   void selectLocation({

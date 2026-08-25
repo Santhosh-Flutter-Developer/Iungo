@@ -9,4 +9,5 @@ abstract class AppRoutes {
   static const serviceRequestList = '/service-requests';
   static const notifications = '/notifications';
   static const profile = '/profile';
+  static const scanQr = '/scan-qr';
 }

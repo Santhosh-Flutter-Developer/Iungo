@@ -13,7 +13,7 @@ class DashboardPage extends GetView<DashboardController> {
   static const _actions = [
     DashboardAction.createServiceRequest,
     DashboardAction.myServiceRequests,
-    // DashboardAction.scanQr,
+    DashboardAction.scanQr,
     // DashboardAction.myWorkOrders,
   ];
 
