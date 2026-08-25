@@ -39,8 +39,14 @@ abstract class ServiceRequestPickListRemoteDataSource {
   /// id/label — used by the Scan QR flow, which needs whatever extra
   /// fields the server sends for an asset (and doesn't know a [siteId]
   /// to scope by, unlike the New Service Request form's dropdown).
+  ///
+  /// Pass exactly one of [id] or [search]: [id] hits the record
+  /// directly by primary key (what Scan QR uses when the code reduces
+  /// to Facilio's own numeric asset id); [search] free-text matches
+  /// against the display label instead, same as the live dropdown.
   Future<List<Map<String, dynamic>>> searchAssetsRaw({
-    required String search,
+    int? id,
+    String? search,
     int? siteId,
   });
 }
@@ -131,14 +137,17 @@ class ServiceRequestPickListRemoteDataSourceImpl
 
   @override
   Future<List<Map<String, dynamic>>> searchAssetsRaw({
-    required String search,
+    int? id,
+    String? search,
     int? siteId,
   }) {
-    final trimmed = search.trim();
+    final trimmed = search?.trim();
     return _fetchItems(
       _assetUrl,
       {
-        if (trimmed.isNotEmpty) 'search': trimmed,
+        if (id != null) 'id': id,
+        if (id == null && trimmed != null && trimmed.isNotEmpty)
+          'search': trimmed,
         'includeDefaultIdsValue': true,
         'viewName': 'hidden-all',
         if (siteId != null)
