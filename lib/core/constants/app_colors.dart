@@ -65,4 +65,16 @@ class AppColors {
 
   /// Profile screen — "Push Notifications" enabled toggle fill.
   static const Color toggleOnGreen = Color(0xFF23C55E);
+
+  /// Work Order list card — "Assigned Technician: X" chip and the
+  /// normal (non-urgent) "Due:" chip background.
+  static const Color workOrderChipBackground = Color(0xFFF3E9F4);
+
+  /// Work Order list card / Detail View — "Due:" pill when the due date
+  /// is today or overdue.
+  static const Color workOrderDueUrgentBackground = Color(0xFFFEE2E1);
+  static const Color workOrderDueUrgentText = Color(0xFFB3261E);
+
+  /// Work Order list card — the light-grey info-grid box background.
+  static const Color workOrderInfoGridBackground = Color(0xFFF4F4F4);
 }

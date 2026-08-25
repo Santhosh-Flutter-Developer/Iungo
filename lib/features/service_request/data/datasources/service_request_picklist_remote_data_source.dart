@@ -1,6 +1,7 @@
 import 'dart:convert';
 
 import 'package:dio/dio.dart';
+import 'package:flutter/foundation.dart';
 import 'package:iungo/core/services/session_service.dart';
 import 'package:iungo/features/service_request/domain/entities/pick_list_option.dart';
 
@@ -31,6 +32,16 @@ abstract class ServiceRequestPickListRemoteDataSource {
   Future<List<PickListOption>> fetchAssetOptions({
     required int siteId,
     String? search,
+  });
+
+  /// Same confirmed endpoint as [fetchAssetOptions], but returns each
+  /// match's raw JSON instead of reducing it to a [PickListOption]'s
+  /// id/label — used by the Scan QR flow, which needs whatever extra
+  /// fields the server sends for an asset (and doesn't know a [siteId]
+  /// to scope by, unlike the New Service Request form's dropdown).
+  Future<List<Map<String, dynamic>>> searchAssetsRaw({
+    required String search,
+    int? siteId,
   });
 }
 
@@ -118,6 +129,29 @@ class ServiceRequestPickListRemoteDataSourceImpl
     );
   }
 
+  @override
+  Future<List<Map<String, dynamic>>> searchAssetsRaw({
+    required String search,
+    int? siteId,
+  }) {
+    final trimmed = search.trim();
+    return _fetchItems(
+      _assetUrl,
+      {
+        if (trimmed.isNotEmpty) 'search': trimmed,
+        'includeDefaultIdsValue': true,
+        'viewName': 'hidden-all',
+        if (siteId != null)
+          'filters': jsonEncode({
+            'siteId': {
+              'operatorId': _isOperatorId,
+              'value': [siteId.toString()],
+            },
+          }),
+      },
+    );
+  }
+
   /// Dropdowns load with `page`/`perPage`; once the user types, those are
   /// dropped in favour of `search` (confirmed via the picklist/attachment
   /// API reference doc).
@@ -130,6 +164,20 @@ class ServiceRequestPickListRemoteDataSourceImpl
   }
 
   Future<List<PickListOption>> _fetch(
+    String url,
+    Map<String, dynamic> queryParameters,
+  ) async {
+    final items = await _fetchItems(url, queryParameters);
+    return items
+        .map(PickListOption.fromJson)
+        .where((option) => option.label.isNotEmpty)
+        .toList();
+  }
+
+  /// Shared request + response-envelope handling for every pick-list
+  /// endpoint — returns each `data.pickList[]` entry's raw JSON, before
+  /// any reduction down to [PickListOption].
+  Future<List<Map<String, dynamic>>> _fetchItems(
     String url,
     Map<String, dynamic> queryParameters,
   ) async {
@@ -148,6 +196,13 @@ class ServiceRequestPickListRemoteDataSourceImpl
         ),
       );
 
+      if (kDebugMode) {
+        debugPrint(
+          '[PickList] GET $url $queryParameters -> '
+          'HTTP ${response.statusCode}, body: ${response.data}',
+        );
+      }
+
       final body = _asMap(response.data);
       if (body == null) {
         throw const ServiceRequestException('Unexpected response from server');
@@ -165,12 +220,18 @@ class ServiceRequestPickListRemoteDataSourceImpl
           (data is Map<String, dynamic>) ? data['pickList'] : null;
       final items = (rawList is List) ? rawList : const [];
 
-      return items
-          .whereType<Map<String, dynamic>>()
-          .map(PickListOption.fromJson)
-          .where((option) => option.label.isNotEmpty)
-          .toList();
+      if (kDebugMode) {
+        debugPrint('[PickList] $url -> ${items.length} item(s)');
+      }
+
+      return items.whereType<Map<String, dynamic>>().toList();
     } on DioException catch (e) {
+      if (kDebugMode) {
+        debugPrint(
+          '[PickList] GET $url $queryParameters FAILED: '
+          'HTTP ${e.response?.statusCode}, body: ${e.response?.data ?? e.message}',
+        );
+      }
       final errorBody = _asMap(e.response?.data);
       final message = errorBody != null ? _extractMessage(errorBody) : null;
       throw ServiceRequestException(

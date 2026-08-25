@@ -10,4 +10,5 @@ abstract class AppRoutes {
   static const notifications = '/notifications';
   static const profile = '/profile';
   static const scanQr = '/scan-qr';
+  static const workOrderList = '/work-orders';
 }

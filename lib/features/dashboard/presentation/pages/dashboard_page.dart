@@ -14,7 +14,7 @@ class DashboardPage extends GetView<DashboardController> {
     DashboardAction.createServiceRequest,
     DashboardAction.myServiceRequests,
     DashboardAction.scanQr,
-    // DashboardAction.myWorkOrders,
+    DashboardAction.myWorkOrders,
   ];
 
   @override

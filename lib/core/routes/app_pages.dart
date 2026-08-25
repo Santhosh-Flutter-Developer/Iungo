@@ -16,6 +16,8 @@ import 'package:iungo/features/service_request/presentation/bindings/service_req
 import 'package:iungo/features/service_request/presentation/pages/service_request_list_page.dart';
 import 'package:iungo/features/splash/presentation/bindings/splash_binding.dart';
 import 'package:iungo/features/splash/presentation/pages/splash_page.dart';
+import 'package:iungo/features/work_order/presentation/bindings/work_order_list_binding.dart';
+import 'package:iungo/features/work_order/presentation/pages/work_order_list_page.dart';
 
 import 'app_routes.dart';
 
@@ -53,6 +55,12 @@ class AppPages {
       name: AppRoutes.serviceRequestList,
       page: () => const ServiceRequestListPage(),
       binding: ServiceRequestListBinding(),
+      transition: Transition.rightToLeft,
+    ),
+    GetPage(
+      name: AppRoutes.workOrderList,
+      page: () => const WorkOrderListPage(),
+      binding: WorkOrderListBinding(),
       transition: Transition.rightToLeft,
     ),
     GetPage(

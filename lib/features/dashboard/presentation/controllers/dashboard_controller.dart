@@ -15,7 +15,7 @@ class DashboardController extends GetxController {
        Get.toNamed(AppRoutes.scanQr);
         break;
       case DashboardAction.myWorkOrders:
-        
+         Get.toNamed(AppRoutes.workOrderList);
         break;
     }
   }

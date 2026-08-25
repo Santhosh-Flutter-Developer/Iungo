@@ -1,35 +1,55 @@
+import 'package:flutter/foundation.dart';
 import 'package:iungo/features/asset/domain/entities/asset.dart';
 
-/// Maps the raw asset object returned by [AssetRemoteDataSource] into an
-/// [Asset]. Field names are read defensively (several plausible keys
-/// tried in order) the same way `service_request_mapper.dart` reads an
-/// unconfirmed "assigned technician" shape — this whole response shape
-/// is a best-effort placeholder pending a confirmed Postman capture for
-/// the Asset module, so adjust the key names below once you have one.
+/// Maps one raw pick-list item from [ServiceRequestPickListRemoteDataSource
+/// .searchAssetsRaw] into an [Asset].
+///
+/// The only two fields Facilio's pick-list API is *confirmed* to send for
+/// every item are `value` (id) and `label` (display text — which is the
+/// asset's printed code, e.g. "100Z3-R/G/LNDSL/TR/PT/PD/VRC/0094"). Those
+/// two are read first below. Description/Category/Location/PPM counts are
+/// read defensively from several plausible extra keys in case the server
+/// happens to include them on this endpoint too — if it doesn't, they
+/// show as "--"/0 rather than guessing further.
+///
+/// In debug builds this also prints the raw item once, so the exact
+/// field names available can be read straight from the console on the
+/// next real scan and used to tighten this mapping.
 Asset mapAssetDetail(
   Map<String, dynamic> json, {
   required Map<int, String> siteNameById,
 }) {
-  final id = _asInt(json['id']) ?? 0;
+  if (kDebugMode) {
+    debugPrint('[Asset Detail] raw pick-list item: $json');
+  }
+
+  final id = _asInt(_firstNonNull([json['value'], json['id']])) ?? 0;
+
+  final label = _firstNonEmptyString([json['label']]);
 
   final name = _firstNonEmptyString([
-    json['name'],
-    json['primaryValue'],
-  ]) ?? '--';
+        json['name'],
+        json['primaryValue'],
+        label,
+      ]) ??
+      '--';
 
   final assetCode = _firstNonEmptyString([
-    json['assetCode'],
-    json['code'],
-    json['uniqueCode'],
-  ]) ?? '--';
+        json['assetCode'],
+        json['code'],
+        json['uniqueCode'],
+        label,
+      ]) ??
+      '--';
 
   final description = _firstNonEmptyString([json['description']]) ?? '--';
 
   final category = _firstNonEmptyString([
-    _nestedName(json['category']),
-    _nestedName(json['assetCategory']),
-    json['category'] is String ? json['category'] as String : null,
-  ]) ?? '--';
+        _nestedName(json['category']),
+        _nestedName(json['assetCategory']),
+        json['category'] is String ? json['category'] as String : null,
+      ]) ??
+      '--';
 
   final location = _composeLocation(json);
 

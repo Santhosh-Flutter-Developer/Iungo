@@ -176,6 +176,48 @@ class AppTranslations extends Translations {
       'location': 'Location',
       'open_ppm_count': 'Open PPM Count',
       'closed_ppm_count': 'Closed PPM Count',
+      // Work Orders
+      'no_description_provided': 'No description provided',
+      'due': 'Due',
+      'site_location': 'Site Location',
+      'maintenance_type': 'Maintenance Type',
+      'tasks': 'Tasks',
+      'completed': 'Completed',
+      'all_tasks': 'All Tasks',
+      'no_comments_found': 'No Comments Found',
+      'no_attachments_found': 'No Attachments Found',
+
+      // Work Order statuses
+      'wo_status_submitted': 'Submitted',
+      'wo_status_assigned': 'Assigned',
+      'wo_status_work_in_progress': 'Work in Progress',
+      'wo_status_incomplete': 'Incomplete',
+      'wo_status_pre_open': 'Pre-Open',
+      'wo_status_requested': 'Requested',
+      'wo_status_rejected': 'Rejected',
+      'wo_status_re_opened': 'Re-Opened',
+      'wo_status_awaiting_approval': 'Awaiting Approval',
+      'wo_status_awaiting_pause_approval_from_client':
+          'Awaiting Pause Approval from Client',
+      'wo_status_inventory_request_raised': 'Inventory Request Raised',
+      'wo_status_material_issued': 'Material Issued',
+      'wo_status_awaiting_qc_team_approval': 'Awaiting QC Team Approval',
+      'wo_status_awaiting_closure_approval_from_client':
+          'Awaiting Closure Approval from Client',
+
+      // Work Order disciplines
+      'discipline_mechanical': 'Mechanical',
+      'discipline_cleaning': 'Cleaning',
+      'discipline_pest_control': 'Pest Control',
+      'discipline_civil': 'Civil',
+      'discipline_electrical': 'Electrical',
+      'discipline_plumbing': 'Plumbing',
+      'discipline_hvac': 'HVAC',
+
+      // Work Order maintenance types
+      'maintenance_type_proactive': 'Proactive',
+      'maintenance_type_corrective': 'Corrective',
+      'maintenance_type_preventive': 'Preventive',
     },
     'ar_SA': {
       'app_name': 'Iungo',
@@ -346,6 +388,48 @@ class AppTranslations extends Translations {
       'location': 'الموقع',
       'open_ppm_count': 'عدد الصيانة الوقائية المفتوحة',
       'closed_ppm_count': 'عدد الصيانة الوقائية المغلقة',
+      // Work Orders
+      'no_description_provided': 'لم يتم تقديم وصف',
+      'due': 'الاستحقاق',
+      'site_location': 'موقع الموقع',
+      'maintenance_type': 'نوع الصيانة',
+      'tasks': 'المهام',
+      'completed': 'مكتمل',
+      'all_tasks': 'جميع المهام',
+      'no_comments_found': 'لا توجد تعليقات',
+      'no_attachments_found': 'لا توجد مرفقات',
+
+      // Work Order statuses
+      'wo_status_submitted': 'تم الإرسال',
+      'wo_status_assigned': 'معين',
+      'wo_status_work_in_progress': 'قيد التنفيذ',
+      'wo_status_incomplete': 'غير مكتمل',
+      'wo_status_pre_open': 'قبل الفتح',
+      'wo_status_requested': 'مطلوب',
+      'wo_status_rejected': 'مرفوض',
+      'wo_status_re_opened': 'أعيد فتحه',
+      'wo_status_awaiting_approval': 'بانتظار الموافقة',
+      'wo_status_awaiting_pause_approval_from_client':
+          'بانتظار موافقة العميل على الإيقاف المؤقت',
+      'wo_status_inventory_request_raised': 'تم رفع طلب المخزون',
+      'wo_status_material_issued': 'تم صرف المواد',
+      'wo_status_awaiting_qc_team_approval': 'بانتظار موافقة فريق ضمان الجودة',
+      'wo_status_awaiting_closure_approval_from_client':
+          'بانتظار موافقة العميل على الإغلاق',
+
+      // Work Order disciplines
+      'discipline_mechanical': 'ميكانيكي',
+      'discipline_cleaning': 'تنظيف',
+      'discipline_pest_control': 'مكافحة الآفات',
+      'discipline_civil': 'مدني',
+      'discipline_electrical': 'كهربائي',
+      'discipline_plumbing': 'سباكة',
+      'discipline_hvac': 'تكييف وتهوية',
+
+      // Work Order maintenance types
+      'maintenance_type_proactive': 'استباقية',
+      'maintenance_type_corrective': 'تصحيحية',
+      'maintenance_type_preventive': 'وقائية',
     },
   };
 }

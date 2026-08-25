@@ -58,7 +58,7 @@ class AppDrawer extends StatelessWidget {
   static const _items = [
     DrawerMenuItem.dashboard,
     DrawerMenuItem.myServiceRequests,
-    // DrawerMenuItem.myWorkOrders,
+    DrawerMenuItem.myWorkOrders,
     // DrawerMenuItem.feedback,
     DrawerMenuItem.profile,
     // DrawerMenuItem.about,
@@ -72,6 +72,8 @@ class AppDrawer extends StatelessWidget {
       Get.offAllNamed(AppRoutes.dashboard);
     } else if (item == DrawerMenuItem.myServiceRequests) {
       Get.offAllNamed(AppRoutes.serviceRequestList);
+    } else if (item == DrawerMenuItem.myWorkOrders) {
+      Get.offAllNamed(AppRoutes.workOrderList);
     } else if (item == DrawerMenuItem.profile) {
       Get.toNamed(AppRoutes.profile);
     } else {}
