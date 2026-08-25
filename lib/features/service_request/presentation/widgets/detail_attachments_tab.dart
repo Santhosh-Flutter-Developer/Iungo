@@ -81,7 +81,12 @@ class DetailAttachmentsTab extends GetView<ServiceRequestDetailController> {
           itemBuilder: (context, index) {
             final attachment = attachments[index];
             return Obx(() {
-              final isDeleting = attachment.id != null &&
+              // Always read deletingAttachmentIds (even when id is null,
+              // e.g. an in-flight upload placeholder) so Obx has an
+              // observable to subscribe to. Short-circuiting past it with
+              // `attachment.id != null && ...` skips the read entirely and
+              // trips GetX's "improper use of Obx" error.
+              final isDeleting =
                   controller.deletingAttachmentIds.contains(attachment.id);
               return AttachmentCard(
                 attachment: attachment,
