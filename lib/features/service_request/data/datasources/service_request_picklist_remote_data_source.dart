@@ -33,8 +33,23 @@ abstract class ServiceRequestPickListRemoteDataSource {
     required int siteId,
     String? search,
   });
-}
 
+  /// Same confirmed endpoint as [fetchAssetOptions], but returns each
+  /// match's raw JSON instead of reducing it to a [PickListOption]'s
+  /// id/label — used by the Scan QR flow, which needs whatever extra
+  /// fields the server sends for an asset (and doesn't know a [siteId]
+  /// to scope by, unlike the New Service Request form's dropdown).
+  ///
+  /// Pass exactly one of [id] or [search]: [id] hits the record
+  /// directly by primary key (what Scan QR uses when the code reduces
+  /// to Facilio's own numeric asset id); [search] free-text matches
+  /// against the display label instead, same as the live dropdown.
+  Future<List<Map<String, dynamic>>> searchAssetsRaw({
+    int? id,
+    String? search,
+    int? siteId,
+  });
+}
 
 /// Talks to the Iungo/Facilio pick-list APIs that back the Status and
 /// Priority filter dropdowns on the "My Service Requests" filter screen,
@@ -117,6 +132,32 @@ class ServiceRequestPickListRemoteDataSourceImpl
             },
           }),
         }),
+    );
+  }
+
+  @override
+  Future<List<Map<String, dynamic>>> searchAssetsRaw({
+    int? id,
+    String? search,
+    int? siteId,
+  }) {
+    final trimmed = search?.trim();
+    return _fetchItems(
+      _assetUrl,
+      {
+        if (id != null) 'id': id,
+        if (id == null && trimmed != null && trimmed.isNotEmpty)
+          'search': trimmed,
+        'includeDefaultIdsValue': true,
+        'viewName': 'hidden-all',
+        if (siteId != null)
+          'filters': jsonEncode({
+            'siteId': {
+              'operatorId': _isOperatorId,
+              'value': [siteId.toString()],
+            },
+          }),
+      },
     );
   }
 

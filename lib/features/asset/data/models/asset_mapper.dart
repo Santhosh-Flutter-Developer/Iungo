@@ -1,43 +1,78 @@
+import 'package:flutter/foundation.dart';
 import 'package:iungo/features/asset/domain/entities/asset.dart';
 
-/// Maps one raw asset record from [AssetRemoteDataSource.fetchAssetById]
-/// (the confirmed `modules/asset/view/allassets` endpoint) into an
-/// [Asset].
+/// Maps one raw pick-list item from [ServiceRequestPickListRemoteDataSource
+/// .searchAssetsRaw] into an [Asset].
 ///
-/// Field names below are read directly off a live captured response,
-/// not guessed:
-///   id, name, description, qrVal, tagNumber, siteId,
-///   category: {id}, buildingSpace: {id}
-/// The asset record itself only carries *ids* for category/building/
-/// site — their human-readable names live in the response's separate
-/// `meta.supplements.asset.<field>.<id>` block, passed in here as
-/// [supplements].
+/// The only two fields Facilio's pick-list API is *confirmed* to send for
+/// every item are `value` (id) and `label` (display text — which is the
+/// asset's printed code, e.g. "100Z3-R/G/LNDSL/TR/PT/PD/VRC/0094"). Those
+/// two are read first below. Description/Category/Location/PPM counts are
+/// read defensively from several plausible extra keys in case the server
+/// happens to include them on this endpoint too — if it doesn't, they
+/// show as "--"/0 rather than guessing further.
+///
+/// In debug builds this also prints the raw item once, so the exact
+/// field names available can be read straight from the console on the
+/// next real scan and used to tighten this mapping.
 Asset mapAssetDetail(
   Map<String, dynamic> json, {
-  required Map<String, dynamic> supplements,
+  required Map<int, String> siteNameById,
 }) {
-  final id = _asInt(json['id']) ?? 0;
+  if (kDebugMode) {
+    debugPrint('[Asset Detail] raw pick-list item: $json');
+  }
 
-  final name = _nonEmpty(json['name']) ?? '--';
+  final id = _asInt(_firstNonNull([json['value'], json['id']])) ?? 0;
 
-  // The entity's `assetCode` field is documented as "e.g.
-  // facilio_112229" — that's exactly this record's `qrVal`, and it's
-  // also literally what the QR scanner reads, confirmed by a live scan
-  // ("scanned facilio_140091" <-> this record's qrVal: "facilio_140091").
-  final assetCode = _nonEmpty(json['qrVal']) ?? '--';
+  final label = _firstNonEmptyString([json['label']]);
 
-  final description = _nonEmpty(json['description']) ?? '--';
-
-  final category = _supplementName(supplements, 'category', json['category']) ??
+  final name = _firstNonEmptyString([
+        json['name'],
+        json['primaryValue'],
+        label,
+      ]) ??
       '--';
 
-  final buildingName =
-      _supplementName(supplements, 'buildingSpace', json['buildingSpace']);
-  final location = buildingName == null ? '--' : '$buildingName-';
+  final assetCode = _firstNonEmptyString([
+        json['assetCode'],
+        json['code'],
+        json['uniqueCode'],
+        label,
+      ]) ??
+      '--';
+
+  final description = _firstNonEmptyString([json['description']]) ?? '--';
+
+  final category = _firstNonEmptyString([
+        _nestedName(json['category']),
+        _nestedName(json['assetCategory']),
+        json['category'] is String ? json['category'] as String : null,
+      ]) ??
+      '--';
+
+  final location = _composeLocation(json);
+
+  final openPpmCount = _asInt(_firstNonNull([
+        json['openPpmCount'],
+        json['openPPMCount'],
+        _nestedValue(json['ppm'], 'open'),
+      ])) ??
+      0;
+
+  final closedPpmCount = _asInt(_firstNonNull([
+        json['closedPpmCount'],
+        json['closedPPMCount'],
+        _nestedValue(json['ppm'], 'closed'),
+      ])) ??
+      0;
 
   final siteId = _asInt(json['siteId']) ?? 0;
-  final siteName =
-      _supplementNameById(supplements, 'siteId', siteId) ?? '--';
+  final siteName = _firstNonEmptyString([
+        _nestedName(json['site']),
+        siteNameById[siteId],
+      ]) ??
+      '--';
 
   return Asset(
     id: id,
@@ -46,45 +81,60 @@ Asset mapAssetDetail(
     description: description,
     category: category,
     location: location,
-    // Not present anywhere in this endpoint's response — the reference
-    // Asset Detail screenshot may have sourced these from a different,
-    // not-yet-identified API (e.g. a PPM/work-order count endpoint).
-    // Defaulting to 0 rather than guessing a shape for them.
-    openPpmCount: 0,
-    closedPpmCount: 0,
+    openPpmCount: openPpmCount,
+    closedPpmCount: closedPpmCount,
     siteId: siteId,
     siteName: siteName,
   );
 }
 
-/// [reference] is the nested `{"id": <n>}` object a raw asset record
-/// carries for a related field (category, buildingSpace, ...) — this
-/// pulls that id out and resolves it against `supplements[field][id]`.
-String? _supplementName(
-  Map<String, dynamic> supplements,
-  String field,
-  dynamic reference,
-) {
-  if (reference is! Map<String, dynamic>) return null;
-  final id = _asInt(reference['id']);
-  if (id == null) return null;
-  return _supplementNameById(supplements, field, id);
+/// Tries a precomposed location string first (however the API happens
+/// to name it), then falls back to joining Site/Building/Floor names
+/// with "-", matching the reference screenshot's
+/// "6-DC-Data Center-Ground Floor-" style.
+String _composeLocation(Map<String, dynamic> json) {
+  final precomposed = _firstNonEmptyString([
+    json['location'],
+    json['locationPath'],
+    json['spacePath'],
+  ]);
+  if (precomposed != null) return precomposed;
+
+  final parts = [
+    _nestedName(json['site']),
+    _nestedName(json['building']),
+    _nestedName(json['floor']),
+  ].whereType<String>().where((p) => p.trim().isNotEmpty).toList();
+
+  return parts.isEmpty ? '--' : '${parts.join('-')}-';
 }
 
-String? _supplementNameById(
-  Map<String, dynamic> supplements,
-  String field,
-  int id,
-) {
-  final byId = supplements[field];
-  if (byId is! Map<String, dynamic>) return null;
-  final record = byId[id.toString()];
-  if (record is! Map<String, dynamic>) return null;
-  return _nonEmpty(record['name']) ?? _nonEmpty(record['displayName']);
+String? _nestedName(dynamic value) {
+  if (value is Map<String, dynamic>) {
+    final name = (value['name'] ?? value['primaryValue']) as String?;
+    return (name != null && name.trim().isNotEmpty) ? name.trim() : null;
+  }
+  return null;
 }
 
-String? _nonEmpty(dynamic value) {
-  if (value is String && value.trim().isNotEmpty) return value.trim();
+dynamic _nestedValue(dynamic value, String key) {
+  if (value is Map<String, dynamic>) return value[key];
+  return null;
+}
+
+dynamic _firstNonNull(List<dynamic> candidates) {
+  for (final candidate in candidates) {
+    if (candidate != null) return candidate;
+  }
+  return null;
+}
+
+String? _firstNonEmptyString(List<dynamic> candidates) {
+  for (final candidate in candidates) {
+    if (candidate is String && candidate.trim().isNotEmpty) {
+      return candidate.trim();
+    }
+  }
   return null;
 }
 
