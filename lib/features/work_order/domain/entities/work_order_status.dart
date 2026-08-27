@@ -19,6 +19,7 @@ enum WorkOrderStatus {
   materialIssued,
   awaitingQcTeamApproval,
   awaitingClosureApprovalFromClient,
+  closed,
 }
 
 extension WorkOrderStatusX on WorkOrderStatus {
@@ -52,6 +53,8 @@ extension WorkOrderStatusX on WorkOrderStatus {
         return 'wo_status_awaiting_qc_team_approval';
       case WorkOrderStatus.awaitingClosureApprovalFromClient:
         return 'wo_status_awaiting_closure_approval_from_client';
+      case WorkOrderStatus.closed:
+        return 'wo_status_closed';
     }
   }
 
@@ -87,6 +90,8 @@ extension WorkOrderStatusX on WorkOrderStatus {
         return const Color(0xFF6B3FA0);
       case WorkOrderStatus.awaitingClosureApprovalFromClient:
         return const Color(0xFF973265);
+      case WorkOrderStatus.closed:
+        return const Color(0xFF3D8B4E);
     }
   }
 
@@ -109,4 +114,47 @@ extension WorkOrderStatusX on WorkOrderStatus {
   /// Options offered in the filter dropdown — exact order from the
   /// reference "Select Status" screenshot.
   static const List<WorkOrderStatus> filterOptions = WorkOrderStatus.values;
+
+  /// Maps a label as returned by the server (either the ticket's expanded
+  /// `moduleState.status`/`displayName`, or a
+  /// `pickList/.../moduleState` option's `label`) onto the fixed enum.
+  /// Unknown/blank labels fall back to [assigned].
+  static WorkOrderStatus fromApiLabel(String? label) {
+    final normalized =
+        (label ?? '').toLowerCase().replaceAll(RegExp(r'[^a-z]'), '');
+    switch (normalized) {
+      case 'submitted':
+        return WorkOrderStatus.submitted;
+      case 'assigned':
+        return WorkOrderStatus.assigned;
+      case 'workinprogress':
+        return WorkOrderStatus.workInProgress;
+      case 'incomplete':
+        return WorkOrderStatus.incomplete;
+      case 'preopen':
+        return WorkOrderStatus.preOpen;
+      case 'requested':
+        return WorkOrderStatus.requested;
+      case 'rejected':
+        return WorkOrderStatus.rejected;
+      case 'reopened':
+        return WorkOrderStatus.reOpened;
+      case 'awaitingapproval':
+        return WorkOrderStatus.awaitingApproval;
+      case 'awaitingpauseapprovalfromclient':
+        return WorkOrderStatus.awaitingPauseApprovalFromClient;
+      case 'inventoryrequestraised':
+        return WorkOrderStatus.inventoryRequestRaised;
+      case 'materialissued':
+        return WorkOrderStatus.materialIssued;
+      case 'awaitingqcteamapproval':
+        return WorkOrderStatus.awaitingQcTeamApproval;
+      case 'awaitingclosureapprovalfromclient':
+        return WorkOrderStatus.awaitingClosureApprovalFromClient;
+      case 'closed':
+        return WorkOrderStatus.closed;
+      default:
+        return WorkOrderStatus.assigned;
+    }
+  }
 }

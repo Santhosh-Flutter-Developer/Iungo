@@ -13,4 +13,21 @@ extension WorkOrderMaintenanceTypeX on WorkOrderMaintenanceType {
         return 'maintenance_type_preventive';
     }
   }
+
+  /// Maps the `type.name`/`displayName` the list/detail API returns
+  /// (e.g. "Proactive") onto the fixed enum. Unknown/blank labels fall
+  /// back to [corrective], the most common catch-all "type" value.
+  static WorkOrderMaintenanceType fromApiLabel(String? label) {
+    final normalized =
+        (label ?? '').toLowerCase().replaceAll(RegExp(r'[^a-z]'), '');
+    switch (normalized) {
+      case 'proactive':
+        return WorkOrderMaintenanceType.proactive;
+      case 'preventive':
+        return WorkOrderMaintenanceType.preventive;
+      case 'corrective':
+      default:
+        return WorkOrderMaintenanceType.corrective;
+    }
+  }
 }

@@ -65,6 +65,8 @@ class _SearchAppBar extends StatelessWidget implements PreferredSizeWidget {
       title: TextField(
         autofocus: true,
         onChanged: controller.onQueryChanged,
+        onSubmitted: controller.onQuerySubmitted,
+        textInputAction: TextInputAction.search,
         cursorColor: AppColors.primary,
         style: const TextStyle(
           fontSize: 16,

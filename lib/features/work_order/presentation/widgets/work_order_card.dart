@@ -6,7 +6,6 @@ import 'package:iungo/features/service_request/domain/entities/service_request_p
 import 'package:iungo/features/service_request/presentation/widgets/status_badge.dart'
     show TicketIdChip;
 import 'package:iungo/features/work_order/domain/entities/work_order.dart';
-import 'package:iungo/features/work_order/domain/entities/work_order_discipline.dart';
 import 'package:iungo/features/work_order/domain/entities/work_order_maintenance_type.dart';
 import 'package:iungo/features/work_order/domain/entities/work_order_status.dart';
 import 'package:iungo/features/work_order/presentation/bindings/work_order_detail_binding.dart';
@@ -53,14 +52,14 @@ class WorkOrderCard extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             if (status.isLongLabel) ...[
-              TicketIdChip(id: workOrder.id),
+              TicketIdChip(id: workOrder.serialNumber),
               const SizedBox(height: 10),
               WorkOrderStatusBanner(status: status),
             ] else
               Row(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  TicketIdChip(id: workOrder.id),
+                  TicketIdChip(id: workOrder.serialNumber),
                   const Spacer(),
                   WorkOrderStatusBadge(status: status),
                 ],
@@ -147,7 +146,9 @@ class WorkOrderCard extends StatelessWidget {
                       Expanded(
                         child: _InfoItem(
                           icon: Icons.change_history,
-                          label: workOrder.discipline.labelKey.tr,
+                          label: workOrder.discipline.isEmpty
+                              ? '--'
+                              : workOrder.discipline,
                         ),
                       ),
                     ],

@@ -11,13 +11,45 @@ import 'package:iungo/features/work_order/presentation/pages/work_order_filter_p
 import 'package:iungo/features/work_order/presentation/pages/work_order_search_page.dart';
 import 'package:iungo/features/work_order/presentation/widgets/work_order_card.dart';
 
-class WorkOrderListPage extends StatelessWidget {
+class WorkOrderListPage extends StatefulWidget {
   const WorkOrderListPage({super.key});
 
   @override
-  Widget build(BuildContext context) {
-    final controller = Get.find<WorkOrderListController>();
+  State<WorkOrderListPage> createState() => _WorkOrderListPageState();
+}
 
+class _WorkOrderListPageState extends State<WorkOrderListPage> {
+  final WorkOrderListController controller = Get.find<WorkOrderListController>();
+
+  final ScrollController _scrollController = ScrollController();
+
+  /// How close to the bottom (in pixels) the user has to scroll before
+  /// the next page is requested.
+  static const double _loadMoreThreshold = 240;
+
+  @override
+  void initState() {
+    super.initState();
+    _scrollController.addListener(_onScroll);
+  }
+
+  @override
+  void dispose() {
+    _scrollController.removeListener(_onScroll);
+    _scrollController.dispose();
+    super.dispose();
+  }
+
+  void _onScroll() {
+    if (!_scrollController.hasClients) return;
+    final position = _scrollController.position;
+    if (position.pixels >= position.maxScrollExtent - _loadMoreThreshold) {
+      controller.loadMore();
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: AppColors.background,
       appBar: AppBar(
@@ -78,8 +110,7 @@ class WorkOrderListPage extends StatelessWidget {
                   return const ServiceRequestShimmerList();
                 }
 
-                if (controller.hasActiveFilter &&
-                    controller.isFilterLoading.value) {
+                if (controller.hasActiveFilter && controller.isFilterLoading.value) {
                   return const ServiceRequestShimmerList();
                 }
 
@@ -99,21 +130,52 @@ class WorkOrderListPage extends StatelessWidget {
                   return const ServiceRequestEmptyState();
                 }
 
+                // Infinite scroll only drives the base (unfiltered) list —
+                // a trailing spinner only makes sense while it's active.
+                final showLoadMoreSpinner =
+                    controller.isLoadingMore.value && !controller.hasActiveFilter;
+                final itemCount = workOrders.length + (showLoadMoreSpinner ? 1 : 0);
+
                 return RefreshIndicator(
                   onRefresh: controller.hasActiveFilter
                       ? controller.retryFilter
                       : controller.reload,
                   color: AppColors.primary,
                   child: ListView.builder(
+                    controller: _scrollController,
                     padding: const EdgeInsets.fromLTRB(16, 0, 16, 24),
-                    itemCount: workOrders.length,
-                    itemBuilder: (context, index) =>
-                        WorkOrderCard(workOrder: workOrders[index]),
+                    itemCount: itemCount,
+                    itemBuilder: (context, index) {
+                      if (index >= workOrders.length) {
+                        return const _LoadMoreSpinner();
+                      }
+                      return WorkOrderCard(workOrder: workOrders[index]);
+                    },
                   ),
                 );
               }),
             ),
           ],
+        ),
+      ),
+    );
+  }
+}
+
+/// Small centered spinner appended below the last card while the next
+/// page of 10 is being fetched.
+class _LoadMoreSpinner extends StatelessWidget {
+  const _LoadMoreSpinner();
+
+  @override
+  Widget build(BuildContext context) {
+    return const Padding(
+      padding: EdgeInsets.symmetric(vertical: 20),
+      child: Center(
+        child: SizedBox(
+          width: 24,
+          height: 24,
+          child: CircularProgressIndicator(strokeWidth: 2.5, color: AppColors.primary),
         ),
       ),
     );
@@ -156,11 +218,8 @@ class _WorkOrderErrorState extends StatelessWidget {
               style: OutlinedButton.styleFrom(
                 foregroundColor: AppColors.primary,
                 side: const BorderSide(color: AppColors.primary),
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(8),
-                ),
+                padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
               ),
               child: Text('retry'.tr),
             ),

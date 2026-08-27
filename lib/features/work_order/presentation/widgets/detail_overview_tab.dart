@@ -58,7 +58,7 @@ class DetailOverviewTab extends StatelessWidget {
         Row(
           children: [
             Text(
-              '# ${workOrder.id}',
+              '# ${workOrder.serialNumber}',
               style: const TextStyle(
                 fontSize: 15,
                 color: AppColors.headingBlueGrey,

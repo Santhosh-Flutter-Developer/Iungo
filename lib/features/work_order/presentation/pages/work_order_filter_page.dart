@@ -39,15 +39,21 @@ class _WorkOrderFilterPageState extends State<WorkOrderFilterPage>
     text: widget.controller.findTicketId.value?.toString() ?? '',
   );
 
-  /// Priority dropdown order matches the reference "Select Priority"
-  /// screenshot exactly: Emergency, Urgent, Routine, PPM — "No priority"
-  /// is not offered here.
-  static const _priorityOptions = [
+  /// Fallback priority order (matches the reference "Select Priority"
+  /// screenshot: Emergency, Urgent, Routine, PPM) used only until the
+  /// live `pickList/.../priority` fetch resolves.
+  static const _fallbackPriorityOptions = [
     ServiceRequestPriority.emergency,
     ServiceRequestPriority.urgent,
     ServiceRequestPriority.routine,
     ServiceRequestPriority.ppm,
   ];
+
+  @override
+  void initState() {
+    super.initState();
+    widget.controller.ensureFilterOptionsLoaded();
+  }
 
   @override
   void dispose() {
@@ -179,23 +185,31 @@ class _WorkOrderFilterPageState extends State<WorkOrderFilterPage>
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          FilterSelectField<WorkOrderStatus>(
-            label: 'select_status'.tr,
-            hint: 'select_status'.tr,
-            options: WorkOrderStatusX.filterOptions,
-            optionLabel: (o) => o.labelKey.tr,
-            value: _draft.status,
-            onChanged: (v) => setState(() => _draft = _draft.copyWith(status: v)),
+          Obx(
+            () => FilterSelectField<WorkOrderStatus>(
+              label: 'select_status'.tr,
+              hint: 'select_status'.tr,
+              options: widget.controller.statusFilterOptions.isNotEmpty
+                  ? widget.controller.statusFilterOptions
+                  : WorkOrderStatusX.filterOptions,
+              optionLabel: (o) => o.labelKey.tr,
+              value: _draft.status,
+              onChanged: (v) => setState(() => _draft = _draft.copyWith(status: v)),
+            ),
           ),
           const SizedBox(height: 20),
-          FilterSelectField<ServiceRequestPriority>(
-            label: 'select_priority'.tr,
-            hint: 'select_priority'.tr,
-            options: _priorityOptions,
-            optionLabel: (o) => o.labelKey.tr,
-            value: _draft.priority,
-            onChanged: (v) =>
-                setState(() => _draft = _draft.copyWith(priority: v)),
+          Obx(
+            () => FilterSelectField<ServiceRequestPriority>(
+              label: 'select_priority'.tr,
+              hint: 'select_priority'.tr,
+              options: widget.controller.priorityFilterOptions.isNotEmpty
+                  ? widget.controller.priorityFilterOptions
+                  : _fallbackPriorityOptions,
+              optionLabel: (o) => o.labelKey.tr,
+              value: _draft.priority,
+              onChanged: (v) =>
+                  setState(() => _draft = _draft.copyWith(priority: v)),
+            ),
           ),
           const SizedBox(height: 20),
           Text(

@@ -206,6 +206,7 @@ class AppTranslations extends Translations {
       'wo_status_awaiting_qc_team_approval': 'Awaiting QC Team Approval',
       'wo_status_awaiting_closure_approval_from_client':
           'Awaiting Closure Approval from Client',
+      'wo_status_closed': 'Closed',
 
       // Work Order disciplines
       'discipline_mechanical': 'Mechanical',
@@ -420,6 +421,7 @@ class AppTranslations extends Translations {
       'wo_status_awaiting_qc_team_approval': 'بانتظار موافقة فريق ضمان الجودة',
       'wo_status_awaiting_closure_approval_from_client':
           'بانتظار موافقة العميل على الإغلاق',
+      'wo_status_closed': 'مغلق',
 
       // Work Order disciplines
       'discipline_mechanical': 'ميكانيكي',
