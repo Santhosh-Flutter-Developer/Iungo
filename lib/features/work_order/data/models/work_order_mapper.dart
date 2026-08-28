@@ -50,7 +50,6 @@ class WorkOrderListPageResult {
     final typeLookup = _idMap(supplementsMap['type']);
     final assignedToLookup = _idMap(supplementsMap['assignedTo']);
     final createdByLookup = _idMap(supplementsMap['createdBy']);
-    final clientLookup = _idMap(supplementsMap['client']);
     // `moduleState` is the underlying field name (matches the pick-list
     // endpoint); `status` is the alias the base `view/all` list returns
     // when it's asked for via `selectableFieldNames`. A given response
@@ -69,7 +68,6 @@ class WorkOrderListPageResult {
             typeLookup: typeLookup,
             assignedToLookup: assignedToLookup,
             createdByLookup: createdByLookup,
-            clientLookup: clientLookup,
             moduleStateLookup:
                 moduleStateLookup.isNotEmpty ? moduleStateLookup : statusLookup,
           ),
@@ -101,7 +99,6 @@ class WorkOrderListPageResult {
     required Map<int, Map<String, dynamic>> typeLookup,
     required Map<int, Map<String, dynamic>> assignedToLookup,
     required Map<int, Map<String, dynamic>> createdByLookup,
-    required Map<int, Map<String, dynamic>> clientLookup,
     required Map<int, Map<String, dynamic>> moduleStateLookup,
   }) {
     final id = _asInt(item['id']) ?? 0;
@@ -156,24 +153,15 @@ class WorkOrderListPageResult {
     final assignedToInfo = assignedToId != null ? assignedToLookup[assignedToId] : null;
     final assignedTechnician = (assignedToInfo?['name'] as String?)?.trim();
 
-    // The requester shown next to the person icon on each card. No
-    // captured response so far returns a `createdBy` id alongside a
-    // matching supplement, so this falls back through the couple of
-    // plausible sources: the raising user's own name, then the
-    // requesting client org's primary contact.
-    final requester = _firstNonEmpty([
-      () {
-        final createdById = _asInt(_nestedId(item['createdBy']));
-        final info = createdById != null ? createdByLookup[createdById] : null;
-        return (info?['name'] as String?)?.trim();
-      }(),
-      () {
-        final clientId = _asInt(_nestedId(item['client']));
-        final info = clientId != null ? clientLookup[clientId] : null;
-        return (info?['primaryContactName'] as String?)?.trim() ??
-            (info?['name'] as String?)?.trim();
-      }(),
-    ]);
+    // The requester shown next to the person icon on each card. Some
+    // work orders (e.g. auto-generated PM tickets) genuinely have no
+    // `createdBy` set by the server — those honestly show '--' below
+    // rather than substituting the requesting client org's contact,
+    // which would show the same name for every ticket under that
+    // client and look like a single wrong value repeated everywhere.
+    final createdById = _asInt(_nestedId(item['createdBy']));
+    final createdByInfo = createdById != null ? createdByLookup[createdById] : null;
+    final requester = (createdByInfo?['name'] as String?)?.trim();
 
     return WorkOrder(
       id: id,
@@ -198,13 +186,6 @@ class WorkOrderListPageResult {
   static dynamic _nestedId(dynamic value) {
     if (value is Map<String, dynamic>) return value['id'];
     return value;
-  }
-
-  static String? _firstNonEmpty(List<String?> candidates) {
-    for (final candidate in candidates) {
-      if (candidate != null && candidate.isNotEmpty) return candidate;
-    }
-    return null;
   }
 
   static int? _asInt(dynamic value) {

@@ -54,7 +54,7 @@ class WorkOrderRemoteDataSourceImpl implements WorkOrderRemoteDataSource {
 
   static const _baseUrl =
       'https://citgroup.facilioclients.com/client/api/v3/modules/workorder';
-  static const _myWorkOrdersUrl = '$_baseUrl/view/myworkorders';
+  static const _myWorkOrdersUrl = '$_baseUrl/view/all';
 
   static const _selectableFieldNames =
       'description,serialNumber,status,subject,dueDate,category,priority,'
@@ -72,9 +72,9 @@ class WorkOrderRemoteDataSourceImpl implements WorkOrderRemoteDataSource {
       {
         'fetchOnlyViewGroupColumn': true,
         'moduleName': 'workorder',
-        'viewName': 'myworkorders',
+        'viewName': 'all',
         'page': page,
-        'perPage': perPage,
+        'perPage': 50,
         'search': '',
         'withoutCustomButtons': true,
         'selectableFieldNames': _selectableFieldNames,
@@ -98,9 +98,9 @@ class WorkOrderRemoteDataSourceImpl implements WorkOrderRemoteDataSource {
       {
         'fetchOnlyViewGroupColumn': true,
         'moduleName': 'workorder',
-        'viewName': 'myworkorders',
+        'viewName': 'all',
         'page': page,
-        'perPage': perPage,
+        'perPage': 50,
         'search': search ?? '',
         if (hasQuickFilter)
           'quickFilter': jsonEncode({
@@ -108,6 +108,8 @@ class WorkOrderRemoteDataSourceImpl implements WorkOrderRemoteDataSource {
               entry.key: {'value': entry.value},
           }),
         'withoutCustomButtons': true,
+        'selectableFieldNames': _selectableFieldNames,
+        'expand': _expandFields,
       },
       fallbackMessage: 'Failed to load work orders',
     );
