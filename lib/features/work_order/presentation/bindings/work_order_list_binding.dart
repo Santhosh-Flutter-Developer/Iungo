@@ -1,6 +1,7 @@
 import 'package:dio/dio.dart';
 import 'package:get/get.dart';
 import 'package:iungo/core/services/session_service.dart';
+import 'package:iungo/features/work_order/data/datasources/work_order_detail_remote_data_source.dart';
 import 'package:iungo/features/work_order/data/datasources/work_order_picklist_remote_data_source.dart';
 import 'package:iungo/features/work_order/data/datasources/work_order_remote_data_source.dart';
 import 'package:iungo/features/work_order/data/work_order_repository.dart';
@@ -54,11 +55,22 @@ class WorkOrderListBinding extends Bindings {
       );
     }
 
+    if (!Get.isRegistered<WorkOrderDetailRemoteDataSource>()) {
+      Get.lazyPut<WorkOrderDetailRemoteDataSource>(
+        () => WorkOrderDetailRemoteDataSourceImpl(
+          Get.find<Dio>(),
+          Get.find<SessionService>(),
+        ),
+        fenix: true,
+      );
+    }
+
     if (!Get.isRegistered<WorkOrderRepository>()) {
       Get.put(
         WorkOrderRepository(
           Get.find<WorkOrderRemoteDataSource>(),
           Get.find<WorkOrderPickListRemoteDataSource>(),
+          Get.find<WorkOrderDetailRemoteDataSource>(),
         ),
         permanent: true,
       );

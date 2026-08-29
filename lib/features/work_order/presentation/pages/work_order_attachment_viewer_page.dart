@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:iungo/core/constants/app_colors.dart';
+import 'package:iungo/core/services/session_service.dart';
 import 'package:iungo/features/work_order/domain/entities/work_order_attachment.dart';
 
 /// Full-screen attachment viewer opened from the Detail View's
@@ -11,8 +12,15 @@ class WorkOrderAttachmentViewerPage extends StatelessWidget {
 
   final WorkOrderAttachment attachment;
 
+  /// Files are served from the portal host, not `/client` — previewUrl
+  /// comes back host-relative.
+  static const _portalHost = 'https://citgroup.facilioclients.com';
+
   @override
   Widget build(BuildContext context) {
+    final isImage = (attachment.contentType ?? '').startsWith('image/');
+    final previewUrl = attachment.previewUrl;
+
     return Scaffold(
       backgroundColor: Colors.black,
       appBar: AppBar(
@@ -36,35 +44,54 @@ class WorkOrderAttachmentViewerPage extends StatelessWidget {
         child: InteractiveViewer(
           minScale: 1,
           maxScale: 4,
-          child: attachment.assetPath != null
-              ? Image.asset(
-                  attachment.assetPath!,
-                  fit: BoxFit.contain,
-                  // loadingBuilder: (context, child, frame) {
-                  //   if (frame == null) {
-                  //     return const SizedBox(
-                  //       width: 32,
-                  //       height: 32,
-                  //       child: CircularProgressIndicator(
-                  //         strokeWidth: 2.5,
-                  //         color: AppColors.white,
-                  //       ),
-                  //     );
-                  //   }
-                  //   return child;
-                  // },
-                )
-              : _PlaceholderPreview(attachment: attachment),
+          child: (isImage && previewUrl != null)
+              ? _RemoteImagePreview(url: _resolve(previewUrl))
+              : const _PlaceholderPreview(),
         ),
       ),
+    );
+  }
+
+  String _resolve(String hostRelativeUrl) {
+    if (hostRelativeUrl.startsWith('http://') ||
+        hostRelativeUrl.startsWith('https://')) {
+      return hostRelativeUrl;
+    }
+    return '$_portalHost$hostRelativeUrl';
+  }
+}
+
+/// An authenticated preview image — [Image.network] alone can't attach
+/// the Bearer token these file endpoints require, so this sends
+/// `headers` explicitly.
+class _RemoteImagePreview extends StatelessWidget {
+  const _RemoteImagePreview({required this.url});
+
+  final String url;
+
+  @override
+  Widget build(BuildContext context) {
+    final token = Get.find<SessionService>().token.value;
+    return Image.network(
+      url,
+      fit: BoxFit.contain,
+      headers: {
+        if (token != null && token.isNotEmpty) 'Authorization': 'Bearer $token',
+      },
+      loadingBuilder: (context, child, progress) {
+        if (progress == null) return child;
+        return const Padding(
+          padding: EdgeInsets.all(48),
+          child: CircularProgressIndicator(color: AppColors.white),
+        );
+      },
+      errorBuilder: (context, error, stackTrace) => const _PlaceholderPreview(),
     );
   }
 }
 
 class _PlaceholderPreview extends StatelessWidget {
-  const _PlaceholderPreview({required this.attachment});
-
-  final WorkOrderAttachment attachment;
+  const _PlaceholderPreview();
 
   @override
   Widget build(BuildContext context) {
@@ -75,7 +102,7 @@ class _PlaceholderPreview extends StatelessWidget {
             size: 96, color: AppColors.white),
         const SizedBox(height: 16),
         Text(
-          attachment.name,
+          'preview_not_available'.tr,
           textAlign: TextAlign.center,
           style: const TextStyle(fontSize: 15, color: AppColors.white),
         ),

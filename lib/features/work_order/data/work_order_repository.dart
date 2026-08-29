@@ -1,9 +1,13 @@
 import 'package:get/get.dart';
 import 'package:iungo/features/service_request/domain/entities/pick_list_option.dart';
+import 'package:iungo/features/work_order/data/datasources/work_order_detail_remote_data_source.dart';
 import 'package:iungo/features/work_order/data/datasources/work_order_picklist_remote_data_source.dart';
 import 'package:iungo/features/work_order/data/datasources/work_order_remote_data_source.dart';
+import 'package:iungo/features/work_order/data/models/work_order_detail_mapper.dart';
 import 'package:iungo/features/work_order/data/models/work_order_mapper.dart';
 import 'package:iungo/features/work_order/domain/entities/work_order.dart';
+import 'package:iungo/features/work_order/domain/entities/work_order_attachment.dart';
+import 'package:iungo/features/work_order/domain/entities/work_order_comment.dart';
 
 /// Single in-memory source of truth for "My Work Orders".
 ///
@@ -15,10 +19,15 @@ import 'package:iungo/features/work_order/domain/entities/work_order.dart';
 /// for infinite scroll) and pushed in here via [replaceWithPage] /
 /// [appendPage].
 class WorkOrderRepository extends GetxService {
-  WorkOrderRepository(this._remoteDataSource, this._pickListDataSource);
+  WorkOrderRepository(
+    this._remoteDataSource,
+    this._pickListDataSource,
+    this._detailDataSource,
+  );
 
   final WorkOrderRemoteDataSource _remoteDataSource;
   final WorkOrderPickListRemoteDataSource _pickListDataSource;
+  final WorkOrderDetailRemoteDataSource _detailDataSource;
 
   final RxList<WorkOrder> workOrders = <WorkOrder>[].obs;
 
@@ -68,6 +77,30 @@ class WorkOrderRepository extends GetxService {
     final options = await _pickListDataSource.fetchPriorityOptions();
     _cachedPriorityOptions = options;
     return options;
+  }
+
+  /// Fetches the full record for the Detail View's Overview tab.
+  Future<WorkOrder> fetchWorkOrderDetail(int id) async {
+    final raw = await _remoteDataSource.fetchWorkOrderDetail(id);
+    return mapWorkOrderDetail(raw);
+  }
+
+  // ---- Detail View: Tasks ----------------------------------------------
+
+  Future<WorkOrderTaskResult> fetchTasks(int workOrderId) {
+    return _detailDataSource.fetchTasks(workOrderId);
+  }
+
+  // ---- Detail View: Comments -----------------------------------------
+
+  Future<List<WorkOrderComment>> fetchComments(int workOrderId) {
+    return _detailDataSource.fetchComments(workOrderId);
+  }
+
+  // ---- Detail View: Attachments ---------------------------------------
+
+  Future<List<WorkOrderAttachment>> fetchAttachments(int workOrderId) {
+    return _detailDataSource.fetchAttachments(workOrderId);
   }
 
   /// Replaces the whole list with a freshly-fetched first page (initial

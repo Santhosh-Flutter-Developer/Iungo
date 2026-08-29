@@ -2,75 +2,119 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:iungo/core/constants/app_colors.dart';
 import 'package:iungo/features/work_order/domain/entities/work_order_task.dart';
+import 'package:iungo/features/work_order/presentation/controllers/work_order_detail_controller.dart';
 
-class DetailTasksTab extends StatelessWidget {
-  const DetailTasksTab({
-    super.key,
-    required this.completed,
-    required this.total,
-    required this.tasks,
-  });
-
-  final int completed;
-  final int total;
-  final List<WorkOrderTask> tasks;
+class DetailTasksTab extends GetView<WorkOrderDetailController> {
+  const DetailTasksTab({super.key});
 
   @override
   Widget build(BuildContext context) {
-    final progress = total == 0 ? 0.0 : completed / total;
+    return Obx(() {
+      if (controller.isLoadingTasks.value) {
+        return const Center(
+          child: CircularProgressIndicator(color: AppColors.primary),
+        );
+      }
 
-    return ListView(
-      padding: const EdgeInsets.fromLTRB(20, 24, 20, 40),
-      children: [
-        Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      if (controller.tasksError.value.isNotEmpty) {
+        return Center(
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 32),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(
+                  controller.tasksError.value,
+                  textAlign: TextAlign.center,
+                  style: const TextStyle(fontSize: 15, color: AppColors.textDark),
+                ),
+                const SizedBox(height: 16),
+                ElevatedButton(
+                  onPressed: controller.retryTasks,
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: AppColors.primary,
+                    foregroundColor: AppColors.white,
+                  ),
+                  child: Text('retry'.tr),
+                ),
+              ],
+            ),
+          ),
+        );
+      }
+
+      final completed = controller.tasksCompleted.value;
+      final total = controller.tasksTotal.value;
+      final tasks = controller.tasks;
+      final progress = total == 0 ? 0.0 : completed / total;
+
+      return RefreshIndicator(
+        color: AppColors.primary,
+        onRefresh: controller.retryTasks,
+        child: ListView(
+          physics: const AlwaysScrollableScrollPhysics(),
+          padding: const EdgeInsets.fromLTRB(20, 24, 20, 40),
           children: [
-            Text(
-              'completed'.tr.toUpperCase(),
-              style: const TextStyle(
-                fontSize: 14,
-                fontWeight: FontWeight.w700,
-                color: AppColors.textDark,
-                letterSpacing: 0.4,
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Text(
+                  'completed'.tr.toUpperCase(),
+                  style: const TextStyle(
+                    fontSize: 14,
+                    fontWeight: FontWeight.w700,
+                    color: AppColors.textDark,
+                    letterSpacing: 0.4,
+                  ),
+                ),
+                Text(
+                  '$completed/$total',
+                  style: const TextStyle(
+                    fontSize: 15,
+                    fontWeight: FontWeight.w600,
+                    color: AppColors.textDark,
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 14),
+            ClipRRect(
+              borderRadius: BorderRadius.circular(6),
+              child: LinearProgressIndicator(
+                value: progress,
+                minHeight: 8,
+                backgroundColor: AppColors.divider,
+                valueColor: const AlwaysStoppedAnimation(AppColors.primary),
               ),
             ),
-            Text(
-              '$completed/$total',
-              style: const TextStyle(
-                fontSize: 15,
-                fontWeight: FontWeight.w600,
-                color: AppColors.textDark,
+            const SizedBox(height: 24),
+            const Divider(color: AppColors.divider, height: 1),
+            const SizedBox(height: 24),
+            if (tasks.isEmpty)
+              Text(
+                'all_tasks'.tr,
+                textAlign: TextAlign.center,
+                style: const TextStyle(
+                  fontSize: 15,
+                  color: AppColors.textMuted,
+                ),
+              )
+            else ...[
+              Text(
+                'all_tasks'.tr,
+                textAlign: TextAlign.center,
+                style: const TextStyle(
+                  fontSize: 15,
+                  color: AppColors.textMuted,
+                ),
               ),
-            ),
+              const SizedBox(height: 20),
+              for (final task in tasks) _TaskRow(task: task),
+            ],
           ],
         ),
-        const SizedBox(height: 14),
-        ClipRRect(
-          borderRadius: BorderRadius.circular(6),
-          child: LinearProgressIndicator(
-            value: progress,
-            minHeight: 8,
-            backgroundColor: AppColors.divider,
-            valueColor: const AlwaysStoppedAnimation(AppColors.primary),
-          ),
-        ),
-        const SizedBox(height: 24),
-        const Divider(color: AppColors.divider, height: 1),
-        const SizedBox(height: 24),
-        Text(
-          'all_tasks'.tr,
-          textAlign: TextAlign.center,
-          style: const TextStyle(
-            fontSize: 15,
-            color: AppColors.textMuted,
-          ),
-        ),
-        if (tasks.isNotEmpty) ...[
-          const SizedBox(height: 20),
-          for (final task in tasks) _TaskRow(task: task),
-        ],
-      ],
-    );
+      );
+    });
   }
 }
 

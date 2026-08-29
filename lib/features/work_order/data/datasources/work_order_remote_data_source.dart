@@ -43,6 +43,25 @@ abstract class WorkOrderRemoteDataSource {
     Map<String, List<String>>? quickFilter,
     String? search,
   });
+
+  /// Fetches the full record for one work order — the Detail View
+  /// screen's Overview tab. Same endpoint as the list, but with a plain
+  /// `id` query param instead of `quickFilter`; the server responds with
+  /// `data.workorder` as a single object (rather than an array) carrying
+  /// richer inline detail — `description`, `moduleState`, `priority`,
+  /// `category`, `type`, `site`, `assignedTo`, `assignedBy`, etc. — fully
+  /// expanded inline (unlike the list response's id + supplement-lookup
+  /// shape):
+  ///
+  ///   GET .../v3/modules/workorder/view/all?
+  ///       fetchOnlyViewGroupColumn=true&moduleName=workorder&
+  ///       viewName=all&page=1&perPage=50&search=&
+  ///       withoutCustomButtons=true&id=<id>&
+  ///       selectableFieldNames=description,serialNumber,status,subject,
+  ///       dueDate,category,priority,siteId,type,assignedTo,createdBy&
+  ///       expand=status,dueDate,category,priority,siteId,type,
+  ///       assignedTo,createdBy
+  Future<Map<String, dynamic>> fetchWorkOrderDetail(int id);
 }
 
 /// Talks to the Iungo/Facilio "My Work Orders" list APIs.
@@ -113,6 +132,63 @@ class WorkOrderRemoteDataSourceImpl implements WorkOrderRemoteDataSource {
       },
       fallbackMessage: 'Failed to load work orders',
     );
+  }
+
+  @override
+  Future<Map<String, dynamic>> fetchWorkOrderDetail(int id) async {
+    const fallbackMessage = 'Failed to load work order';
+    try {
+      final token = _session.token.value;
+
+      final response = await _dio.get<dynamic>(
+        _myWorkOrdersUrl,
+        queryParameters: {
+          'fetchOnlyViewGroupColumn': true,
+          'moduleName': 'workorder',
+          'viewName': 'all',
+          'page': 1,
+          'perPage': 50,
+          'search': '',
+          'withoutCustomButtons': true,
+          'id': id,
+          'selectableFieldNames': _selectableFieldNames,
+          'expand': _expandFields,
+        },
+        options: Options(
+          headers: {
+            'Accept': 'application/json',
+            if (token != null && token.isNotEmpty)
+              'Authorization': 'Bearer $token',
+          },
+        ),
+      );
+
+      final body = _asMap(response.data);
+      if (body == null) {
+        throw const WorkOrderException('Unexpected response from server');
+      }
+
+      final code = body['code'];
+      if (code != null && code != 0) {
+        throw WorkOrderException(
+          (body['message'] ?? fallbackMessage).toString(),
+        );
+      }
+
+      final data = body['data'];
+      final workorder =
+          (data is Map<String, dynamic>) ? data['workorder'] : null;
+      if (workorder is! Map<String, dynamic>) {
+        throw const WorkOrderException('Unexpected response from server');
+      }
+      return workorder;
+    } on DioException catch (e) {
+      throw mapWorkOrderError(e, fallbackMessage: fallbackMessage);
+    } on WorkOrderException {
+      rethrow;
+    } catch (_) {
+      throw const WorkOrderException(fallbackMessage);
+    }
   }
 
   Future<WorkOrderListPageResult> _get(

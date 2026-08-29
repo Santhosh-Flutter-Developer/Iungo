@@ -62,21 +62,53 @@ class WorkOrderDetailPage extends GetView<WorkOrderDetailController> {
             ],
           ),
         ),
-        body: TabBarView(
-          children: [
-            DetailOverviewTab(
-              workOrder: controller.workOrder,
-              controller: controller,
-            ),
-            DetailTasksTab(
-              completed: controller.workOrder.tasksCompleted,
-              total: controller.workOrder.tasksTotal,
-              tasks: controller.workOrder.tasks,
-            ),
-            DetailCommentsTab(comments: controller.workOrder.comments),
-            DetailAttachmentsTab(attachments: controller.workOrder.attachments),
-          ],
-        ),
+        body: Obx(() {
+          if (controller.isLoading.value) {
+            return const Center(
+              child: CircularProgressIndicator(color: AppColors.primary),
+            );
+          }
+          if (controller.errorMessage.value.isNotEmpty) {
+            return Center(
+              child: Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 32),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text(
+                      controller.errorMessage.value,
+                      textAlign: TextAlign.center,
+                      style: const TextStyle(
+                        fontSize: 15,
+                        color: AppColors.textDark,
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+                    ElevatedButton(
+                      onPressed: controller.retry,
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: AppColors.primary,
+                        foregroundColor: AppColors.white,
+                      ),
+                      child: Text('retry'.tr),
+                    ),
+                  ],
+                ),
+              ),
+            );
+          }
+          return TabBarView(
+            children: [
+              DetailOverviewTab(
+                workOrder: controller.order,
+                controller: controller,
+              ),
+              const DetailTasksTab(),
+              const DetailCommentsTab(),
+              const DetailAttachmentsTab(),
+            ],
+          );
+        }),
       ),
     );
   }

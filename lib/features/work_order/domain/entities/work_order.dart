@@ -1,13 +1,13 @@
 import 'package:iungo/features/service_request/domain/entities/service_request_priority.dart';
-import 'package:iungo/features/work_order/domain/entities/work_order_attachment.dart';
-import 'package:iungo/features/work_order/domain/entities/work_order_comment.dart';
 import 'package:iungo/features/work_order/domain/entities/work_order_maintenance_type.dart';
 import 'package:iungo/features/work_order/domain/entities/work_order_status.dart';
-import 'package:iungo/features/work_order/domain/entities/work_order_task.dart';
 
 /// A single "My Work Orders" list-card entry. Backed by the live
 /// "My Work Orders" API (see WorkOrderRepository). Also backs the
-/// Detail View screen shown when a card is tapped.
+/// Detail View's Overview tab shown when a card is tapped — the other
+/// three tabs (Tasks/Comments/Attachments) are each backed by their own
+/// API call and live on [WorkOrderDetailController] instead, since they
+/// aren't part of this record.
 class WorkOrder {
   WorkOrder({
     required this.id,
@@ -23,11 +23,6 @@ class WorkOrder {
     required this.dueDate,
     this.assignedTechnician,
     DateTime? raisedAt,
-    this.tasksCompleted = 0,
-    this.tasksTotal = 0,
-    this.tasks = const [],
-    this.comments = const [],
-    this.attachments = const [],
   }) : raisedAt = raisedAt ?? dueDate;
 
   /// Internal Facilio primary key — used only for API calls, never
@@ -59,11 +54,4 @@ class WorkOrder {
   /// Date + time shown at the top of the Detail View's Overview tab.
   /// Falls back to [dueDate] (midnight) when not supplied.
   final DateTime raisedAt;
-
-  final int tasksCompleted;
-  final int tasksTotal;
-  final List<WorkOrderTask> tasks;
-
-  final List<WorkOrderComment> comments;
-  final List<WorkOrderAttachment> attachments;
 }
