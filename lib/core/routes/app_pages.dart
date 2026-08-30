@@ -16,7 +16,10 @@ import 'package:iungo/features/service_request/presentation/bindings/service_req
 import 'package:iungo/features/service_request/presentation/pages/service_request_list_page.dart';
 import 'package:iungo/features/splash/presentation/bindings/splash_binding.dart';
 import 'package:iungo/features/splash/presentation/pages/splash_page.dart';
+import 'package:iungo/features/work_order/domain/entities/pending_approval_kind.dart';
+import 'package:iungo/features/work_order/presentation/bindings/pending_work_order_list_binding.dart';
 import 'package:iungo/features/work_order/presentation/bindings/work_order_list_binding.dart';
+import 'package:iungo/features/work_order/presentation/pages/pending_work_order_list_page.dart';
 import 'package:iungo/features/work_order/presentation/pages/work_order_list_page.dart';
 
 import 'app_routes.dart';
@@ -61,6 +64,23 @@ class AppPages {
       name: AppRoutes.workOrderList,
       page: () => const WorkOrderListPage(),
       binding: WorkOrderListBinding(),
+      transition: Transition.rightToLeft,
+    ),
+    GetPage(
+      name: AppRoutes.workOrderPauseApprovalList,
+      page: () => const PendingWorkOrderListPage(
+        kind: PendingApprovalKind.pauseApproval,
+      ),
+      binding: PendingWorkOrderListBinding(PendingApprovalKind.pauseApproval),
+      transition: Transition.rightToLeft,
+    ),
+    GetPage(
+      name: AppRoutes.workOrderClosureApprovalList,
+      page: () => const PendingWorkOrderListPage(
+        kind: PendingApprovalKind.closureApproval,
+      ),
+      binding:
+          PendingWorkOrderListBinding(PendingApprovalKind.closureApproval),
       transition: Transition.rightToLeft,
     ),
     GetPage(

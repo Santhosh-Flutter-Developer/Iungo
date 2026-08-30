@@ -85,7 +85,7 @@ class _WorkOrderListPageState extends State<WorkOrderListPage> {
           ),
         ],
       ),
-      drawer: const AppDrawer(selected: DrawerMenuItem.myWorkOrders),
+      drawer: const AppDrawer(selected: DrawerMenuItem.allWorkOrders),
       body: SafeArea(
         child: Column(
           children: [

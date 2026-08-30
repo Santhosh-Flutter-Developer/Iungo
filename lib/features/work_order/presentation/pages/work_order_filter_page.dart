@@ -6,20 +6,25 @@ import 'package:iungo/features/service_request/presentation/pages/due_date_range
 import 'package:iungo/features/service_request/presentation/widgets/filter_select_field.dart';
 import 'package:iungo/features/work_order/domain/entities/work_order_filter.dart';
 import 'package:iungo/features/work_order/domain/entities/work_order_status.dart';
-import 'package:iungo/features/work_order/presentation/controllers/work_order_list_controller.dart';
+import 'package:iungo/features/work_order/presentation/controllers/work_order_filter_controller_like.dart';
 
 /// Full "Filter" screen for Work Orders: two tabs — "Filter"
 /// (status/priority/due date + Apply) and "Find Ticket" (lookup by id).
 /// Matches the reference screenshots exactly — note there is no "type"
 /// dropdown here, unlike the Service Requests filter.
+///
+/// Driven by [WorkOrderFilterControllerLike] rather than the concrete
+/// API-backed controller, so the same screen also serves the static
+/// "Awaiting for Pause Approval" / "Awaiting Approval for Closure"
+/// placeholder lists.
 class WorkOrderFilterPage extends StatefulWidget {
   const WorkOrderFilterPage({super.key, required this.controller});
 
-  final WorkOrderListController controller;
+  final WorkOrderFilterControllerLike controller;
 
   static Future<void> show(
     BuildContext context, {
-    required WorkOrderListController controller,
+    required WorkOrderFilterControllerLike controller,
   }) {
     return Get.to(() => WorkOrderFilterPage(controller: controller)) ??
         Future.value();

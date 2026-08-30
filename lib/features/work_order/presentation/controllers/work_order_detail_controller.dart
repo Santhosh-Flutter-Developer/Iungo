@@ -20,10 +20,20 @@ import 'package:iungo/features/work_order/domain/entities/work_order_task.dart';
 /// overview detail on [onInit] so a slow overview fetch doesn't block
 /// the other three tabs.
 class WorkOrderDetailController extends GetxController {
-  WorkOrderDetailController(this._repository, WorkOrder initial)
-      : workOrder = initial.obs;
+  WorkOrderDetailController(
+    this._repository,
+    WorkOrder initial, {
+    this.staticMode = false,
+  }) : workOrder = initial.obs;
 
   final WorkOrderRepository _repository;
+
+  /// When true, this Detail View is one of the static "Awaiting for
+  /// Pause/Closure Approval" placeholder lists — the overview shows the
+  /// [initial] work order as-is (no re-fetch by id) and Tasks/Comments/
+  /// Attachments simply render their existing empty states, since there
+  /// is no backing API to call yet.
+  final bool staticMode;
 
   /// Convenience accessor — most callers only ever want the current
   /// work order, not the fact that it's reactive.
@@ -65,6 +75,17 @@ class WorkOrderDetailController extends GetxController {
     _updateCountdown();
     _ticker =
         Timer.periodic(const Duration(seconds: 1), (_) => _updateCountdown());
+
+    if (staticMode) {
+      // No backing API yet — show the seeded work order as-is and leave
+      // Tasks/Comments/Attachments at their empty state.
+      isLoading.value = false;
+      isLoadingTasks.value = false;
+      isLoadingComments.value = false;
+      isLoadingAttachments.value = false;
+      return;
+    }
+
     _loadDetail();
     _loadTasks();
     _loadComments();
@@ -87,6 +108,7 @@ class WorkOrderDetailController extends GetxController {
   }
 
   Future<void> _loadDetail() async {
+    if (staticMode) return;
     isLoading.value = true;
     errorMessage.value = '';
     try {
@@ -108,6 +130,7 @@ class WorkOrderDetailController extends GetxController {
   // ---- Tasks -------------------------------------------------------
 
   Future<void> _loadTasks() async {
+    if (staticMode) return;
     isLoadingTasks.value = true;
     tasksError.value = '';
     try {
@@ -130,6 +153,7 @@ class WorkOrderDetailController extends GetxController {
   // ---- Comments --------------------------------------------------------
 
   Future<void> _loadComments() async {
+    if (staticMode) return;
     isLoadingComments.value = true;
     commentsError.value = '';
     try {
@@ -150,6 +174,7 @@ class WorkOrderDetailController extends GetxController {
   // ---- Attachments -------------------------------------------------------
 
   Future<void> _loadAttachments() async {
+    if (staticMode) return;
     isLoadingAttachments.value = true;
     attachmentsError.value = '';
     try {

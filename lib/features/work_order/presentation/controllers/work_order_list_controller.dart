@@ -8,8 +8,10 @@ import 'package:iungo/features/work_order/data/work_order_repository.dart';
 import 'package:iungo/features/work_order/domain/entities/work_order.dart';
 import 'package:iungo/features/work_order/domain/entities/work_order_filter.dart';
 import 'package:iungo/features/work_order/domain/entities/work_order_status.dart';
+import 'package:iungo/features/work_order/presentation/controllers/work_order_filter_controller_like.dart';
 
-class WorkOrderListController extends GetxController {
+class WorkOrderListController extends GetxController
+    implements WorkOrderFilterControllerLike {
   WorkOrderListController(this._repository);
 
   final WorkOrderRepository _repository;

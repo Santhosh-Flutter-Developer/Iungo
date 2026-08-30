@@ -8,11 +8,22 @@ import 'package:iungo/core/widgets/app_snackbar.dart';
 enum DrawerMenuItem {
   dashboard,
   myServiceRequests,
-  myWorkOrders,
+  allWorkOrders,
+  awaitingPauseApproval,
+  awaitingClosureApproval,
   feedback,
   profile,
   about,
 }
+
+/// The three sub-items under the "Work Order" expandable menu — kept as
+/// its own small list so the drawer knows which item to auto-expand for
+/// and which rows to render inside it.
+const _workOrderMenuItems = [
+  DrawerMenuItem.allWorkOrders,
+  DrawerMenuItem.awaitingPauseApproval,
+  DrawerMenuItem.awaitingClosureApproval,
+];
 
 extension _DrawerMenuItemX on DrawerMenuItem {
   IconData get icon {
@@ -21,7 +32,9 @@ extension _DrawerMenuItemX on DrawerMenuItem {
         return Icons.home_outlined;
       case DrawerMenuItem.myServiceRequests:
         return Icons.assignment_turned_in_outlined;
-      case DrawerMenuItem.myWorkOrders:
+      case DrawerMenuItem.allWorkOrders:
+      case DrawerMenuItem.awaitingPauseApproval:
+      case DrawerMenuItem.awaitingClosureApproval:
         return Icons.playlist_add_check_outlined;
       case DrawerMenuItem.feedback:
         return Icons.edit_outlined;
@@ -38,8 +51,12 @@ extension _DrawerMenuItemX on DrawerMenuItem {
         return 'dashboard';
       case DrawerMenuItem.myServiceRequests:
         return 'my_service_requests';
-      case DrawerMenuItem.myWorkOrders:
-        return 'my_work_orders';
+      case DrawerMenuItem.allWorkOrders:
+        return 'all_work_orders';
+      case DrawerMenuItem.awaitingPauseApproval:
+        return 'awaiting_pause_approval';
+      case DrawerMenuItem.awaitingClosureApproval:
+        return 'awaiting_approval_closure';
       case DrawerMenuItem.feedback:
         return 'feedback';
       case DrawerMenuItem.profile:
@@ -55,12 +72,14 @@ class AppDrawer extends StatelessWidget {
 
   final DrawerMenuItem selected;
 
-  static const _items = [
+  static const _itemsAbove = [
     DrawerMenuItem.dashboard,
     DrawerMenuItem.myServiceRequests,
-    DrawerMenuItem.myWorkOrders,
-    // DrawerMenuItem.feedback,
+  ];
+
+  static const _itemsBelow = [
     DrawerMenuItem.profile,
+    // DrawerMenuItem.feedback,
     // DrawerMenuItem.about,
   ];
 
@@ -72,8 +91,12 @@ class AppDrawer extends StatelessWidget {
       Get.offAllNamed(AppRoutes.dashboard);
     } else if (item == DrawerMenuItem.myServiceRequests) {
       Get.offAllNamed(AppRoutes.serviceRequestList);
-    } else if (item == DrawerMenuItem.myWorkOrders) {
+    } else if (item == DrawerMenuItem.allWorkOrders) {
       Get.offAllNamed(AppRoutes.workOrderList);
+    } else if (item == DrawerMenuItem.awaitingPauseApproval) {
+      Get.offAllNamed(AppRoutes.workOrderPauseApprovalList);
+    } else if (item == DrawerMenuItem.awaitingClosureApproval) {
+      Get.offAllNamed(AppRoutes.workOrderClosureApprovalList);
     } else if (item == DrawerMenuItem.profile) {
       Get.toNamed(AppRoutes.profile);
     } else {}
@@ -190,7 +213,18 @@ class AppDrawer extends StatelessWidget {
               child: ListView(
                 padding: EdgeInsets.zero,
                 children: [
-                  for (final item in _items)
+                  for (final item in _itemsAbove)
+                    _DrawerRow(
+                      icon: item.icon,
+                      label: item.labelKey.tr,
+                      isSelected: item == selected,
+                      onTap: () => _handleTap(context, item),
+                    ),
+                  _WorkOrderExpansionMenu(
+                    selected: selected,
+                    onItemTap: (item) => _handleTap(context, item),
+                  ),
+                  for (final item in _itemsBelow)
                     _DrawerRow(
                       icon: item.icon,
                       label: item.labelKey.tr,
@@ -214,18 +248,80 @@ class AppDrawer extends StatelessWidget {
   }
 }
 
+/// The "Work Order" expandable menu — a parent row (matches the other
+/// drawer rows in icon/label styling) that opens to reveal "All Work
+/// Orders" / "Awaiting for Pause Approval" / "Awaiting Approval for
+/// Closure". Auto-expanded whenever the current screen is one of the
+/// three, so navigating in never hides the highlighted sub-item.
+class _WorkOrderExpansionMenu extends StatelessWidget {
+  const _WorkOrderExpansionMenu({
+    required this.selected,
+    required this.onItemTap,
+  });
+
+  final DrawerMenuItem selected;
+  final ValueChanged<DrawerMenuItem> onItemTap;
+
+  bool get _isChildSelected => _workOrderMenuItems.contains(selected);
+
+  @override
+  Widget build(BuildContext context) {
+    return Theme(
+      data: Theme.of(context).copyWith(dividerColor: Colors.transparent),
+      child: ExpansionTile(
+        key: PageStorageKey(_isChildSelected),
+        initiallyExpanded: _isChildSelected,
+        tilePadding: const EdgeInsets.symmetric(horizontal: 24),
+        childrenPadding: EdgeInsets.zero,
+        iconColor: AppColors.headingBlueGrey,
+        collapsedIconColor: AppColors.headingBlueGrey,
+        leading: Icon(
+          Icons.playlist_add_check_outlined,
+          size: 26,
+          color: AppColors.headingBlueGrey,
+        ),
+        title: Text(
+          'work_order'.tr,
+          maxLines: 2,
+          overflow: TextOverflow.ellipsis,
+          style: const TextStyle(
+            fontSize: 17,
+            fontWeight: FontWeight.w600,
+            color: AppColors.headingBlueGrey,
+          ),
+        ),
+        children: [
+          for (final item in _workOrderMenuItems)
+            _DrawerRow(
+              icon: item.icon,
+              label: item.labelKey.tr,
+              isSelected: item == selected,
+              onTap: () => onItemTap(item),
+              indent: true,
+            ),
+        ],
+      ),
+    );
+  }
+}
+
 class _DrawerRow extends StatelessWidget {
   const _DrawerRow({
     required this.icon,
     required this.label,
     required this.isSelected,
     required this.onTap,
+    this.indent = false,
   });
 
   final IconData icon;
   final String label;
   final bool isSelected;
   final VoidCallback onTap;
+
+  /// True for sub-items nested inside the "Work Order" expansion menu —
+  /// adds extra leading space so they read as children of that row.
+  final bool indent;
 
   @override
   Widget build(BuildContext context) {
@@ -238,10 +334,10 @@ class _DrawerRow extends StatelessWidget {
       child: InkWell(
         onTap: onTap,
         child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 20),
+          padding: EdgeInsets.fromLTRB(indent ? 48 : 24, 20, 24, 20),
           child: Row(
             children: [
-              Icon(icon, size: 26, color: color),
+              Icon(icon, size: indent ? 20 : 26, color: color),
               const SizedBox(width: 22),
               Expanded(
                 child: Text(

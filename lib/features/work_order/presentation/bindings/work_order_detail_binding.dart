@@ -5,9 +5,14 @@ import 'package:iungo/features/work_order/presentation/bindings/work_order_list_
 import 'package:iungo/features/work_order/presentation/controllers/work_order_detail_controller.dart';
 
 class WorkOrderDetailBinding extends Bindings {
-  WorkOrderDetailBinding(this.workOrder);
+  WorkOrderDetailBinding(this.workOrder, {this.staticMode = false});
 
   final WorkOrder workOrder;
+
+  /// Forwarded to [WorkOrderDetailController] — true for the static
+  /// "Awaiting for Pause/Closure Approval" placeholder lists, which have
+  /// no backing API yet.
+  final bool staticMode;
 
   @override
   void dependencies() {
@@ -16,6 +21,7 @@ class WorkOrderDetailBinding extends Bindings {
       WorkOrderDetailController(
         Get.find<WorkOrderRepository>(),
         workOrder,
+        staticMode: staticMode,
       ),
     );
   }

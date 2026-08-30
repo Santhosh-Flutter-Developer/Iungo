@@ -11,4 +11,6 @@ abstract class AppRoutes {
   static const profile = '/profile';
   static const scanQr = '/scan-qr';
   static const workOrderList = '/work-orders';
+  static const workOrderPauseApprovalList = '/work-orders/pause-approval';
+  static const workOrderClosureApprovalList = '/work-orders/closure-approval';
 }

@@ -15,9 +15,14 @@ import 'package:iungo/features/work_order/presentation/widgets/work_order_status
 /// One card in the "My Work Orders" list. Tapping the card opens the
 /// Detail View.
 class WorkOrderCard extends StatelessWidget {
-  const WorkOrderCard({super.key, required this.workOrder});
+  const WorkOrderCard({super.key, required this.workOrder, this.onTap});
 
   final WorkOrder workOrder;
+
+  /// Overrides the default navigation to the real, API-backed Detail
+  /// View — used by the static "Awaiting for Pause/Closure Approval"
+  /// lists to open their own placeholder Detail View instead.
+  final VoidCallback? onTap;
 
   bool get _isDueTodayOrOverdue {
     final now = DateTime.now();
@@ -35,10 +40,11 @@ class WorkOrderCard extends StatelessWidget {
     final status = workOrder.status;
 
     return InkWell(
-      onTap: () => Get.to(
-        () => const WorkOrderDetailPage(),
-        binding: WorkOrderDetailBinding(workOrder),
-      ),
+      onTap: onTap ??
+          () => Get.to(
+                () => const WorkOrderDetailPage(),
+                binding: WorkOrderDetailBinding(workOrder),
+              ),
       borderRadius: BorderRadius.circular(12),
       child: Container(
         margin: const EdgeInsets.only(bottom: 16),
