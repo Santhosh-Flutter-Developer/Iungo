@@ -9,10 +9,10 @@ import 'package:iungo/features/inventory_request/presentation/controllers/invent
 /// Drives the "Inventory Request → Awaiting Client Approval" screen —
 /// same list UI, filters, and Detail View pattern as Work Order, but
 /// backed by a small local seed list instead of an API call, since the
-/// backing endpoint doesn't exist yet. Filtering (reservation status /
-/// spare-part flag / created date / find ticket) runs entirely in
-/// memory. Swap this out for a real API-backed controller once the
-/// corresponding endpoint exists.
+/// backing endpoint doesn't exist yet. Filtering (status / reservation
+/// status / created date / find ticket) runs entirely in memory. Swap
+/// this out for a real API-backed controller once the corresponding
+/// endpoint exists.
 class InventoryRequestListController extends GetxController
     implements InventoryRequestFilterControllerLike {
   final RxBool isLoading = false.obs;
@@ -25,8 +25,20 @@ class InventoryRequestListController extends GetxController
   final Rxn<int> findTicketId = Rxn<int>();
 
   @override
+  final RxList<String> statusFilterOptions = <String>[].obs;
+
+  @override
   final RxList<InventoryReservationStatus> reservationStatusFilterOptions =
       <InventoryReservationStatus>[].obs;
+
+  /// Canonical statuses shown in the Filter screen even if the current
+  /// seed data doesn't happen to contain one of them yet.
+  static const _knownStatuses = [
+    'Awaiting Client Approval',
+    'Fully Issued',
+    'Partially Issued',
+    'Rejected',
+  ];
 
   late final List<InventoryRequest> _seed = buildInventoryRequestSeed();
 
@@ -35,6 +47,12 @@ class InventoryRequestListController extends GetxController
   @override
   void onInit() {
     super.onInit();
+    final seedStatuses = _seed
+        .map((r) => r.status)
+        .whereType<String>()
+        .where((s) => s.trim().isNotEmpty);
+    statusFilterOptions
+        .assignAll({..._knownStatuses, ...seedStatuses}.toList());
     reservationStatusFilterOptions
         .assignAll(InventoryReservationStatusX.filterOptions);
     _visible.assignAll(_seed);
@@ -83,11 +101,9 @@ class InventoryRequestListController extends GetxController
           results.where((r) => r.reservationStatus == reservationStatus).toList();
     }
 
-    final isSparePartRequest = filter.value.isSparePartRequest;
-    if (isSparePartRequest != null) {
-      results = results
-          .where((r) => r.isSparePartRequest == isSparePartRequest)
-          .toList();
+    final status = filter.value.status;
+    if (status != null && status.trim().isNotEmpty) {
+      results = results.where((r) => r.status == status).toList();
     }
 
     final start = filter.value.createdDateStart;

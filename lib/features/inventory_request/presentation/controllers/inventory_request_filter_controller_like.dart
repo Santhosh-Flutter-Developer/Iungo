@@ -9,6 +9,7 @@ import 'package:iungo/features/inventory_request/domain/entities/inventory_reser
 abstract class InventoryRequestFilterControllerLike {
   Rx<InventoryRequestFilter> get filter;
   Rxn<int> get findTicketId;
+  RxList<String> get statusFilterOptions;
   RxList<InventoryReservationStatus> get reservationStatusFilterOptions;
 
   Future<void> ensureFilterOptionsLoaded();

@@ -8,8 +8,8 @@ import 'package:iungo/features/service_request/presentation/pages/due_date_range
 import 'package:iungo/features/service_request/presentation/widgets/filter_select_field.dart';
 
 /// Full "Filter" screen for Inventory Requests: two tabs — "Filter"
-/// (reservation status/spare-part flag/created date + Apply) and "Find
-/// Ticket" (lookup by id). Mirrors [WorkOrderFilterPage] exactly.
+/// (status/reservation status/created date + Apply) and "Find Ticket"
+/// (lookup by id). Mirrors [WorkOrderFilterPage] exactly.
 ///
 /// Driven by [InventoryRequestFilterControllerLike] rather than the
 /// concrete controller, so the same screen can later drive a live,
@@ -42,8 +42,6 @@ class _InventoryRequestFilterPageState
   late final _ticketIdController = TextEditingController(
     text: widget.controller.findTicketId.value?.toString() ?? '',
   );
-
-  static const _sparePartOptions = [true, false];
 
   @override
   void initState() {
@@ -195,14 +193,16 @@ class _InventoryRequestFilterPageState
             ),
           ),
           const SizedBox(height: 20),
-          FilterSelectField<bool>(
-            label: 'is_spare_part_request_label'.tr,
-            hint: 'is_spare_part_request_label'.tr,
-            options: _sparePartOptions,
-            optionLabel: (o) => o ? 'yes'.tr : 'no'.tr,
-            value: _draft.isSparePartRequest,
-            onChanged: (v) =>
-                setState(() => _draft = _draft.copyWith(isSparePartRequest: v)),
+          Obx(
+            () => FilterSelectField<String>(
+              label: 'select_status'.tr,
+              hint: 'select_status'.tr,
+              options: widget.controller.statusFilterOptions.toList(),
+              optionLabel: (o) => o,
+              value: _draft.status,
+              onChanged: (v) =>
+                  setState(() => _draft = _draft.copyWith(status: v)),
+            ),
           ),
           const SizedBox(height: 20),
           Text(

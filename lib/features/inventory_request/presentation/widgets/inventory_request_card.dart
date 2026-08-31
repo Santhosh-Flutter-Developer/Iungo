@@ -3,9 +3,10 @@ import 'package:get/get.dart';
 import 'package:iungo/core/constants/app_colors.dart';
 import 'package:iungo/core/utils/app_date_format.dart';
 import 'package:iungo/features/inventory_request/domain/entities/inventory_request.dart';
+import 'package:iungo/features/inventory_request/domain/entities/inventory_reservation_status.dart';
 import 'package:iungo/features/inventory_request/presentation/bindings/inventory_request_detail_binding.dart';
 import 'package:iungo/features/inventory_request/presentation/pages/inventory_request_detail_page.dart';
-import 'package:iungo/features/inventory_request/presentation/widgets/inventory_reservation_status_badge.dart';
+import 'package:iungo/features/inventory_request/presentation/widgets/inventory_request_status_badge.dart';
 import 'package:iungo/features/service_request/presentation/widgets/status_badge.dart'
     show TicketIdChip;
 
@@ -45,9 +46,7 @@ class InventoryRequestCard extends StatelessWidget {
               children: [
                 TicketIdChip(id: request.id),
                 const Spacer(),
-                InventoryReservationStatusBadge(
-                  status: request.reservationStatus,
-                ),
+                InventoryRequestStatusBadge(status: request.status),
               ],
             ),
             const SizedBox(height: 14),
@@ -124,11 +123,38 @@ class InventoryRequestCard extends StatelessWidget {
                     ],
                   ),
                   const SizedBox(height: 10),
-                  _InfoItem(
-                    icon: Icons.inventory_2_outlined,
-                    label: request.isSparePartRequest
-                        ? 'is_spare_part_request'.tr
-                        : 'is_not_spare_part_request'.tr,
+                  Row(
+                    children: [
+                      Expanded(
+                        child: _InfoItem(
+                          icon: Icons.fact_check_outlined,
+                          label: '${'reservation_status'.tr}: '
+                              '${request.reservationStatus.labelKey.tr}',
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 10),
+                  Row(
+                    children: [
+                      Expanded(
+                        child: _InfoItem(
+                          icon: Icons.category_outlined,
+                          label: '${'service_line'.tr}: ${request.serviceLine}',
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 10),
+                  Row(
+                    children: [
+                      Expanded(
+                        child: _InfoItem(
+                          icon: Icons.edit_note_outlined,
+                          label: '${'created_by'.tr}: ${request.createdBy}',
+                        ),
+                      ),
+                    ],
                   ),
                 ],
               ),

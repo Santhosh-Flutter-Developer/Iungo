@@ -4,15 +4,17 @@ import 'package:iungo/core/constants/app_colors.dart';
 import 'package:iungo/core/utils/app_date_format.dart';
 import 'package:iungo/features/inventory_request/domain/entities/inventory_line_item.dart';
 import 'package:iungo/features/inventory_request/domain/entities/inventory_request.dart';
-import 'package:iungo/features/inventory_request/presentation/widgets/inventory_reservation_status_badge.dart';
+import 'package:iungo/features/inventory_request/domain/entities/inventory_reservation_status.dart';
+import 'package:iungo/features/inventory_request/presentation/widgets/inventory_request_status_badge.dart';
 
 /// Overview tab of the Inventory Request Detail View. Uses the same
 /// AppBar/tab-bar chrome, fonts, colors and spacing rhythm as the Work
 /// Order Detail View's Overview tab (see [DetailOverviewTab]), but lays
 /// out the actual fields to match the reference admin-panel screenshot:
 /// a description block, a two-column field grid (Requested/Required
-/// Time, Requested By/For, Client Approval Authorities/Service Line,
-/// Status/Is Spare Part Request), and a Line Items table.
+/// Time, Requested By/For, Reservation Status/Created By, Client
+/// Approval Authorities/Service Line, Status/Is Spare Part Request),
+/// and a Line Items table.
 class InventoryRequestDetailOverviewTab extends StatelessWidget {
   const InventoryRequestDetailOverviewTab({super.key, required this.request});
 
@@ -25,7 +27,7 @@ class InventoryRequestDetailOverviewTab extends StatelessWidget {
       children: [
         Row(
           children: [
-            InventoryReservationStatusBadge(status: request.reservationStatus),
+            InventoryRequestStatusBadge(status: request.status),
           ],
         ),
         const SizedBox(height: 14),
@@ -95,6 +97,12 @@ class InventoryRequestDetailOverviewTab extends StatelessWidget {
           leftValue: request.requestedBy,
           rightLabel: 'requested_for'.tr,
           rightValue: request.requestedFor,
+        ),
+        _FieldPairRow(
+          leftLabel: 'reservation_status'.tr,
+          leftValue: request.reservationStatus.labelKey.tr,
+          rightLabel: 'created_by'.tr,
+          rightValue: request.createdBy,
         ),
         _FieldPairRow(
           leftLabel: 'client_approval_authorities'.tr,
