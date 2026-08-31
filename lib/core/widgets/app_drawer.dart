@@ -11,6 +11,7 @@ enum DrawerMenuItem {
   allWorkOrders,
   awaitingPauseApproval,
   awaitingClosureApproval,
+  inventoryRequestAwaitingClientApproval,
   feedback,
   profile,
   about,
@@ -25,6 +26,13 @@ const _workOrderMenuItems = [
   DrawerMenuItem.awaitingClosureApproval,
 ];
 
+/// The sub-item(s) under the "Inventory Request" expandable menu — kept
+/// as its own small list, same pattern as [_workOrderMenuItems], so more
+/// items can be added later without touching the expansion widget.
+const _inventoryRequestMenuItems = [
+  DrawerMenuItem.inventoryRequestAwaitingClientApproval,
+];
+
 extension _DrawerMenuItemX on DrawerMenuItem {
   IconData get icon {
     switch (this) {
@@ -36,6 +44,8 @@ extension _DrawerMenuItemX on DrawerMenuItem {
       case DrawerMenuItem.awaitingPauseApproval:
       case DrawerMenuItem.awaitingClosureApproval:
         return Icons.playlist_add_check_outlined;
+      case DrawerMenuItem.inventoryRequestAwaitingClientApproval:
+        return Icons.inventory_2_outlined;
       case DrawerMenuItem.feedback:
         return Icons.edit_outlined;
       case DrawerMenuItem.profile:
@@ -57,6 +67,8 @@ extension _DrawerMenuItemX on DrawerMenuItem {
         return 'awaiting_pause_approval';
       case DrawerMenuItem.awaitingClosureApproval:
         return 'awaiting_approval_closure';
+      case DrawerMenuItem.inventoryRequestAwaitingClientApproval:
+        return 'awaiting_client_approval';
       case DrawerMenuItem.feedback:
         return 'feedback';
       case DrawerMenuItem.profile:
@@ -97,6 +109,8 @@ class AppDrawer extends StatelessWidget {
       Get.offAllNamed(AppRoutes.workOrderPauseApprovalList);
     } else if (item == DrawerMenuItem.awaitingClosureApproval) {
       Get.offAllNamed(AppRoutes.workOrderClosureApprovalList);
+    } else if (item == DrawerMenuItem.inventoryRequestAwaitingClientApproval) {
+      Get.offAllNamed(AppRoutes.inventoryRequestAwaitingClientApproval);
     } else if (item == DrawerMenuItem.profile) {
       Get.toNamed(AppRoutes.profile);
     } else {}
@@ -224,6 +238,10 @@ class AppDrawer extends StatelessWidget {
                     selected: selected,
                     onItemTap: (item) => _handleTap(context, item),
                   ),
+                  _InventoryRequestExpansionMenu(
+                    selected: selected,
+                    onItemTap: (item) => _handleTap(context, item),
+                  ),
                   for (final item in _itemsBelow)
                     _DrawerRow(
                       icon: item.icon,
@@ -292,6 +310,62 @@ class _WorkOrderExpansionMenu extends StatelessWidget {
         ),
         children: [
           for (final item in _workOrderMenuItems)
+            _DrawerRow(
+              icon: item.icon,
+              label: item.labelKey.tr,
+              isSelected: item == selected,
+              onTap: () => onItemTap(item),
+              indent: true,
+            ),
+        ],
+      ),
+    );
+  }
+}
+
+/// The "Inventory Request" expandable menu — a parent row (matches the
+/// other drawer rows in icon/label styling) that opens to reveal
+/// "Awaiting Client Approval". Auto-expanded whenever the current screen
+/// is one of its children, same pattern as [_WorkOrderExpansionMenu].
+class _InventoryRequestExpansionMenu extends StatelessWidget {
+  const _InventoryRequestExpansionMenu({
+    required this.selected,
+    required this.onItemTap,
+  });
+
+  final DrawerMenuItem selected;
+  final ValueChanged<DrawerMenuItem> onItemTap;
+
+  bool get _isChildSelected => _inventoryRequestMenuItems.contains(selected);
+
+  @override
+  Widget build(BuildContext context) {
+    return Theme(
+      data: Theme.of(context).copyWith(dividerColor: Colors.transparent),
+      child: ExpansionTile(
+        key: PageStorageKey(_isChildSelected),
+        initiallyExpanded: _isChildSelected,
+        tilePadding: const EdgeInsets.symmetric(horizontal: 24),
+        childrenPadding: EdgeInsets.zero,
+        iconColor: AppColors.headingBlueGrey,
+        collapsedIconColor: AppColors.headingBlueGrey,
+        leading: Icon(
+          Icons.inventory_2_outlined,
+          size: 26,
+          color: AppColors.headingBlueGrey,
+        ),
+        title: Text(
+          'inventory_request'.tr,
+          maxLines: 2,
+          overflow: TextOverflow.ellipsis,
+          style: const TextStyle(
+            fontSize: 17,
+            fontWeight: FontWeight.w600,
+            color: AppColors.headingBlueGrey,
+          ),
+        ),
+        children: [
+          for (final item in _inventoryRequestMenuItems)
             _DrawerRow(
               icon: item.icon,
               label: item.labelKey.tr,

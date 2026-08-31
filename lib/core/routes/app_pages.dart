@@ -5,6 +5,8 @@ import 'package:iungo/features/auth/presentation/bindings/login_binding.dart';
 import 'package:iungo/features/auth/presentation/pages/login_page.dart';
 import 'package:iungo/features/dashboard/presentation/bindings/dashboard_binding.dart';
 import 'package:iungo/features/dashboard/presentation/pages/dashboard_page.dart';
+import 'package:iungo/features/inventory_request/presentation/bindings/inventory_request_list_binding.dart';
+import 'package:iungo/features/inventory_request/presentation/pages/inventory_request_list_page.dart';
 import 'package:iungo/features/legal/presentation/pages/privacy_policy_page.dart';
 import 'package:iungo/features/notification/presentation/bindings/notification_binding.dart';
 import 'package:iungo/features/notification/presentation/pages/notification_page.dart';
@@ -81,6 +83,12 @@ class AppPages {
       ),
       binding:
           PendingWorkOrderListBinding(PendingApprovalKind.closureApproval),
+      transition: Transition.rightToLeft,
+    ),
+    GetPage(
+      name: AppRoutes.inventoryRequestAwaitingClientApproval,
+      page: () => const InventoryRequestListPage(),
+      binding: InventoryRequestListBinding(),
       transition: Transition.rightToLeft,
     ),
     GetPage(

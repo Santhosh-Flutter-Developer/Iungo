@@ -1,0 +1,62 @@
+import 'package:iungo/features/inventory_request/domain/entities/inventory_line_item.dart';
+import 'package:iungo/features/inventory_request/domain/entities/inventory_reservation_status.dart';
+
+/// A single "Inventory Request" record — backs both the "Awaiting Client
+/// Approval" list card and the Detail View's Overview tab. Field names
+/// mirror the reference admin-panel screenshots (ID, Name, Created Time,
+/// Status, Reservation Status, Work Order, Requested For/By, Is Spare
+/// Part Request or Not, Created By, plus the Line Items table).
+class InventoryRequest {
+  const InventoryRequest({
+    required this.id,
+    required this.name,
+    required this.description,
+    required this.createdTime,
+    required this.requestedTime,
+    required this.requiredTime,
+    this.status,
+    required this.reservationStatus,
+    required this.workOrderTitle,
+    required this.requestedFor,
+    required this.requestedBy,
+    required this.isSparePartRequest,
+    required this.createdBy,
+    required this.clientApprovalAuthorities,
+    required this.serviceLine,
+    required this.lineItems,
+  });
+
+  /// The ticket number shown on every card/Detail View (e.g. "# 1666").
+  final int id;
+
+  /// Short request name/title, e.g. "Water leakage was observed from the
+  /// angle valve at plot 18 store".
+  final String name;
+
+  /// Fuller description shown on the Overview tab.
+  final String description;
+  final DateTime createdTime;
+  final DateTime requestedTime;
+  final DateTime requiredTime;
+
+  /// Raw ticket status — null/blank renders as "--" (matches the
+  /// reference, which leaves this column empty for most rows).
+  final String? status;
+
+  final InventoryReservationStatus reservationStatus;
+
+  /// Title of the linked Work Order, e.g. "Angle Valve Water Leakage".
+  final String workOrderTitle;
+  final String requestedFor;
+  final String requestedBy;
+  final bool isSparePartRequest;
+  final String createdBy;
+
+  /// Names of the people who can approve this request on the client
+  /// side, e.g. ["Khalid Aladwani", "Muhanad AlRubiaan"].
+  final List<String> clientApprovalAuthorities;
+
+  /// e.g. "MECHANICAL".
+  final String serviceLine;
+  final List<InventoryLineItem> lineItems;
+}

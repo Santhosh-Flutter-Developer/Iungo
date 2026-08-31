@@ -13,4 +13,6 @@ abstract class AppRoutes {
   static const workOrderList = '/work-orders';
   static const workOrderPauseApprovalList = '/work-orders/pause-approval';
   static const workOrderClosureApprovalList = '/work-orders/closure-approval';
+  static const inventoryRequestAwaitingClientApproval =
+      '/inventory-requests/awaiting-client-approval';
 }
