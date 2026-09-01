@@ -20,8 +20,10 @@ import 'package:iungo/features/splash/presentation/bindings/splash_binding.dart'
 import 'package:iungo/features/splash/presentation/pages/splash_page.dart';
 import 'package:iungo/features/work_order/domain/entities/pending_approval_kind.dart';
 import 'package:iungo/features/work_order/presentation/bindings/pending_work_order_list_binding.dart';
+import 'package:iungo/features/work_order/presentation/bindings/work_order_closure_approval_list_binding.dart';
 import 'package:iungo/features/work_order/presentation/bindings/work_order_list_binding.dart';
 import 'package:iungo/features/work_order/presentation/pages/pending_work_order_list_page.dart';
+import 'package:iungo/features/work_order/presentation/pages/work_order_closure_approval_list_page.dart';
 import 'package:iungo/features/work_order/presentation/pages/work_order_list_page.dart';
 
 import 'app_routes.dart';
@@ -78,11 +80,8 @@ class AppPages {
     ),
     GetPage(
       name: AppRoutes.workOrderClosureApprovalList,
-      page: () => const PendingWorkOrderListPage(
-        kind: PendingApprovalKind.closureApproval,
-      ),
-      binding:
-          PendingWorkOrderListBinding(PendingApprovalKind.closureApproval),
+      page: () => const WorkOrderClosureApprovalListPage(),
+      binding: WorkOrderClosureApprovalListBinding(),
       transition: Transition.rightToLeft,
     ),
     GetPage(
