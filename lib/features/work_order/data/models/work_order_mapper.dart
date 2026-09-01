@@ -114,20 +114,29 @@ class WorkOrderListPageResult {
         ? DateTime.fromMillisecondsSinceEpoch(createdTimeMs)
         : DateTime.now();
 
+    // Null when the server genuinely didn't return a due date for this
+    // ticket — never fabricated from [raisedAt], so the card can tell
+    // "no due date" apart from "due exactly when it was raised".
     final dueDateMs = _asInt(item['dueDate']);
     final dueDate = dueDateMs != null && dueDateMs > 0
         ? DateTime.fromMillisecondsSinceEpoch(dueDateMs)
-        : raisedAt;
+        : null;
 
     final siteId = _asInt(item['siteId']);
     final siteInfo = siteId != null ? siteLookup[siteId] : null;
     final site = (siteInfo?['name'] as String?)?.trim();
 
+    // Null when the server didn't return a priority reference at all
+    // (no `priorityId`, or an id with no matching supplement entry) —
+    // distinct from the server legitimately returning "No Priority".
     final priorityId = _asInt(_nestedId(item['priority']));
     final priorityInfo = priorityId != null ? priorityLookup[priorityId] : null;
-    final priority = ServiceRequestPriorityX.fromApiLabel(
-      (priorityInfo?['displayName'] ?? priorityInfo?['primaryValue']) as String?,
-    );
+    final priority = priorityInfo == null
+        ? null
+        : ServiceRequestPriorityX.fromApiLabel(
+            (priorityInfo['displayName'] ?? priorityInfo['primaryValue'])
+                as String?,
+          );
 
     final categoryId = _asInt(_nestedId(item['category']));
     final categoryInfo = categoryId != null ? categoryLookup[categoryId] : null;
@@ -136,11 +145,15 @@ class WorkOrderListPageResult {
                 ?.trim() ??
             '';
 
+    // Null when the server didn't return a type reference at all — kept
+    // distinct from a recognized-but-uncommon type label.
     final typeId = _asInt(_nestedId(item['type']));
     final typeInfo = typeId != null ? typeLookup[typeId] : null;
-    final maintenanceType = WorkOrderMaintenanceTypeX.fromApiLabel(
-      (typeInfo?['name'] ?? typeInfo?['description']) as String?,
-    );
+    final maintenanceType = typeInfo == null
+        ? null
+        : WorkOrderMaintenanceTypeX.fromApiLabel(
+            (typeInfo['name'] ?? typeInfo['description']) as String?,
+          );
 
     final moduleStateId = _asInt(_nestedId(item['moduleState'] ?? item['status']));
     final moduleStateInfo =

@@ -103,10 +103,10 @@ class PendingWorkOrderListController extends GetxController
     if (start != null && end != null) {
       final startOfDay = DateTime(start.year, start.month, start.day);
       final endOfDay = DateTime(end.year, end.month, end.day, 23, 59, 59);
-      results = results
-          .where((w) =>
-              !w.dueDate.isBefore(startOfDay) && !w.dueDate.isAfter(endOfDay))
-          .toList();
+      results = results.where((w) {
+        final due = w.dueDate;
+        return due != null && !due.isBefore(startOfDay) && !due.isAfter(endOfDay);
+      }).toList();
     }
 
     final serialNumber = findTicketId.value;

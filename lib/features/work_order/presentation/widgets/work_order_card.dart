@@ -25,13 +25,11 @@ class WorkOrderCard extends StatelessWidget {
   final VoidCallback? onTap;
 
   bool get _isDueTodayOrOverdue {
+    final dueDate = workOrder.dueDate;
+    if (dueDate == null) return false;
     final now = DateTime.now();
     final today = DateTime(now.year, now.month, now.day);
-    final due = DateTime(
-      workOrder.dueDate.year,
-      workOrder.dueDate.month,
-      workOrder.dueDate.day,
-    );
+    final due = DateTime(dueDate.year, dueDate.month, dueDate.day);
     return !due.isAfter(today);
   }
 
@@ -82,19 +80,21 @@ class WorkOrderCard extends StatelessWidget {
                 height: 1.25,
               ),
             ),
-            const SizedBox(height: 6),
-            Text(
-              workOrder.description.trim().isEmpty
-                  ? 'no_description_provided'.tr
-                  : workOrder.description,
-              maxLines: 2,
-              overflow: TextOverflow.ellipsis,
-              style: const TextStyle(
-                fontSize: 14,
-                color: AppColors.textMuted,
-                height: 1.3,
+            // No description from the API — omit the line entirely
+            // rather than showing a placeholder in its place.
+            if (workOrder.description.trim().isNotEmpty) ...[
+              const SizedBox(height: 6),
+              Text(
+                workOrder.description,
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
+                style: const TextStyle(
+                  fontSize: 14,
+                  color: AppColors.textMuted,
+                  height: 1.3,
+                ),
               ),
-            ),
+            ],
             const SizedBox(height: 14),
             if (workOrder.assignedTechnician != null) ...[
               _PillChip(
@@ -106,12 +106,16 @@ class WorkOrderCard extends StatelessWidget {
               ),
               const SizedBox(height: 10),
             ],
-            _DueChip(
-              label: _isDueTodayOrOverdue
-                  ? '${'due'.tr}: ${'today'.tr}'
-                  : '${'due'.tr}: ${AppDateFormat.mediumDate(workOrder.dueDate)}',
-              urgent: _isDueTodayOrOverdue,
-            ),
+            // No due date from the API — omit the pill entirely rather
+            // than showing a fabricated date.
+            if (workOrder.dueDate != null) ...[
+              _DueChip(
+                label: _isDueTodayOrOverdue
+                    ? '${'due'.tr}: ${'today'.tr}'
+                    : '${'due'.tr}: ${AppDateFormat.mediumDate(workOrder.dueDate!)}',
+                urgent: _isDueTodayOrOverdue,
+              ),
+            ],
             const SizedBox(height: 14),
             Container(
               width: double.infinity,
@@ -146,7 +150,7 @@ class WorkOrderCard extends StatelessWidget {
                       Expanded(
                         child: _InfoItem(
                           icon: Icons.access_time,
-                          label: workOrder.priority.labelKey.tr,
+                          label: workOrder.priority?.labelKey.tr ?? '--',
                         ),
                       ),
                       Expanded(
@@ -162,7 +166,7 @@ class WorkOrderCard extends StatelessWidget {
                   const SizedBox(height: 10),
                   _InfoItem(
                     icon: Icons.build_outlined,
-                    label: workOrder.maintenanceType.labelKey.tr,
+                    label: workOrder.maintenanceType?.labelKey.tr ?? '--',
                   ),
                 ],
               ),

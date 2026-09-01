@@ -93,8 +93,18 @@ class WorkOrderDetailController extends GetxController {
   }
 
   void _updateCountdown() {
+    final dueDate = workOrder.value.dueDate;
+    if (dueDate == null) {
+      // No due date from the API — the Overview tab hides the
+      // countdown pill entirely in this case, so this value is unused,
+      // but keep it well-defined rather than leaving the last stale
+      // countdown (e.g. right after a re-fetch drops the due date).
+      dueCountdown.value = '';
+      return;
+    }
+
     final now = DateTime.now();
-    var remaining = workOrder.value.dueDate.difference(now);
+    var remaining = dueDate.difference(now);
     final overdue = remaining.isNegative;
     if (overdue) remaining = -remaining;
 

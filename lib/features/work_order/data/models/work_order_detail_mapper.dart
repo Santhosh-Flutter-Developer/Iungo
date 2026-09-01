@@ -36,17 +36,23 @@ WorkOrder mapWorkOrderDetail(Map<String, dynamic> json) {
       ? DateTime.fromMillisecondsSinceEpoch(createdTimeMs)
       : DateTime.now();
 
+  // Null when the server genuinely didn't return a due date — never
+  // fabricated from [raisedAt].
   final dueDateMs = _asInt(json['dueDate']);
   final dueDate = dueDateMs != null && dueDateMs > 0
       ? DateTime.fromMillisecondsSinceEpoch(dueDateMs)
-      : raisedAt;
+      : null;
 
   final status = WorkOrderStatusX.fromApiLabel(_primaryValue(json['moduleState']));
-  final priority =
-      ServiceRequestPriorityX.fromApiLabel(_primaryValue(json['priority']));
+  // Null when the server didn't return a priority/type object at all —
+  // distinct from a recognized value.
+  final priority = json['priority'] is Map<String, dynamic>
+      ? ServiceRequestPriorityX.fromApiLabel(_primaryValue(json['priority']))
+      : null;
   final discipline = _primaryValue(json['category']) ?? '';
-  final maintenanceType =
-      WorkOrderMaintenanceTypeX.fromApiLabel(_primaryValue(json['type']));
+  final maintenanceType = json['type'] is Map<String, dynamic>
+      ? WorkOrderMaintenanceTypeX.fromApiLabel(_primaryValue(json['type']))
+      : null;
 
   final site = json['site'];
   final siteName = (site is Map<String, dynamic>)

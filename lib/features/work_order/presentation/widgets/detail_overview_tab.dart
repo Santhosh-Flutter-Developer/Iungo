@@ -64,25 +64,34 @@ class DetailOverviewTab extends StatelessWidget {
                 color: AppColors.headingBlueGrey,
               ),
             ),
-            const SizedBox(width: 12),
-            Obx(
-              () => Container(
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                decoration: BoxDecoration(
-                  color: AppColors.workOrderDueUrgentBackground,
-                  borderRadius: BorderRadius.circular(6),
-                ),
-                child: Text(
-                  '${'due'.tr}: ${controller.dueCountdown.value}',
-                  style: const TextStyle(
-                    fontSize: 13,
-                    fontWeight: FontWeight.w600,
-                    color: AppColors.workOrderDueUrgentText,
+            // No due date from the API — omit the countdown pill
+            // entirely rather than showing a fabricated countdown.
+            Obx(() {
+              if (controller.workOrder.value.dueDate == null) {
+                return const SizedBox.shrink();
+              }
+              return Row(
+                children: [
+                  const SizedBox(width: 12),
+                  Container(
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 12, vertical: 6),
+                    decoration: BoxDecoration(
+                      color: AppColors.workOrderDueUrgentBackground,
+                      borderRadius: BorderRadius.circular(6),
+                    ),
+                    child: Text(
+                      '${'due'.tr}: ${controller.dueCountdown.value}',
+                      style: const TextStyle(
+                        fontSize: 13,
+                        fontWeight: FontWeight.w600,
+                        color: AppColors.workOrderDueUrgentText,
+                      ),
+                    ),
                   ),
-                ),
-              ),
-            ),
+                ],
+              );
+            }),
           ],
         ),
         const SizedBox(height: 14),
@@ -185,12 +194,12 @@ class DetailOverviewTab extends StatelessWidget {
         DetailInfoTile(
           icon: Icons.build_outlined,
           label: 'maintenance_type'.tr,
-          value: workOrder.maintenanceType.labelKey.tr,
+          value: workOrder.maintenanceType?.labelKey.tr ?? '--',
         ),
         DetailInfoTile(
           icon: Icons.trending_up,
           label: 'priority'.tr,
-          value: workOrder.priority.labelKey.tr,
+          value: workOrder.priority?.labelKey.tr ?? '--',
         ),
       ],
     );
