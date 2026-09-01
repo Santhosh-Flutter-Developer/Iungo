@@ -18,13 +18,12 @@ import 'package:iungo/features/service_request/presentation/bindings/service_req
 import 'package:iungo/features/service_request/presentation/pages/service_request_list_page.dart';
 import 'package:iungo/features/splash/presentation/bindings/splash_binding.dart';
 import 'package:iungo/features/splash/presentation/pages/splash_page.dart';
-import 'package:iungo/features/work_order/domain/entities/pending_approval_kind.dart';
-import 'package:iungo/features/work_order/presentation/bindings/pending_work_order_list_binding.dart';
 import 'package:iungo/features/work_order/presentation/bindings/work_order_closure_approval_list_binding.dart';
 import 'package:iungo/features/work_order/presentation/bindings/work_order_list_binding.dart';
-import 'package:iungo/features/work_order/presentation/pages/pending_work_order_list_page.dart';
+import 'package:iungo/features/work_order/presentation/bindings/work_order_pause_approval_list_binding.dart';
 import 'package:iungo/features/work_order/presentation/pages/work_order_closure_approval_list_page.dart';
 import 'package:iungo/features/work_order/presentation/pages/work_order_list_page.dart';
+import 'package:iungo/features/work_order/presentation/pages/work_order_pause_approval_list_page.dart';
 
 import 'app_routes.dart';
 
@@ -72,10 +71,8 @@ class AppPages {
     ),
     GetPage(
       name: AppRoutes.workOrderPauseApprovalList,
-      page: () => const PendingWorkOrderListPage(
-        kind: PendingApprovalKind.pauseApproval,
-      ),
-      binding: PendingWorkOrderListBinding(PendingApprovalKind.pauseApproval),
+      page: () => const WorkOrderPauseApprovalListPage(),
+      binding: WorkOrderPauseApprovalListBinding(),
       transition: Transition.rightToLeft,
     ),
     GetPage(
