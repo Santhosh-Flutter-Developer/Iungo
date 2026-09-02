@@ -21,7 +21,7 @@ abstract class InventoryRequestDetailRemoteDataSource {
   ///     ?module=InventoryRequestnotes&onlyFetchParentNotes=true
   Future<List<WorkOrderComment>> fetchNotes(int inventoryRequestId);
 
-  /// GET /client/api/attachment/itemtypesattachments/itemtypes/list/{id}
+  /// GET /client/api/attachment/inventoryrequestattachments/inventoryrequest/list/{id}
   Future<List<WorkOrderAttachment>> fetchAttachments(int inventoryRequestId);
 }
 
@@ -70,7 +70,7 @@ class InventoryRequestDetailRemoteDataSourceImpl
     const fallbackMessage = 'Failed to load attachments';
     try {
       final response = await _dio.get<dynamic>(
-        '$_clientBase/attachment/itemtypesattachments/itemtypes/list/$inventoryRequestId',
+        '$_clientBase/attachment/inventoryrequestattachments/inventoryrequest/list/$inventoryRequestId',
         options: Options(headers: _authHeaders()),
       );
 

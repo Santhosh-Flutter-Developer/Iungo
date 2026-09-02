@@ -117,8 +117,10 @@ class InventoryRequestListPageResult {
           'created_time',
         ]) ??
         DateTime.now();
-    final requestedTime = _firstDate(item, const ['requestedTime']) ?? createdTime;
-    final requiredTime = _firstDate(item, const ['requiredTime']) ?? requestedTime;
+    final requestedTime =
+        _firstDate(item, const ['requestedTime'], asUtc: true) ?? createdTime;
+    final requiredTime =
+        _firstDate(item, const ['requiredTime'], asUtc: true) ?? requestedTime;
 
     final status = _rawStatusValue(item['moduleState'] ?? item['status']);
 
@@ -166,13 +168,15 @@ class InventoryRequestListPageResult {
         '';
 
     final isSparePartRequest = _asBool(
-      item['isSparePartRequest'] ??
+      item['is_spare_part_request_or_not_inventoryrequest'] ??
+          item['isSparePartRequest'] ??
           item['sparePartRequest'] ??
           item['isSpareRequest'],
     );
 
     final clientApprovalAuthorities = _resolveNameList(
-      item['clientApprovalAuthorities'] ??
+      item['client_approval_authorities_inventoryrequest'] ??
+          item['clientApprovalAuthorities'] ??
           item['clientApprovalAuthority'] ??
           item['approvalAuthorities'] ??
           item['approvers'],
@@ -222,9 +226,24 @@ class InventoryRequestListPageResult {
   /// every other timestamp field in this app uses), then falls back to
   /// parsing an ISO-8601 string, in case this particular field is
   /// returned in a different shape than `requestedTime`/`requiredTime`.
-  static DateTime? _dateFrom(dynamic value) {
+  ///
+  /// [asUtc] controls how the epoch is interpreted: `requestedTime`/
+  /// `requiredTime` are date-only fields encoded as midnight in the
+  /// org's timezone, converted to UTC — reading them with the device's
+  /// *local* timezone (the default `DateTime.fromMillisecondsSinceEpoch`
+  /// behaviour) can roll the date forward or back a day depending on
+  /// where the device is, which is exactly the "wrong date" bug this
+  /// works around. Reading them as UTC keeps the calendar date stable
+  /// and matches the reference admin panel (which renders the same
+  /// epoch as UTC). `createdTime` intentionally keeps the default
+  /// (local) behaviour — it's a real timestamp, and its "22:35PM"-style
+  /// display is meant to reflect the viewer's local time.
+  static DateTime? _dateFrom(dynamic value, {bool asUtc = false}) {
     final ms = _asInt(value);
-    if (ms != null && ms > 0) return DateTime.fromMillisecondsSinceEpoch(ms);
+    if (ms != null && ms > 0) {
+      final utc = DateTime.fromMillisecondsSinceEpoch(ms, isUtc: true);
+      return asUtc ? utc : utc.toLocal();
+    }
     if (value is String && value.trim().isNotEmpty) {
       final parsed = DateTime.tryParse(value.trim());
       if (parsed != null) return parsed;
@@ -235,9 +254,13 @@ class InventoryRequestListPageResult {
   /// Tries each of [keys] in order against [json] and returns the first
   /// one that parses to a valid date — used for fields (like
   /// `createdTime`) whose exact JSON key on this module is uncertain.
-  static DateTime? _firstDate(Map<String, dynamic> json, List<String> keys) {
+  static DateTime? _firstDate(
+    Map<String, dynamic> json,
+    List<String> keys, {
+    bool asUtc = false,
+  }) {
     for (final key in keys) {
-      final parsed = _dateFrom(json[key]);
+      final parsed = _dateFrom(json[key], asUtc: asUtc);
       if (parsed != null) return parsed;
     }
     return null;
@@ -428,12 +451,18 @@ InventoryRequest mapInventoryRequestDetail(Map<String, dynamic> envelope) {
         'created_time',
       ]) ??
       DateTime.now();
-  final requestedTime =
-      InventoryRequestListPageResult._firstDate(json, const ['requestedTime']) ??
-          createdTime;
-  final requiredTime =
-      InventoryRequestListPageResult._firstDate(json, const ['requiredTime']) ??
-          requestedTime;
+  final requestedTime = InventoryRequestListPageResult._firstDate(
+        json,
+        const ['requestedTime'],
+        asUtc: true,
+      ) ??
+      createdTime;
+  final requiredTime = InventoryRequestListPageResult._firstDate(
+        json,
+        const ['requiredTime'],
+        asUtc: true,
+      ) ??
+      requestedTime;
 
   final status = InventoryRequestListPageResult._rawStatusValue(
     json['moduleState'] ?? json['status'],
@@ -483,11 +512,15 @@ InventoryRequest mapInventoryRequestDetail(Map<String, dynamic> envelope) {
       '';
 
   final isSparePartRequest = InventoryRequestListPageResult._asBool(
-    json['isSparePartRequest'] ?? json['sparePartRequest'] ?? json['isSpareRequest'],
+    json['is_spare_part_request_or_not_inventoryrequest'] ??
+        json['isSparePartRequest'] ??
+        json['sparePartRequest'] ??
+        json['isSpareRequest'],
   );
 
   final clientApprovalAuthorities = InventoryRequestListPageResult._resolveNameList(
-    json['clientApprovalAuthorities'] ??
+    json['client_approval_authorities_inventoryrequest'] ??
+        json['clientApprovalAuthorities'] ??
         json['clientApprovalAuthority'] ??
         json['approvalAuthorities'] ??
         json['approvers'],
