@@ -5,6 +5,7 @@ import 'package:iungo/features/inventory_request/presentation/controllers/invent
 import 'package:iungo/features/inventory_request/presentation/widgets/detail_attachments_tab.dart';
 import 'package:iungo/features/inventory_request/presentation/widgets/detail_comments_tab.dart';
 import 'package:iungo/features/inventory_request/presentation/widgets/detail_overview_tab.dart';
+import 'package:iungo/features/inventory_request/presentation/widgets/inventory_request_approval_action_bar.dart';
 
 /// Detail View for one Inventory Request — same AppBar/TabBar chrome as
 /// [WorkOrderDetailPage], but with only the three tabs this feature
@@ -106,6 +107,7 @@ class InventoryRequestDetailPage extends GetView<InventoryRequestDetailControlle
             ],
           );
         }),
+        bottomNavigationBar: const InventoryRequestApprovalActionBar(),
       ),
     );
   }

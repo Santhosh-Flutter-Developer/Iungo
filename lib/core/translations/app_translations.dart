@@ -233,6 +233,17 @@ class AppTranslations extends Translations {
       'no_notes_available': 'No notes available.',
       'no_attachments_available': 'No attachments available.',
       'no_inventory_requests_found': 'No inventory requests found.',
+      'approve': 'Approve',
+      'reject': 'Reject',
+      'reject_request': 'Reject Request',
+      'reject_request_prompt':
+          'Please provide remarks explaining why this request is being rejected.',
+      'remarks': 'Remarks',
+      'enter_remarks_hint': 'Enter remarks',
+      'remarks_required': 'Remarks are required to reject this request',
+      'approve_request_confirm_title': 'Approve Request',
+      'approve_request_confirm_message':
+          'Are you sure you want to approve this request?',
 
       // Work Order statuses
       'wo_status_submitted': 'Submitted',
@@ -493,6 +504,16 @@ class AppTranslations extends Translations {
       'no_notes_available': 'لا توجد ملاحظات متاحة.',
       'no_attachments_available': 'لا توجد مرفقات متاحة.',
       'no_inventory_requests_found': 'لم يتم العثور على طلبات مخزون.',
+      'approve': 'موافقة',
+      'reject': 'رفض',
+      'reject_request': 'رفض الطلب',
+      'reject_request_prompt': 'يرجى إدخال ملاحظات توضح سبب رفض هذا الطلب.',
+      'remarks': 'ملاحظات',
+      'enter_remarks_hint': 'أدخل الملاحظات',
+      'remarks_required': 'الملاحظات مطلوبة لرفض هذا الطلب',
+      'approve_request_confirm_title': 'الموافقة على الطلب',
+      'approve_request_confirm_message':
+          'هل أنت متأكد أنك تريد الموافقة على هذا الطلب؟',
 
       // Work Order statuses
       'wo_status_submitted': 'تم الإرسال',

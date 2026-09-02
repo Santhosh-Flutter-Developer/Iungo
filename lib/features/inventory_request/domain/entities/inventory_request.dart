@@ -60,6 +60,18 @@ class InventoryRequest {
   final String serviceLine;
   final List<InventoryLineItem> lineItems;
 
+  /// Whether this request is currently sitting in the "Awaiting Client
+  /// Approval" state — the only state the Detail View's Approve/Reject
+  /// actions should be shown for. Falls back to `true` when [status] is
+  /// blank, matching [InventoryRequestStatusBadge]'s own fallback: every
+  /// record reachable from this screen belongs to that queue, so an
+  /// unresolved/blank status is still treated as awaiting approval
+  /// rather than hiding the actions.
+  bool get isAwaitingClientApproval {
+    final trimmed = status?.trim().toLowerCase() ?? '';
+    return trimmed.isEmpty || trimmed == 'awaiting client approval';
+  }
+
   /// Returns a copy with [status] replaced — used once the raw
   /// moduleState value parsed off the API has been resolved to its
   /// human-readable label (see

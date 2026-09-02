@@ -6,6 +6,7 @@ import 'package:iungo/features/work_order/presentation/widgets/detail_attachment
 import 'package:iungo/features/work_order/presentation/widgets/detail_comments_tab.dart';
 import 'package:iungo/features/work_order/presentation/widgets/detail_overview_tab.dart';
 import 'package:iungo/features/work_order/presentation/widgets/detail_tasks_tab.dart';
+import 'package:iungo/features/work_order/presentation/widgets/work_order_approval_action_bar.dart';
 
 class WorkOrderDetailPage extends GetView<WorkOrderDetailController> {
   const WorkOrderDetailPage({super.key});
@@ -109,6 +110,7 @@ class WorkOrderDetailPage extends GetView<WorkOrderDetailController> {
             ],
           );
         }),
+        bottomNavigationBar: const WorkOrderApprovalActionBar(),
       ),
     );
   }

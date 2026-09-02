@@ -69,6 +69,13 @@ class WorkOrderDetailController extends GetxController {
   final RxBool isLoadingAttachments = true.obs;
   final RxString attachmentsError = ''.obs;
 
+  // ---- Approve / Reject (Awaiting Closure Approval from Client) ----
+
+  /// True while an approve/reject submission is in flight — lets the
+  /// Detail View disable the action buttons and show a spinner so a
+  /// double-tap can't fire the request twice once the API is wired up.
+  final RxBool isSubmittingApproval = false.obs;
+
   @override
   void onInit() {
     super.onInit();
@@ -201,6 +208,42 @@ class WorkOrderDetailController extends GetxController {
   }
 
   Future<void> retryAttachments() => _loadAttachments();
+
+  // ---- Approve / Reject ---------------------------------------------
+
+  /// Approves the "Awaiting Closure Approval from Client" work order.
+  ///
+  /// UI-only for now — [WorkOrderApprovalActionBar] already guards this
+  /// behind a confirmation dialog and disables itself while
+  /// [isSubmittingApproval] is true, so wiring in the real endpoint
+  /// here later (once the API details are shared) is just filling in
+  /// the TODO below; no caller-side changes should be needed.
+  Future<void> approveRequest() async {
+    isSubmittingApproval.value = true;
+    try {
+      // TODO: call the Approve Work Order Closure API for order.id once
+      // the endpoint is available, then refresh the detail (e.g.
+      // await _loadDetail()) so the Status/action bar update.
+    } finally {
+      isSubmittingApproval.value = false;
+    }
+  }
+
+  /// Rejects the closure with a mandatory [remarks] explanation.
+  ///
+  /// UI-only for now, same as [approveRequest] — the reject dialog
+  /// already enforces non-empty remarks before this is called.
+  Future<void> rejectRequest(String remarks) async {
+    isSubmittingApproval.value = true;
+    try {
+      // TODO: call the Reject Work Order Closure API for order.id with
+      // `remarks` once the endpoint is available, then refresh the
+      // detail (e.g. await _loadDetail()) so the Status/action bar
+      // update.
+    } finally {
+      isSubmittingApproval.value = false;
+    }
+  }
 
   @override
   void onClose() {

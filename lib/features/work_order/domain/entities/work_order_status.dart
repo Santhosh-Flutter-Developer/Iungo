@@ -111,6 +111,12 @@ extension WorkOrderStatusX on WorkOrderStatus {
     }
   }
 
+  /// Whether the Detail View's Approve/Reject actions should be shown
+  /// for a work order in this status — true only for "Awaiting Closure
+  /// Approval from Client".
+  bool get isAwaitingClosureApprovalFromClient =>
+      this == WorkOrderStatus.awaitingClosureApprovalFromClient;
+
   /// Options offered in the filter dropdown — exact order from the
   /// reference "Select Status" screenshot.
   static const List<WorkOrderStatus> filterOptions = WorkOrderStatus.values;
