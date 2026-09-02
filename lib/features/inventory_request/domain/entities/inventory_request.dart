@@ -59,4 +59,29 @@ class InventoryRequest {
   /// e.g. "MECHANICAL".
   final String serviceLine;
   final List<InventoryLineItem> lineItems;
+
+  /// Returns a copy with [status] replaced — used once the raw
+  /// moduleState value parsed off the API has been resolved to its
+  /// human-readable label (see
+  /// `InventoryRequestRepository.resolveStatusLabel`).
+  InventoryRequest copyWith({String? status}) {
+    return InventoryRequest(
+      id: id,
+      name: name,
+      description: description,
+      createdTime: createdTime,
+      requestedTime: requestedTime,
+      requiredTime: requiredTime,
+      status: status ?? this.status,
+      reservationStatus: reservationStatus,
+      workOrderTitle: workOrderTitle,
+      requestedFor: requestedFor,
+      requestedBy: requestedBy,
+      isSparePartRequest: isSparePartRequest,
+      createdBy: createdBy,
+      clientApprovalAuthorities: clientApprovalAuthorities,
+      serviceLine: serviceLine,
+      lineItems: lineItems,
+    );
+  }
 }

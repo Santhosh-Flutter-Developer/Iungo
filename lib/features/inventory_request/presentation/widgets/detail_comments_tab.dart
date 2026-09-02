@@ -3,8 +3,9 @@ import 'package:get/get.dart';
 import 'package:iungo/core/constants/app_colors.dart';
 import 'package:iungo/features/inventory_request/presentation/controllers/inventory_request_detail_controller.dart';
 
-/// Mirrors [DetailCommentsTab] (Work Order) exactly — no backing API for
-/// Inventory Request yet, so this renders the existing empty state.
+/// Renders the live "Notes" for an Inventory Request — loading/error/
+/// empty/list states driven by [InventoryRequestDetailController].
+/// Mirrors [DetailCommentsTab] (Work Order) exactly.
 class InventoryRequestDetailCommentsTab
     extends GetView<InventoryRequestDetailController> {
   const InventoryRequestDetailCommentsTab({super.key});
@@ -55,7 +56,7 @@ class InventoryRequestDetailCommentsTab
             padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 120),
             children: [
               Text(
-                'no_comments_found'.tr,
+                'no_notes_available'.tr,
                 textAlign: TextAlign.center,
                 style: const TextStyle(fontSize: 16, color: AppColors.textMuted),
               ),

@@ -5,10 +5,12 @@ import 'package:iungo/features/inventory_request/presentation/controllers/invent
 import 'package:iungo/features/work_order/presentation/pages/work_order_attachment_viewer_page.dart';
 import 'package:iungo/features/work_order/presentation/widgets/work_order_attachment_card.dart';
 
-/// Mirrors [DetailAttachmentsTab] (Work Order) exactly — reuses
-/// [WorkOrderAttachmentCard]/[WorkOrderAttachmentViewerPage] since both
-/// features share the same attachment shape. No backing API for
-/// Inventory Request yet, so this renders the existing empty state.
+/// Renders the live "Attachments" for an Inventory Request —
+/// loading/error/empty/list states driven by
+/// [InventoryRequestDetailController]. Mirrors [DetailAttachmentsTab]
+/// (Work Order) exactly, reusing [WorkOrderAttachmentCard]/
+/// [WorkOrderAttachmentViewerPage] since both features share the same
+/// attachment shape.
 class InventoryRequestDetailAttachmentsTab
     extends GetView<InventoryRequestDetailController> {
   const InventoryRequestDetailAttachmentsTab({super.key});
@@ -59,7 +61,7 @@ class InventoryRequestDetailAttachmentsTab
             padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 120),
             children: [
               Text(
-                'no_attachments_hint'.tr,
+                'no_attachments_available'.tr,
                 textAlign: TextAlign.center,
                 style: const TextStyle(fontSize: 15, color: AppColors.textDark),
               ),
