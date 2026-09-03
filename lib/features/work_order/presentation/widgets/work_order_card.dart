@@ -27,9 +27,14 @@ class WorkOrderCard extends StatelessWidget {
   bool get _isDueTodayOrOverdue {
     final dueDate = workOrder.dueDate;
     if (dueDate == null) return false;
-    final now = DateTime.now();
-    final today = DateTime(now.year, now.month, now.day);
-    final due = DateTime(dueDate.year, dueDate.month, dueDate.day);
+    // Compare using Riyadh calendar days — the due date printed just
+    // below (via AppDateFormat.mediumDate) is Riyadh time, so the
+    // overdue/due-today flag needs to agree with what's on screen
+    // rather than the device's own local "today".
+    final nowRiyadh = AppDateFormat.toRiyadh(DateTime.now());
+    final today = DateTime(nowRiyadh.year, nowRiyadh.month, nowRiyadh.day);
+    final dueRiyadh = AppDateFormat.toRiyadh(dueDate);
+    final due = DateTime(dueRiyadh.year, dueRiyadh.month, dueRiyadh.day);
     return !due.isAfter(today);
   }
 

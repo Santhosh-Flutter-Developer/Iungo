@@ -1,4 +1,5 @@
 import 'package:get/get.dart';
+import 'package:iungo/core/utils/app_date_format.dart';
 import 'package:iungo/features/service_request/data/datasources/service_request_create_remote_data_source.dart';
 import 'package:iungo/features/service_request/data/datasources/service_request_detail_remote_data_source.dart';
 import 'package:iungo/features/service_request/data/datasources/service_request_exceptions.dart';
@@ -251,9 +252,11 @@ class ServiceRequestRepository extends GetxService {
   List<ServiceRequestAttachment> _toAttachmentDisplays(
     List<AttachmentFile> attachments,
   ) {
-    final now = DateTime.now();
-    final dateLabel =
-        '${_month(now.month)} ${now.day}, ${now.year}';
+    // Route through the shared formatter (Riyadh time) instead of the
+    // device's local "now" so a just-uploaded attachment's date matches
+    // every other date shown on the ticket once the real API response
+    // is refreshed in.
+    final dateLabel = AppDateFormat.mediumDate(DateTime.now());
     return [
       for (final file in attachments)
         ServiceRequestAttachment(
@@ -281,11 +284,4 @@ class ServiceRequestRepository extends GetxService {
     return '${(bytes / (1024 * 1024)).toStringAsFixed(2)} MB';
   }
 
-  String _month(int month) {
-    const names = [
-      'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
-      'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec',
-    ];
-    return names[(month - 1).clamp(0, 11)];
-  }
 }
