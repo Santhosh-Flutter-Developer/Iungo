@@ -244,6 +244,8 @@ class AppTranslations extends Translations {
       'approve_request_confirm_title': 'Approve Request',
       'approve_request_confirm_message':
           'Are you sure you want to approve this request?',
+      'approve_success': 'Request approved successfully.',
+      'reject_success': 'Request rejected successfully.',
 
       // Work Order statuses
       'wo_status_submitted': 'Submitted',
@@ -514,6 +516,8 @@ class AppTranslations extends Translations {
       'approve_request_confirm_title': 'الموافقة على الطلب',
       'approve_request_confirm_message':
           'هل أنت متأكد أنك تريد الموافقة على هذا الطلب؟',
+      'approve_success': 'تمت الموافقة على الطلب بنجاح.',
+      'reject_success': 'تم رفض الطلب بنجاح.',
 
       // Work Order statuses
       'wo_status_submitted': 'تم الإرسال',

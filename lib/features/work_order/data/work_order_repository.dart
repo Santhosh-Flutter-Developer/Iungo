@@ -103,6 +103,23 @@ class WorkOrderRepository extends GetxService {
     return _detailDataSource.fetchAttachments(workOrderId);
   }
 
+  // ---- Detail View: Approve / Reject -----------------------------------
+
+  /// Approves or rejects a work order sitting in an "Awaiting ...
+  /// Approval from Client" status. See
+  /// [WorkOrderDetailRemoteDataSource.submitTransition].
+  Future<void> submitTransition({
+    required int workOrderId,
+    required int stateTransitionId,
+    required String comment,
+  }) {
+    return _detailDataSource.submitTransition(
+      workOrderId: workOrderId,
+      stateTransitionId: stateTransitionId,
+      comment: comment,
+    );
+  }
+
   /// Replaces the whole list with a freshly-fetched first page (initial
   /// load / pull-to-refresh).
   void replaceWithPage(List<WorkOrder> page) {

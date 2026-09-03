@@ -117,6 +117,54 @@ extension WorkOrderStatusX on WorkOrderStatus {
   bool get isAwaitingClosureApprovalFromClient =>
       this == WorkOrderStatus.awaitingClosureApprovalFromClient;
 
+  /// Whether the Detail View's Approve/Reject actions should be shown
+  /// for a work order in this status — true for "Awaiting Pause
+  /// Approval from Client".
+  bool get isAwaitingPauseApprovalFromClient =>
+      this == WorkOrderStatus.awaitingPauseApprovalFromClient;
+
+  /// Whether this status has a client-approval action (Approve/Reject)
+  /// at all — drives whether [WorkOrderApprovalActionBar] renders.
+  /// Equivalent to `approveTransitionId != null`.
+  bool get hasClientApprovalActions =>
+      isAwaitingPauseApprovalFromClient || isAwaitingClosureApprovalFromClient;
+
+  /// The `stateTransitionId` the "Approve" action must send for this
+  /// status, confirmed via Postman against the live Portal API:
+  ///
+  ///   Awaiting Pause Approval from Client   -> 14095
+  ///   Awaiting Closure Approval from Client -> 14098
+  ///
+  /// `null` for every other status (no approval action available).
+  int? get approveTransitionId {
+    switch (this) {
+      case WorkOrderStatus.awaitingPauseApprovalFromClient:
+        return 14095;
+      case WorkOrderStatus.awaitingClosureApprovalFromClient:
+        return 14098;
+      default:
+        return null;
+    }
+  }
+
+  /// The `stateTransitionId` the "Reject" action must send for this
+  /// status, confirmed via Postman against the live Portal API:
+  ///
+  ///   Awaiting Pause Approval from Client   -> 14096
+  ///   Awaiting Closure Approval from Client -> 14099
+  ///
+  /// `null` for every other status (no approval action available).
+  int? get rejectTransitionId {
+    switch (this) {
+      case WorkOrderStatus.awaitingPauseApprovalFromClient:
+        return 14096;
+      case WorkOrderStatus.awaitingClosureApprovalFromClient:
+        return 14099;
+      default:
+        return null;
+    }
+  }
+
   /// Options offered in the filter dropdown — exact order from the
   /// reference "Select Status" screenshot.
   static const List<WorkOrderStatus> filterOptions = WorkOrderStatus.values;

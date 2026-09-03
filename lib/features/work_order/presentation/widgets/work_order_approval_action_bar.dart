@@ -6,18 +6,19 @@ import 'package:iungo/features/work_order/domain/entities/work_order_status.dart
 import 'package:iungo/features/work_order/presentation/controllers/work_order_detail_controller.dart';
 
 /// Sticky bottom "Approve" / "Reject" bar for the Work Order Detail
-/// View — shown only while the work order is in the "Awaiting Closure
-/// Approval from Client" status (see
-/// [WorkOrderStatusX.isAwaitingClosureApprovalFromClient]).
+/// View — shown while the work order is in either "Awaiting Pause
+/// Approval from Client" or "Awaiting Closure Approval from Client"
+/// (see [WorkOrderStatusX.hasClientApprovalActions]).
 ///
 /// Approve asks for a simple yes/no confirmation. Reject additionally
 /// requires the user to type remarks explaining the rejection —
 /// remarks are mandatory, so the Reject button in that dialog stays
 /// disabled until the field is non-empty.
 ///
-/// UI-only for now: both actions call
-/// [WorkOrderDetailController.approveRequest]/[rejectRequest], which
-/// are currently no-op stubs (TODO'd for the real API).
+/// Both actions call [WorkOrderDetailController.approveRequest]/
+/// [rejectRequest], which submit the Portal API's transition endpoint
+/// with the `stateTransitionId` for the order's current status (see
+/// [WorkOrderStatusX.approveTransitionId]/[rejectTransitionId]).
 class WorkOrderApprovalActionBar extends GetView<WorkOrderDetailController> {
   const WorkOrderApprovalActionBar({super.key});
 
@@ -26,7 +27,7 @@ class WorkOrderApprovalActionBar extends GetView<WorkOrderDetailController> {
     return Obx(() {
       if (controller.isLoading.value ||
           controller.errorMessage.value.isNotEmpty ||
-          !controller.order.status.isAwaitingClosureApprovalFromClient) {
+          !controller.order.status.hasClientApprovalActions) {
         return const SizedBox.shrink();
       }
 

@@ -1,11 +1,13 @@
 import 'dart:async';
 
 import 'package:get/get.dart';
+import 'package:iungo/core/widgets/app_snackbar.dart';
 import 'package:iungo/features/work_order/data/datasources/work_order_exceptions.dart';
 import 'package:iungo/features/work_order/data/work_order_repository.dart';
 import 'package:iungo/features/work_order/domain/entities/work_order.dart';
 import 'package:iungo/features/work_order/domain/entities/work_order_attachment.dart';
 import 'package:iungo/features/work_order/domain/entities/work_order_comment.dart';
+import 'package:iungo/features/work_order/domain/entities/work_order_status.dart';
 import 'package:iungo/features/work_order/domain/entities/work_order_task.dart';
 
 /// Holds the tab state for one Detail View screen.
@@ -211,35 +213,67 @@ class WorkOrderDetailController extends GetxController {
 
   // ---- Approve / Reject ---------------------------------------------
 
-  /// Approves the "Awaiting Closure Approval from Client" work order.
+  /// Approves the work order's current "Awaiting Pause/Closure Approval
+  /// from Client" state via the Portal API's transition endpoint (see
+  /// [WorkOrderRepository.submitTransition]). The `stateTransitionId`
+  /// sent is looked up from the order's *current* status (
+  /// [WorkOrderStatusX.approveTransitionId]) so the same method works
+  /// for both Pause and Closure approval — a no-op if the order isn't
+  /// actually in one of those statuses (shouldn't happen, since
+  /// [WorkOrderApprovalActionBar] only shows the buttons then).
   ///
-  /// UI-only for now — [WorkOrderApprovalActionBar] already guards this
-  /// behind a confirmation dialog and disables itself while
-  /// [isSubmittingApproval] is true, so wiring in the real endpoint
-  /// here later (once the API details are shared) is just filling in
-  /// the TODO below; no caller-side changes should be needed.
+  /// No remarks field is offered for Approve, so an empty comment is
+  /// sent — [WorkOrderApprovalActionBar] already guards this behind a
+  /// confirmation dialog and disables itself while
+  /// [isSubmittingApproval] is true.
   Future<void> approveRequest() async {
+    final transitionId = order.status.approveTransitionId;
+    if (transitionId == null) return;
+
     isSubmittingApproval.value = true;
     try {
-      // TODO: call the Approve Work Order Closure API for order.id once
-      // the endpoint is available, then refresh the detail (e.g.
-      // await _loadDetail()) so the Status/action bar update.
+      await _repository.submitTransition(
+        workOrderId: order.id,
+        stateTransitionId: transitionId,
+        comment: '',
+      );
+      AppSnackbar.showSuccess('approve_success'.tr);
+      await _loadDetail();
+    } on WorkOrderException catch (e) {
+      AppSnackbar.showError(
+        e.message.trim().isNotEmpty ? e.message : 'something_went_wrong'.tr,
+      );
+    } catch (_) {
+      AppSnackbar.showError('something_went_wrong'.tr);
     } finally {
       isSubmittingApproval.value = false;
     }
   }
 
-  /// Rejects the closure with a mandatory [remarks] explanation.
-  ///
-  /// UI-only for now, same as [approveRequest] — the reject dialog
-  /// already enforces non-empty remarks before this is called.
+  /// Rejects the work order's current "Awaiting Pause/Closure Approval
+  /// from Client" state with a mandatory [remarks] explanation — the
+  /// Reject dialog already enforces non-empty remarks before this is
+  /// called. Same [WorkOrderStatusX.rejectTransitionId] lookup as
+  /// [approveRequest].
   Future<void> rejectRequest(String remarks) async {
+    final transitionId = order.status.rejectTransitionId;
+    if (transitionId == null) return;
+
     isSubmittingApproval.value = true;
     try {
-      // TODO: call the Reject Work Order Closure API for order.id with
-      // `remarks` once the endpoint is available, then refresh the
-      // detail (e.g. await _loadDetail()) so the Status/action bar
-      // update.
+      await _repository.submitTransition(
+        workOrderId: order.id,
+        stateTransitionId: transitionId,
+        comment: remarks,
+      );
+      AppSnackbar.showSuccess('reject_success'.tr);
+      await _loadDetail();
+    } on WorkOrderException catch (e) {
+      AppSnackbar.showError(
+        e.message.trim().isNotEmpty ? e.message : 'something_went_wrong'.tr,
+      );
+    } catch (_) {
+      AppSnackbar.showError('something_went_wrong'.tr);
     } finally {
       isSubmittingApproval.value = false;
     }

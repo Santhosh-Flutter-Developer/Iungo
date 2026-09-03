@@ -22,6 +22,27 @@ abstract class WorkOrderDetailRemoteDataSource {
 
   /// GET /client/api/attachment/ticketattachments/workorder/list/{id}
   Future<List<WorkOrderAttachment>> fetchAttachments(int workOrderId);
+
+  /// PATCH /client/api/v3/action/workorder/{workOrderId}/transition —
+  /// approves or rejects a work order sitting in an "Awaiting ...
+  /// Approval from Client" status. Confirmed request shape:
+  ///
+  ///   { "id": <workOrderId>, "stateTransitionId": <id>,
+  ///     "data": { "transitionCommentData": {
+  ///       "bodyHTML": "<p>...</p>", "body": "...",
+  ///       "mentions": [], "attachments": [], "commentSharing": [] } } }
+  ///
+  /// [stateTransitionId] is the fixed id for the specific
+  /// status+action pair — see [WorkOrderStatusX.approveTransitionId]/
+  /// [WorkOrderStatusX.rejectTransitionId]. [comment] is always sent as
+  /// a `transitionCommentData` block; pass an empty string for Approve
+  /// when the user didn't type anything (remarks are only mandatory for
+  /// Reject, enforced by the Reject dialog itself).
+  Future<void> submitTransition({
+    required int workOrderId,
+    required int stateTransitionId,
+    required String comment,
+  });
 }
 
 class WorkOrderDetailRemoteDataSourceImpl
@@ -32,6 +53,8 @@ class WorkOrderDetailRemoteDataSourceImpl
   final SessionService _session;
 
   static const _clientBase = 'https://citgroup.facilioclients.com/client/api';
+  static const _actionBase =
+      'https://citgroup.facilioclients.com/client/api/v3/action';
 
   // ---- Tasks -------------------------------------------------------
 
@@ -108,6 +131,50 @@ class WorkOrderDetailRemoteDataSourceImpl
       rethrow;
     } catch (e) {
       throw mapWorkOrderError(e, fallbackMessage: 'Failed to load attachments');
+    }
+  }
+
+  // ---- Approve / Reject -------------------------------------------------
+
+  @override
+  Future<void> submitTransition({
+    required int workOrderId,
+    required int stateTransitionId,
+    required String comment,
+  }) async {
+    const fallbackMessage = 'Failed to submit your response';
+    try {
+      final response = await _dio.patch<dynamic>(
+        '$_actionBase/workorder/$workOrderId/transition',
+        data: {
+          'id': workOrderId,
+          'stateTransitionId': stateTransitionId,
+          'data': {
+            'transitionCommentData': {
+              'bodyHTML': comment.isEmpty ? '' : '<p>$comment</p>',
+              'body': comment,
+              'mentions': [],
+              'attachments': [],
+              'commentSharing': [],
+            },
+          },
+        },
+        options: Options(headers: _authHeaders()),
+      );
+
+      final body = _asMap(response.data);
+      if (body != null) {
+        final code = body['code'];
+        if (code != null && code != 0) {
+          throw WorkOrderException(
+            (body['message'] ?? fallbackMessage).toString(),
+          );
+        }
+      }
+    } on WorkOrderException {
+      rethrow;
+    } catch (e) {
+      throw mapWorkOrderError(e, fallbackMessage: fallbackMessage);
     }
   }
 
