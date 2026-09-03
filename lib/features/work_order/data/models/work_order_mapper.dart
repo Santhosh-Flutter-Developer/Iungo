@@ -158,8 +158,23 @@ class WorkOrderListPageResult {
     final moduleStateId = _asInt(_nestedId(item['moduleState'] ?? item['status']));
     final moduleStateInfo =
         moduleStateId != null ? moduleStateLookup[moduleStateId] : null;
+    // `displayName` is tried first: it's the full human-readable label
+    // ("Awaiting Pause Approval from Client") and normalizes reliably
+    // to a [WorkOrderStatus] case. The raw `status` field is an
+    // internal slug that isn't always consistent with the display
+    // label — e.g. the "Awaiting Pause Approval from Client" state
+    // returns `status: "awaitingclientapproval"` (not
+    // "awaitingpauseapprovalfromclient"), which doesn't match any case
+    // in [WorkOrderStatusX.fromApiLabel] and was silently falling back
+    // to `assigned`, showing the wrong status on every list screen
+    // (All Work Orders / Awaiting Pause Approval / Awaiting Closure
+    // Approval all share this mapper). The Detail View was unaffected
+    // because it reads `primaryValue` from a fully-expanded record,
+    // which always matches `displayName`.
+    // `status` is kept only as a fallback for the rare case
+    // `displayName` is missing.
     final status = WorkOrderStatusX.fromApiLabel(
-      (moduleStateInfo?['status'] ?? moduleStateInfo?['displayName']) as String?,
+      (moduleStateInfo?['displayName'] ?? moduleStateInfo?['status']) as String?,
     );
 
     final assignedToId = _asInt(_nestedId(item['assignedTo']));
