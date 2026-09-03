@@ -57,10 +57,10 @@ class AttachmentPreviewData {
   final Map<String, String>? authHeaders;
 }
 
-/// Shows the attachment preview as a popup overlay — the same pattern
-/// already used across every Detail View (Service Request, Work Order,
-/// Inventory Request): a dimmed background with a rounded card on top,
-/// closed with the X in its header. What renders inside depends on the
+/// Shows the attachment preview as a full-screen page — the same
+/// pattern used across every Detail View (Service Request, Work Order,
+/// Inventory Request): a black background with a purple app bar
+/// (close icon + filename) up top. What renders below depends on the
 /// attachment's kind:
 ///  - image: pinch-zoomable inline preview (unchanged behaviour)
 ///  - pdf: downloaded and rendered inline, with a loading state
@@ -71,10 +71,11 @@ Future<void> showAttachmentPreview(
   BuildContext context,
   AttachmentPreviewData data,
 ) {
-  return showDialog(
-    context: context,
-    barrierColor: Colors.black87,
-    builder: (_) => _AttachmentPreviewDialog(data: data),
+  return Navigator.of(context).push(
+    MaterialPageRoute(
+      builder: (_) => _AttachmentPreviewPage(data: data),
+      fullscreenDialog: true,
+    ),
   );
 }
 
@@ -89,17 +90,17 @@ Map<String, String> attachmentAuthHeaders() {
   };
 }
 
-class _AttachmentPreviewDialog extends StatefulWidget {
-  const _AttachmentPreviewDialog({required this.data});
+class _AttachmentPreviewPage extends StatefulWidget {
+  const _AttachmentPreviewPage({required this.data});
 
   final AttachmentPreviewData data;
 
   @override
-  State<_AttachmentPreviewDialog> createState() =>
-      _AttachmentPreviewDialogState();
+  State<_AttachmentPreviewPage> createState() =>
+      _AttachmentPreviewPageState();
 }
 
-class _AttachmentPreviewDialogState extends State<_AttachmentPreviewDialog> {
+class _AttachmentPreviewPageState extends State<_AttachmentPreviewPage> {
   late final AttachmentKind _kind = classifyAttachment(
     contentType: widget.data.contentType,
     extension: widget.data.extension,
@@ -109,30 +110,26 @@ class _AttachmentPreviewDialogState extends State<_AttachmentPreviewDialog> {
 
   @override
   Widget build(BuildContext context) {
-    final screenSize = MediaQuery.of(context).size;
-
-    return Dialog(
-      backgroundColor: Colors.transparent,
-      insetPadding: const EdgeInsets.all(16),
-      child: ConstrainedBox(
-        constraints: BoxConstraints(
-          maxHeight: screenSize.height * 0.82,
+    return Scaffold(
+      backgroundColor: Colors.black,
+      appBar: AppBar(
+        backgroundColor: AppColors.primary,
+        elevation: 0,
+        leading: IconButton(
+          icon: const Icon(Icons.close, color: AppColors.white),
+          onPressed: () => Navigator.of(context).pop(),
         ),
-        child: ClipRRect(
-          borderRadius: BorderRadius.circular(12),
-          child: Container(
+        title: Text(
+          widget.data.name,
+          maxLines: 1,
+          overflow: TextOverflow.ellipsis,
+          style: const TextStyle(
             color: AppColors.white,
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                _Header(name: widget.data.name, extension: widget.data.extension),
-                const Divider(height: 1, color: AppColors.divider),
-                Flexible(child: _buildContent(context)),
-              ],
-            ),
+            fontWeight: FontWeight.w500,
           ),
         ),
       ),
+      body: SafeArea(child: _buildContent(context)),
     );
   }
 
@@ -182,58 +179,6 @@ class _AttachmentPreviewDialogState extends State<_AttachmentPreviewDialog> {
   }
 }
 
-class _Header extends StatelessWidget {
-  const _Header({required this.name, required this.extension});
-
-  final String name;
-  final String extension;
-
-  @override
-  Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(16, 12, 8, 12),
-      child: Row(
-        children: [
-          Expanded(
-            child: Text(
-              name,
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-              style: const TextStyle(
-                fontSize: 15,
-                fontWeight: FontWeight.w600,
-                color: AppColors.textDark,
-              ),
-            ),
-          ),
-          if (extension.isNotEmpty) ...[
-            const SizedBox(width: 8),
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-              decoration: BoxDecoration(
-                color: AppColors.cardBackground,
-                borderRadius: BorderRadius.circular(4),
-              ),
-              child: Text(
-                extension.toUpperCase(),
-                style: const TextStyle(
-                  fontSize: 12,
-                  fontWeight: FontWeight.w600,
-                  color: AppColors.headingBlueGrey,
-                ),
-              ),
-            ),
-          ],
-          IconButton(
-            icon: const Icon(Icons.close, color: AppColors.textDark),
-            onPressed: () => Get.back(),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
 class _ImagePreview extends StatelessWidget {
   const _ImagePreview({required this.data});
 
@@ -255,7 +200,7 @@ class _ImagePreview extends StatelessWidget {
           if (progress == null) return child;
           return const Padding(
             padding: EdgeInsets.all(48),
-            child: CircularProgressIndicator(color: AppColors.primary),
+            child: CircularProgressIndicator(color: AppColors.white),
           );
         },
         errorBuilder: (context, error, stackTrace) =>
@@ -265,10 +210,12 @@ class _ImagePreview extends StatelessWidget {
       image = _PreviewErrorText(name: data.name);
     }
 
-    return InteractiveViewer(
-      minScale: 1,
-      maxScale: 4,
-      child: Center(child: image),
+    return Center(
+      child: InteractiveViewer(
+        minScale: 1,
+        maxScale: 4,
+        child: image,
+      ),
     );
   }
 }
@@ -321,21 +268,23 @@ class _PdfPreviewState extends State<_PdfPreview> {
       future: _controllerFuture,
       builder: (context, snapshot) {
         if (snapshot.connectionState != ConnectionState.done) {
-          return Padding(
-            padding: const EdgeInsets.all(48),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                const CircularProgressIndicator(color: AppColors.primary),
-                const SizedBox(height: 16),
-                Text(
-                  'loading_attachment'.tr,
-                  style: const TextStyle(
-                    fontSize: 14,
-                    color: AppColors.headingBlueGrey,
+          return Center(
+            child: Padding(
+              padding: const EdgeInsets.all(48),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  const CircularProgressIndicator(color: AppColors.white),
+                  const SizedBox(height: 16),
+                  Text(
+                    'loading_attachment'.tr,
+                    style: const TextStyle(
+                      fontSize: 14,
+                      color: AppColors.white,
+                    ),
                   ),
-                ),
-              ],
+                ],
+              ),
             ),
           );
         }
@@ -391,56 +340,58 @@ class _UnsupportedPreview extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.all(32),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Icon(_icon, size: 56, color: AppColors.headingBlueGrey),
-          const SizedBox(height: 16),
-          Text(
-            'preview_not_available_attachment'.tr,
-            textAlign: TextAlign.center,
-            style: const TextStyle(fontSize: 14, color: AppColors.textDark),
-          ),
-          const SizedBox(height: 20),
-          Material(
-            color: AppColors.attachmentViewBackground,
-            borderRadius: BorderRadius.circular(8),
-            child: InkWell(
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.all(32),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(_icon, size: 96, color: AppColors.white),
+            const SizedBox(height: 16),
+            Text(
+              'preview_not_available_attachment'.tr,
+              textAlign: TextAlign.center,
+              style: const TextStyle(fontSize: 15, color: AppColors.white),
+            ),
+            const SizedBox(height: 20),
+            Material(
+              color: AppColors.white,
               borderRadius: BorderRadius.circular(8),
-              onTap: isOpening ? null : onView,
-              child: Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
-                child: isOpening
-                    ? const SizedBox(
-                        width: 18,
-                        height: 18,
-                        child: CircularProgressIndicator(
-                          strokeWidth: 2,
-                          color: AppColors.primary,
-                        ),
-                      )
-                    : Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          const Icon(Icons.open_in_new,
-                              size: 18, color: AppColors.primary),
-                          const SizedBox(width: 8),
-                          Text(
-                            'view'.tr,
-                            style: const TextStyle(
-                              fontSize: 14,
-                              fontWeight: FontWeight.w700,
-                              color: AppColors.primary,
-                            ),
+              child: InkWell(
+                borderRadius: BorderRadius.circular(8),
+                onTap: isOpening ? null : onView,
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+                  child: isOpening
+                      ? const SizedBox(
+                          width: 18,
+                          height: 18,
+                          child: CircularProgressIndicator(
+                            strokeWidth: 2,
+                            color: AppColors.primary,
                           ),
-                        ],
-                      ),
+                        )
+                      : Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            const Icon(Icons.open_in_new,
+                                size: 18, color: AppColors.primary),
+                            const SizedBox(width: 8),
+                            Text(
+                              'view'.tr,
+                              style: const TextStyle(
+                                fontSize: 14,
+                                fontWeight: FontWeight.w700,
+                                color: AppColors.primary,
+                              ),
+                            ),
+                          ],
+                        ),
+                ),
               ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }
@@ -453,12 +404,14 @@ class _PreviewErrorText extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.all(24),
-      child: Text(
-        'preview_not_available_attachment'.tr,
-        textAlign: TextAlign.center,
-        style: const TextStyle(fontSize: 14, color: AppColors.textDark),
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.all(24),
+        child: Text(
+          'preview_not_available_attachment'.tr,
+          textAlign: TextAlign.center,
+          style: const TextStyle(fontSize: 15, color: AppColors.white),
+        ),
       ),
     );
   }

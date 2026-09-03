@@ -222,8 +222,9 @@ class WorkOrderDetailController extends GetxController {
   /// actually in one of those statuses (shouldn't happen, since
   /// [WorkOrderApprovalActionBar] only shows the buttons then).
   ///
-  /// No remarks field is offered for Approve, so an empty comment is
-  /// sent — [WorkOrderApprovalActionBar] already guards this behind a
+  /// No remarks field is offered for Approve, so a default "Approved"
+  /// comment is sent — the portal API rejects an empty comment.
+  /// [WorkOrderApprovalActionBar] already guards this behind a
   /// confirmation dialog and disables itself while
   /// [isSubmittingApproval] is true.
   Future<void> approveRequest() async {
@@ -235,7 +236,7 @@ class WorkOrderDetailController extends GetxController {
       await _repository.submitTransition(
         workOrderId: order.id,
         stateTransitionId: transitionId,
-        comment: '',
+        comment: 'approved_default_comment'.tr,
       );
       AppSnackbar.showSuccess('approve_success'.tr);
       await _loadDetail();

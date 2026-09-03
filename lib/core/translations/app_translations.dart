@@ -250,6 +250,7 @@ class AppTranslations extends Translations {
           'Are you sure you want to approve this request?',
       'approve_success': 'Request approved successfully.',
       'reject_success': 'Request rejected successfully.',
+      'approved_default_comment': 'Approved',
 
       // Work Order statuses
       'wo_status_submitted': 'Submitted',
@@ -525,6 +526,7 @@ class AppTranslations extends Translations {
           'هل أنت متأكد أنك تريد الموافقة على هذا الطلب؟',
       'approve_success': 'تمت الموافقة على الطلب بنجاح.',
       'reject_success': 'تم رفض الطلب بنجاح.',
+      'approved_default_comment': 'تمت الموافقة',
 
       // Work Order statuses
       'wo_status_submitted': 'تم الإرسال',
