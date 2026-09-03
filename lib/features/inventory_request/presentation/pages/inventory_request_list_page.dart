@@ -167,7 +167,7 @@ class _InventoryRequestListPageState extends State<InventoryRequestListPage> {
                         onTap: () => Get.to(
                           () => const InventoryRequestDetailPage(),
                           binding: InventoryRequestDetailBinding(request),
-                        ),
+                        )?.then((_) => controller.reload()),
                       );
                     },
                   ),

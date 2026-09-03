@@ -5,8 +5,10 @@ import 'package:iungo/core/widgets/app_drawer.dart';
 import 'package:iungo/features/service_request/presentation/widgets/filter_pill_button.dart';
 import 'package:iungo/features/service_request/presentation/widgets/service_request_empty_state.dart';
 import 'package:iungo/features/service_request/presentation/widgets/service_request_shimmer.dart';
+import 'package:iungo/features/work_order/presentation/bindings/work_order_detail_binding.dart';
 import 'package:iungo/features/work_order/presentation/bindings/work_order_pause_approval_search_binding.dart';
 import 'package:iungo/features/work_order/presentation/controllers/work_order_pause_approval_list_controller.dart';
+import 'package:iungo/features/work_order/presentation/pages/work_order_detail_page.dart';
 import 'package:iungo/features/work_order/presentation/pages/work_order_filter_page.dart';
 import 'package:iungo/features/work_order/presentation/pages/work_order_pause_approval_search_page.dart';
 import 'package:iungo/features/work_order/presentation/widgets/work_order_card.dart';
@@ -157,7 +159,14 @@ class _WorkOrderPauseApprovalListPageState
                       if (index >= workOrders.length) {
                         return const _LoadMoreSpinner();
                       }
-                      return WorkOrderCard(workOrder: workOrders[index]);
+                      final workOrder = workOrders[index];
+                      return WorkOrderCard(
+                        workOrder: workOrder,
+                        onTap: () => Get.to(
+                          () => const WorkOrderDetailPage(),
+                          binding: WorkOrderDetailBinding(workOrder),
+                        )?.then((_) => controller.reload()),
+                      );
                     },
                   ),
                 );

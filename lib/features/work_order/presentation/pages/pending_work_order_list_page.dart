@@ -112,7 +112,7 @@ class PendingWorkOrderListPage extends StatelessWidget {
                             workOrder,
                             staticMode: true,
                           ),
-                        ),
+                        )?.then((_) => controller.reload()),
                       );
                     },
                   ),
