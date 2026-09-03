@@ -527,7 +527,9 @@ InventoryRequest mapInventoryRequestDetail(Map<String, dynamic> envelope) {
     clientApprovalAuthoritiesLookup,
   );
 
-  final lineItems = _lineItemsFrom(json['lineItems'] ?? json['items']);
+  final lineItems = _lineItemsFrom(
+    json['inventoryrequestlineitems'] ?? json['lineItems'] ?? json['items'],
+  );
 
   return InventoryRequest(
     id: id,
@@ -552,7 +554,14 @@ InventoryRequest mapInventoryRequestDetail(Map<String, dynamic> envelope) {
 List<InventoryLineItem> _lineItemsFrom(dynamic raw) {
   if (raw is! List) return const [];
   return raw.whereType<Map<String, dynamic>>().map((item) {
-    final itemInfo = item['item'];
+    // The real `inventoryrequestlineitems` API shape nests the material
+    // under `itemType` (not `item`), the store room under `storeRoom` as
+    // an object with a `name`, the requested quantity is the line item's
+    // own top-level `quantity`, "available" is the item type's current
+    // stock (`currentQuantity`, falling back to `quantity`), and issued
+    // quantity is `issuedQuantity`. Older/alternate key names are kept as
+    // fallbacks in case another endpoint shapes this differently.
+    final itemInfo = item['itemType'] ?? item['item'];
     final itemCode = ((itemInfo is Map<String, dynamic>
                 ? itemInfo['code'] ?? itemInfo['itemCode']
                 : item['itemCode']) as String?)
@@ -570,15 +579,24 @@ List<InventoryLineItem> _lineItemsFrom(dynamic raw) {
             ?.trim() ??
         '';
 
+    final availableQtyRaw = (itemInfo is Map<String, dynamic>)
+        ? (itemInfo['currentQuantity'] ?? itemInfo['quantity'])
+        : (item['availableQty'] ?? item['currentQuantity']);
+
     return InventoryLineItem(
       itemCode: itemCode,
       itemName: itemName,
       storeRoom: storeRoom,
-      requestedQty:
-          InventoryRequestListPageResult._asInt(item['requestedQty']) ?? 0,
+      requestedQty: InventoryRequestListPageResult._asInt(
+            item['quantity'] ?? item['requestedQty'],
+          ) ??
+          0,
       availableQty:
-          InventoryRequestListPageResult._asInt(item['availableQty']) ?? 0,
-      issuedQty: InventoryRequestListPageResult._asInt(item['issuedQty']) ?? 0,
+          InventoryRequestListPageResult._asInt(availableQtyRaw) ?? 0,
+      issuedQty: InventoryRequestListPageResult._asInt(
+            item['issuedQuantity'] ?? item['issuedQty'],
+          ) ??
+          0,
     );
   }).toList();
 }
