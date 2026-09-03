@@ -23,6 +23,26 @@ abstract class InventoryRequestDetailRemoteDataSource {
 
   /// GET /client/api/attachment/inventoryrequestattachments/inventoryrequest/list/{id}
   Future<List<WorkOrderAttachment>> fetchAttachments(int inventoryRequestId);
+
+  /// PATCH /client/api/v3/action/inventoryrequest/{inventoryRequestId}/transition
+  ///
+  /// Approves or rejects an Inventory Request sitting in "Awaiting
+  /// Client Approval". Confirmed request shape:
+  ///
+  ///   { "id": <inventoryRequestId>, "stateTransitionId": <id>,
+  ///     "data": { "transitionCommentData": {
+  ///       "bodyHTML": "<p>...</p>", "body": "...",
+  ///       "mentions": [], "attachments": [], "commentSharing": [] } } }
+  ///
+  /// [stateTransitionId] is the fixed id for the Approve (14145) or
+  /// Reject (41229) action. [comment] is always sent as a
+  /// `transitionCommentData` block — "Approved" by default for Approve,
+  /// or the user-entered remarks for Reject.
+  Future<void> submitTransition({
+    required int inventoryRequestId,
+    required int stateTransitionId,
+    required String comment,
+  });
 }
 
 class InventoryRequestDetailRemoteDataSourceImpl
@@ -33,6 +53,8 @@ class InventoryRequestDetailRemoteDataSourceImpl
   final SessionService _session;
 
   static const _clientBase = 'https://citgroup.facilioclients.com/client/api';
+  static const _actionBase =
+      'https://citgroup.facilioclients.com/client/api/v3/action';
 
   // ---- Notes -----------------------------------------------------------
 
@@ -79,6 +101,50 @@ class InventoryRequestDetailRemoteDataSourceImpl
         throw const InventoryRequestException('Unexpected response from server');
       }
       return WorkOrderAttachmentMapper.responseFromJson(body);
+    } on InventoryRequestException {
+      rethrow;
+    } catch (e) {
+      throw mapInventoryRequestError(e, fallbackMessage: fallbackMessage);
+    }
+  }
+
+  // ---- Approve / Reject ---------------------------------------------
+
+  @override
+  Future<void> submitTransition({
+    required int inventoryRequestId,
+    required int stateTransitionId,
+    required String comment,
+  }) async {
+    const fallbackMessage = 'Failed to submit your response';
+    try {
+      final response = await _dio.patch<dynamic>(
+        '$_actionBase/inventoryrequest/$inventoryRequestId/transition',
+        data: {
+          'id': inventoryRequestId,
+          'stateTransitionId': stateTransitionId,
+          'data': {
+            'transitionCommentData': {
+              'bodyHTML': comment.isEmpty ? '' : '<p>$comment</p>',
+              'body': comment,
+              'mentions': [],
+              'attachments': [],
+              'commentSharing': [],
+            },
+          },
+        },
+        options: Options(headers: _authHeaders()),
+      );
+
+      final body = _asMap(response.data);
+      if (body != null) {
+        final code = body['code'];
+        if (code != null && code != 0) {
+          throw InventoryRequestException(
+            (body['message'] ?? fallbackMessage).toString(),
+          );
+        }
+      }
     } on InventoryRequestException {
       rethrow;
     } catch (e) {

@@ -1,4 +1,5 @@
 import 'package:get/get.dart';
+import 'package:iungo/core/widgets/app_snackbar.dart';
 import 'package:iungo/features/inventory_request/data/datasources/inventory_request_exceptions.dart';
 import 'package:iungo/features/inventory_request/data/inventory_request_repository.dart';
 import 'package:iungo/features/inventory_request/domain/entities/inventory_request.dart';
@@ -120,35 +121,62 @@ class InventoryRequestDetailController extends GetxController {
 
   // ---- Approve / Reject -----------------------------------------------
 
-  /// Approves the request.
-  ///
-  /// UI-only for now — [InventoryRequestApprovalActionBar] already
-  /// guards this behind a confirmation dialog and disables itself while
-  /// [isSubmittingApproval] is true, so wiring in the real endpoint here
-  /// later (once the API details are shared) is just filling in the
-  /// TODO below; no caller-side changes should be needed.
+  /// `stateTransitionId` the Portal API expects for the "Approve"
+  /// action on an Inventory Request sitting in "Awaiting Client
+  /// Approval", confirmed via Postman against the live Portal API.
+  static const int _approveTransitionId = 14145;
+
+  /// `stateTransitionId` the Portal API expects for the "Reject"
+  /// action — same status, confirmed via Postman.
+  static const int _rejectTransitionId = 41229;
+
+  /// Approves the request's current "Awaiting Client Approval" state
+  /// via the Portal API's transition endpoint (see
+  /// [InventoryRequestRepository.submitTransition]). No remarks field
+  /// is offered for Approve, so a default "Approved" comment is sent —
+  /// the portal API rejects an empty comment. Mirrors
+  /// [WorkOrderDetailController.approveRequest] exactly.
   Future<void> approveRequest() async {
     isSubmittingApproval.value = true;
     try {
-      // TODO: call the Approve Inventory Request API for request.value.id
-      // once the endpoint is available, then refresh the detail
-      // (e.g. await _loadDetail()) so the Status/action bar update.
+      await _repository.submitTransition(
+        inventoryRequestId: order.id,
+        stateTransitionId: _approveTransitionId,
+        comment: 'approved_default_comment'.tr,
+      );
+      AppSnackbar.showSuccess('approve_success'.tr);
+      await _loadDetail();
+    } on InventoryRequestException catch (e) {
+      AppSnackbar.showError(
+        e.message.trim().isNotEmpty ? e.message : 'something_went_wrong'.tr,
+      );
+    } catch (_) {
+      AppSnackbar.showError('something_went_wrong'.tr);
     } finally {
       isSubmittingApproval.value = false;
     }
   }
 
-  /// Rejects the request with a mandatory [remarks] explanation.
-  ///
-  /// UI-only for now, same as [approveRequest] — the reject dialog
-  /// already enforces non-empty remarks before this is called.
+  /// Rejects the request's current "Awaiting Client Approval" state
+  /// with a mandatory [remarks] explanation — the Reject dialog already
+  /// enforces non-empty remarks before this is called. Mirrors
+  /// [WorkOrderDetailController.rejectRequest] exactly.
   Future<void> rejectRequest(String remarks) async {
     isSubmittingApproval.value = true;
     try {
-      // TODO: call the Reject Inventory Request API for request.value.id
-      // with `remarks` once the endpoint is available, then refresh the
-      // detail (e.g. await _loadDetail()) so the Status/action bar
-      // update.
+      await _repository.submitTransition(
+        inventoryRequestId: order.id,
+        stateTransitionId: _rejectTransitionId,
+        comment: remarks,
+      );
+      AppSnackbar.showSuccess('reject_success'.tr);
+      await _loadDetail();
+    } on InventoryRequestException catch (e) {
+      AppSnackbar.showError(
+        e.message.trim().isNotEmpty ? e.message : 'something_went_wrong'.tr,
+      );
+    } catch (_) {
+      AppSnackbar.showError('something_went_wrong'.tr);
     } finally {
       isSubmittingApproval.value = false;
     }

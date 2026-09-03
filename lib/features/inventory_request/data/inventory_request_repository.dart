@@ -228,6 +228,23 @@ class InventoryRequestRepository extends GetxService {
     return _detailDataSource.fetchAttachments(inventoryRequestId);
   }
 
+  // ---- Detail View: Approve / Reject -------------------------------
+
+  /// Submits an Approve/Reject decision for one Inventory Request via
+  /// the Portal API's transition endpoint. See
+  /// [InventoryRequestDetailRemoteDataSource.submitTransition].
+  Future<void> submitTransition({
+    required int inventoryRequestId,
+    required int stateTransitionId,
+    required String comment,
+  }) {
+    return _detailDataSource.submitTransition(
+      inventoryRequestId: inventoryRequestId,
+      stateTransitionId: stateTransitionId,
+      comment: comment,
+    );
+  }
+
   /// Replaces the whole list with a freshly-fetched first page (initial
   /// load / pull-to-refresh).
   void replaceWithPage(List<InventoryRequest> page) {
