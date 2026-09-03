@@ -1,16 +1,18 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:iungo/core/constants/app_colors.dart';
+import 'package:iungo/core/constants/app_urls.dart';
+import 'package:iungo/core/widgets/attachment_preview_dialog.dart';
 import 'package:iungo/features/inventory_request/presentation/controllers/inventory_request_detail_controller.dart';
-import 'package:iungo/features/work_order/presentation/pages/work_order_attachment_viewer_page.dart';
+import 'package:iungo/features/work_order/domain/entities/work_order_attachment.dart';
 import 'package:iungo/features/work_order/presentation/widgets/work_order_attachment_card.dart';
 
 /// Renders the live "Attachments" for an Inventory Request —
 /// loading/error/empty/list states driven by
 /// [InventoryRequestDetailController]. Mirrors [DetailAttachmentsTab]
-/// (Work Order) exactly, reusing [WorkOrderAttachmentCard]/
-/// [WorkOrderAttachmentViewerPage] since both features share the same
-/// attachment shape.
+/// (Work Order) exactly, reusing [WorkOrderAttachmentCard] since both
+/// features share the same attachment shape. "View" opens the same
+/// shared popup-overlay preview as every other Detail View.
 class InventoryRequestDetailAttachmentsTab
     extends GetView<InventoryRequestDetailController> {
   const InventoryRequestDetailAttachmentsTab({super.key});
@@ -81,13 +83,29 @@ class InventoryRequestDetailAttachmentsTab
             final attachment = attachments[index];
             return WorkOrderAttachmentCard(
               attachment: attachment,
-              onView: () => Get.to(
-                () => WorkOrderAttachmentViewerPage(attachment: attachment),
-              ),
+              onView: () => _showPreview(context, attachment),
             );
           },
         ),
       );
     });
+  }
+
+  void _showPreview(BuildContext context, WorkOrderAttachment attachment) {
+    showAttachmentPreview(
+      context,
+      AttachmentPreviewData(
+        name: attachment.name,
+        extension: attachment.extension,
+        contentType: attachment.contentType,
+        previewUrl: attachment.previewUrl == null
+            ? null
+            : AppUrls.resolve(attachment.previewUrl!),
+        downloadUrl: attachment.downloadUrl == null
+            ? null
+            : AppUrls.resolve(attachment.downloadUrl!),
+        authHeaders: attachmentAuthHeaders(),
+      ),
+    );
   }
 }

@@ -48,6 +48,11 @@ dependencies:
   file_picker: ^8.1.6
   mobile_scanner: ^6.0.2
 
+  # Attachment preview (Detail View > Attachments > View)
+  path_provider: ^2.1.4 # temp dir for downloaded attachments
+  open_filex: ^4.5.0 # hand off non-previewable files to the OS's own app
+  pdfx: ^2.6.0 # in-app PDF rendering
+
 dev_dependencies:
   flutter_test:
     sdk: flutter

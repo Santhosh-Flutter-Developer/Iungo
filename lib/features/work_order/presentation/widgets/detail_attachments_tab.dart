@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:iungo/core/constants/app_colors.dart';
+import 'package:iungo/core/constants/app_urls.dart';
+import 'package:iungo/core/widgets/attachment_preview_dialog.dart';
+import 'package:iungo/features/work_order/domain/entities/work_order_attachment.dart';
 import 'package:iungo/features/work_order/presentation/controllers/work_order_detail_controller.dart';
-import 'package:iungo/features/work_order/presentation/pages/work_order_attachment_viewer_page.dart';
 import 'package:iungo/features/work_order/presentation/widgets/work_order_attachment_card.dart';
 
 class DetailAttachmentsTab extends GetView<WorkOrderDetailController> {
@@ -74,13 +76,29 @@ class DetailAttachmentsTab extends GetView<WorkOrderDetailController> {
             final attachment = attachments[index];
             return WorkOrderAttachmentCard(
               attachment: attachment,
-              onView: () => Get.to(
-                () => WorkOrderAttachmentViewerPage(attachment: attachment),
-              ),
+              onView: () => _showPreview(context, attachment),
             );
           },
         ),
       );
     });
+  }
+
+  void _showPreview(BuildContext context, WorkOrderAttachment attachment) {
+    showAttachmentPreview(
+      context,
+      AttachmentPreviewData(
+        name: attachment.name,
+        extension: attachment.extension,
+        contentType: attachment.contentType,
+        previewUrl: attachment.previewUrl == null
+            ? null
+            : AppUrls.resolve(attachment.previewUrl!),
+        downloadUrl: attachment.downloadUrl == null
+            ? null
+            : AppUrls.resolve(attachment.downloadUrl!),
+        authHeaders: attachmentAuthHeaders(),
+      ),
+    );
   }
 }

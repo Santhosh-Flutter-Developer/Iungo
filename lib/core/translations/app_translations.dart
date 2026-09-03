@@ -174,6 +174,10 @@ class AppTranslations extends Translations {
       'no_attachments_hint': 'Add attachments by pressing the "+" button',
       'uploading': 'Uploading…',
       'preview_not_available': 'Preview not available for this file',
+      'preview_not_available_attachment':
+          'Preview is not available for this attachment.',
+      'loading_attachment': 'Loading attachment…',
+      'open_attachment_failed': 'Unable to open this attachment.',
       'scan_qr_instruction': 'Align the QR code within the frame to scan',
       'camera_permission_denied':
           'Camera permission is required to scan a QR code',
@@ -447,6 +451,9 @@ class AppTranslations extends Translations {
       'no_attachments_hint': 'أضف مرفقات بالضغط على زر "+"',
       'uploading': 'جارٍ الرفع…',
       'preview_not_available': 'المعاينة غير متاحة لهذا الملف',
+      'preview_not_available_attachment': 'المعاينة غير متاحة لهذا المرفق.',
+      'loading_attachment': 'جارٍ تحميل المرفق…',
+      'open_attachment_failed': 'تعذّر فتح هذا المرفق.',
       'scan_qr_instruction': 'ضع رمز الاستجابة السريعة داخل الإطار للمسح',
       'camera_permission_denied':
           'يلزم إذن الكاميرا لمسح رمز الاستجابة السريعة',
