@@ -84,30 +84,38 @@ class LoginPage extends GetView<LoginController> {
                 ),
               ),
               const SizedBox(height: 16),
-              Wrap(
-                alignment: WrapAlignment.center,
-                children: [
-                  Text(
-                    'agree_prefix'.tr,
-                    style: const TextStyle(
-                      fontSize: 13,
-                      
-                      color: AppColors.textMuted,
-                    ),
-                  ),
-                  GestureDetector(
-                    onTap: () => Get.toNamed(AppRoutes.privacyPolicy),
-                    child: Text(
-                      'privacy_policy'.tr,
+              // The agree/privacy-policy text is kept in English for every
+              // locale (see AppTranslations), so it must always be laid out
+              // left-to-right — "By continuing, you agree to our Privacy
+              // Policy" — even when the surrounding screen is RTL (Arabic).
+              // Without this, Wrap inherits the ambient RTL direction and
+              // reverses the visual order, putting "Privacy Policy" first.
+              Directionality(
+                textDirection: TextDirection.ltr,
+                child: Wrap(
+                  alignment: WrapAlignment.center,
+                  children: [
+                    Text(
+                      'agree_prefix'.tr,
                       style: const TextStyle(
                         fontSize: 13,
-                        color: AppColors.link,
-                        decoration: TextDecoration.underline,
-                        fontWeight: FontWeight.w600,
+                        color: AppColors.textMuted,
                       ),
                     ),
-                  ),
-                ],
+                    GestureDetector(
+                      onTap: () => Get.toNamed(AppRoutes.privacyPolicy),
+                      child: Text(
+                        'privacy_policy'.tr,
+                        style: const TextStyle(
+                          fontSize: 13,
+                          color: AppColors.link,
+                          decoration: TextDecoration.underline,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
               ),
             ],
           ),

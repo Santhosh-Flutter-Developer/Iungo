@@ -34,6 +34,20 @@ class _DueDateRangePageState extends State<DueDateRangePage> {
   DateTime? _start;
   DateTime? _end;
 
+  // How many years back / forward from today the scrollable month list
+  // covers. Widened so users can pick due dates in previous years, not
+  // just the single month before today.
+  static const _yearsBack = 15;
+  static const _yearsForward = 2;
+
+  // Center key used to anchor the CustomScrollView so the current month
+  // sits at the top of the viewport: months before it live in a sliver
+  // that grows upward (scroll up for past years), months from now onward
+  // live in a sliver that grows downward (scroll down for future months).
+  // This lets both directions be lazily built instead of eagerly
+  // generating (and having to jump through) hundreds of month grids.
+  final Key _centerKey = UniqueKey();
+
   static const _weekdayLabels = ['S', 'M', 'T', 'W', 'T', 'F', 'S'];
   static const _monthNames = [
     'January', 'February', 'March', 'April', 'May', 'June',
@@ -74,10 +88,9 @@ class _DueDateRangePageState extends State<DueDateRangePage> {
   @override
   Widget build(BuildContext context) {
     final now = DateTime.now();
-    final months = List.generate(
-      13,
-      (i) => DateTime(now.year, now.month + i - 1),
-    );
+    final currentMonth = DateTime(now.year, now.month);
+    final pastMonthsCount = _yearsBack * 12;
+    final futureMonthsCount = _yearsForward * 12 + 1; // includes current month
 
     return Scaffold(
       backgroundColor: AppColors.background,
@@ -173,11 +186,48 @@ class _DueDateRangePageState extends State<DueDateRangePage> {
             ),
             const Divider(height: 20, color: AppColors.divider),
             Expanded(
-              child: ListView.builder(
-                padding: const EdgeInsets.symmetric(horizontal: 20),
-                itemCount: months.length,
-                itemBuilder: (context, index) =>
-                    _MonthGrid(month: months[index], state: this),
+              child: CustomScrollView(
+                center: _centerKey,
+                slivers: [
+                  // Past months: index 0 is the month right before the
+                  // current one, growing further into the past as the
+                  // index increases. Sliver ordering before `center`
+                  // renders bottom-up, so this lays out correctly above
+                  // the current month without needing to pre-build or
+                  // scroll to it.
+                  SliverPadding(
+                    padding: const EdgeInsets.symmetric(horizontal: 20),
+                    sliver: SliverList(
+                      delegate: SliverChildBuilderDelegate(
+                        (context, index) => _MonthGrid(
+                          month: DateTime(
+                            currentMonth.year,
+                            currentMonth.month - 1 - index,
+                          ),
+                          state: this,
+                        ),
+                        childCount: pastMonthsCount,
+                      ),
+                    ),
+                  ),
+                  // Current + future months.
+                  SliverPadding(
+                    key: _centerKey,
+                    padding: const EdgeInsets.symmetric(horizontal: 20),
+                    sliver: SliverList(
+                      delegate: SliverChildBuilderDelegate(
+                        (context, index) => _MonthGrid(
+                          month: DateTime(
+                            currentMonth.year,
+                            currentMonth.month + index,
+                          ),
+                          state: this,
+                        ),
+                        childCount: futureMonthsCount,
+                      ),
+                    ),
+                  ),
+                ],
               ),
             ),
           ],
@@ -200,7 +250,7 @@ class _DueDateRangePageState extends State<DueDateRangePage> {
 }
 
 class _MonthGrid extends StatelessWidget {
-  const _MonthGrid({required this.month, required this.state});
+  const _MonthGrid({super.key, required this.month, required this.state});
 
   final DateTime month;
   final _DueDateRangePageState state;
