@@ -29,6 +29,10 @@ class _SelectAssetPageState extends State<SelectAssetPage> {
         selectedItem: controller.selectedAsset.value,
         onSelected: controller.selectAsset,
         isLoading: controller.isLoadingAssets.value,
+        isLoadingMore: controller.isLoadingMoreAssets.value,
+        hasMore: controller.hasMoreAssets.value,
+        onLoadMore: controller.onLoadMoreAssets,
+        onSearchChanged: controller.onAssetSearchChanged,
       ),
     );
   }

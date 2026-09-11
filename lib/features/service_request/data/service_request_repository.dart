@@ -77,25 +77,35 @@ class ServiceRequestRepository extends GetxService {
     return options;
   }
 
-  Future<List<PickListOption>> fetchSiteOptions({String? search}) {
-    return _pickListDataSource.fetchSiteOptions(search: search);
+  Future<List<PickListOption>> fetchSiteOptions({
+    String? search,
+    int page = 1,
+  }) {
+    return _pickListDataSource.fetchSiteOptions(search: search, page: page);
   }
 
   Future<List<PickListOption>> fetchBuildingOptions({
     required int siteId,
     String? search,
+    int page = 1,
   }) {
     return _pickListDataSource.fetchBuildingOptions(
       siteId: siteId,
       search: search,
+      page: page,
     );
   }
 
   Future<List<PickListOption>> fetchAssetOptions({
     required int siteId,
     String? search,
+    int page = 1,
   }) {
-    return _pickListDataSource.fetchAssetOptions(siteId: siteId, search: search);
+    return _pickListDataSource.fetchAssetOptions(
+      siteId: siteId,
+      search: search,
+      page: page,
+    );
   }
 
   /// Fetches the full record for the Detail View screen. The Detail

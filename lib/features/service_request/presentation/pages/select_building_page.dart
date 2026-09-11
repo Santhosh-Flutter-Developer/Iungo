@@ -29,6 +29,10 @@ class _SelectBuildingPageState extends State<SelectBuildingPage> {
         selectedItem: controller.selectedBuilding.value,
         onSelected: controller.selectBuilding,
         isLoading: controller.isLoadingBuildings.value,
+        isLoadingMore: controller.isLoadingMoreBuildings.value,
+        hasMore: controller.hasMoreBuildings.value,
+        onLoadMore: controller.onLoadMoreBuildings,
+        onSearchChanged: controller.onBuildingSearchChanged,
       ),
     );
   }

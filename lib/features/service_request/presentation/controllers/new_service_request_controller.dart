@@ -76,6 +76,17 @@ class NewServiceRequestController extends GetxController {
   final RxBool isLoadingBuildings = false.obs;
   final RxBool isLoadingAssets = false.obs;
 
+  // Infinite-scroll state — true while a *next* page (not the first) is
+  // being fetched, and whether another page might still exist. Search
+  // never paginates (the API returns matches directly), so these stay
+  // false while a search query is active.
+  final RxBool isLoadingMoreSites = false.obs;
+  final RxBool isLoadingMoreBuildings = false.obs;
+  final RxBool isLoadingMoreAssets = false.obs;
+  final RxBool hasMoreSites = false.obs;
+  final RxBool hasMoreBuildings = false.obs;
+  final RxBool hasMoreAssets = false.obs;
+
   final Rxn<String> selectedSite = Rxn<String>();
   final Rxn<String> selectedBuilding = Rxn<String>();
   final Rxn<String> selectedAsset = Rxn<String>();
@@ -126,56 +137,89 @@ class NewServiceRequestController extends GetxController {
     }
   }
 
-  Future<void> _loadSiteOptions({String? search}) async {
-    isLoadingSites.value = true;
-    try {
-      final options = await _repository.fetchSiteOptions(search: search);
-      siteOptions.assignAll(options);
-      // Auto-select when there's exactly one site (matches the
-      // single-site org shown in the reference screenshots) and nothing
-      // is picked yet.
-      if (search == null && selectedSite.value == null && options.length == 1) {
-        _applySite(options.first);
-      }
-    } catch (_) {
-      AppSnackbar.showError('something_went_wrong'.tr);
-    } finally {
-      isLoadingSites.value = false;
-    }
-  }
+  /// Page size the pickList API is queried with — matches the
+  /// `perPage=50` used by [ServiceRequestPickListRemoteDataSourceImpl].
+  /// A page shorter than this means there's nothing further to load.
+  static const _pickerPerPage = 50;
 
-  Future<void> _loadBuildingOptions({String? search}) async {
-    final siteId = _selectedSiteId;
-    if (siteId == null) return;
-    isLoadingBuildings.value = true;
-    try {
-      final options = await _repository.fetchBuildingOptions(
+  // One [_PickListPager] per field, each driving that field's RxList +
+  // loading flags via the shared infinite-scroll/server-search logic
+  // below. Declared `late` so they can reference the Rx fields above
+  // (already initialised by the time onInit() first touches a pager).
+  late final _PickListPager _sitePager = _PickListPager(
+    perPage: _pickerPerPage,
+    options: siteOptions,
+    isLoading: isLoadingSites,
+    isLoadingMore: isLoadingMoreSites,
+    hasMore: hasMoreSites,
+    fetch: (search, page) =>
+        _repository.fetchSiteOptions(search: search, page: page),
+  );
+
+  late final _PickListPager _buildingPager = _PickListPager(
+    perPage: _pickerPerPage,
+    options: buildingOptions,
+    isLoading: isLoadingBuildings,
+    isLoadingMore: isLoadingMoreBuildings,
+    hasMore: hasMoreBuildings,
+    fetch: (search, page) {
+      final siteId = _selectedSiteId;
+      if (siteId == null) return Future.value(const <PickListOption>[]);
+      return _repository.fetchBuildingOptions(
         siteId: siteId,
         search: search,
+        page: page,
       );
-      buildingOptions.assignAll(options);
-    } catch (_) {
-      AppSnackbar.showError('something_went_wrong'.tr);
-    } finally {
-      isLoadingBuildings.value = false;
-    }
-  }
+    },
+  );
 
-  Future<void> _loadAssetOptions({String? search}) async {
-    final siteId = _selectedSiteId;
-    if (siteId == null) return;
-    isLoadingAssets.value = true;
-    try {
-      final options = await _repository.fetchAssetOptions(
+  late final _PickListPager _assetPager = _PickListPager(
+    perPage: _pickerPerPage,
+    options: assetOptions,
+    isLoading: isLoadingAssets,
+    isLoadingMore: isLoadingMoreAssets,
+    hasMore: hasMoreAssets,
+    fetch: (search, page) {
+      final siteId = _selectedSiteId;
+      if (siteId == null) return Future.value(const <PickListOption>[]);
+      return _repository.fetchAssetOptions(
         siteId: siteId,
         search: search,
+        page: page,
       );
-      assetOptions.assignAll(options);
-    } catch (_) {
-      AppSnackbar.showError('something_went_wrong'.tr);
-    } finally {
-      isLoadingAssets.value = false;
-    }
+    },
+  );
+
+  Future<void> _loadSiteOptions({String? search}) {
+    return _sitePager.loadFirstPage(
+      search: search,
+      onLoaded: (options) {
+        // Auto-select when there's exactly one site (matches the
+        // single-site org shown in the reference screenshots) and
+        // nothing is picked yet — only outside of an active search.
+        final isSearch = search != null && search.trim().isNotEmpty;
+        if (!isSearch && selectedSite.value == null && options.length == 1) {
+          _applySite(options.first);
+        }
+      },
+      onError: () => AppSnackbar.showError('something_went_wrong'.tr),
+    );
+  }
+
+  Future<void> _loadBuildingOptions({String? search}) {
+    if (_selectedSiteId == null) return Future.value();
+    return _buildingPager.loadFirstPage(
+      search: search,
+      onError: () => AppSnackbar.showError('something_went_wrong'.tr),
+    );
+  }
+
+  Future<void> _loadAssetOptions({String? search}) {
+    if (_selectedSiteId == null) return Future.value();
+    return _assetPager.loadFirstPage(
+      search: search,
+      onError: () => AppSnackbar.showError('something_went_wrong'.tr),
+    );
   }
 
   /// Called when the Site selector is opened, so its list is fresh.
@@ -186,6 +230,37 @@ class NewServiceRequestController extends GetxController {
 
   /// Called when the Asset selector is opened.
   void onOpenAssetPicker() => _loadAssetOptions();
+
+  /// Wired to [SelectionListPage.onSearchChanged] (debounced there) —
+  /// re-queries the API with `&search=` rather than filtering the
+  /// already-fetched page client-side.
+  void onSiteSearchChanged(String query) => _loadSiteOptions(search: query);
+
+  void onBuildingSearchChanged(String query) =>
+      _loadBuildingOptions(search: query);
+
+  void onAssetSearchChanged(String query) => _loadAssetOptions(search: query);
+
+  /// Wired to [SelectionListPage.onLoadMore] — fetches the next page and
+  /// appends it. No-ops while a search is active, already loading, or
+  /// the current page came back short (no more pages).
+  void onLoadMoreSites() {
+    _sitePager.loadMore(
+      onError: () => AppSnackbar.showError('something_went_wrong'.tr),
+    );
+  }
+
+  void onLoadMoreBuildings() {
+    _buildingPager.loadMore(
+      onError: () => AppSnackbar.showError('something_went_wrong'.tr),
+    );
+  }
+
+  void onLoadMoreAssets() {
+    _assetPager.loadMore(
+      onError: () => AppSnackbar.showError('something_went_wrong'.tr),
+    );
+  }
 
   void toggleClassificationExpanded() {
     isClassificationExpanded.toggle();
@@ -206,6 +281,8 @@ class NewServiceRequestController extends GetxController {
     _selectedAssetId = null;
     buildingOptions.clear();
     assetOptions.clear();
+    hasMoreBuildings.value = false;
+    hasMoreAssets.value = false;
   }
 
   void selectSite(String label) {
@@ -465,5 +542,83 @@ class NewServiceRequestController extends GetxController {
     descriptionController.dispose();
     mapController?.dispose();
     super.onClose();
+  }
+}
+
+/// Shared infinite-scroll + server-side-search driver for one
+/// Site/Building/Asset picker field. One instance per field — each
+/// wraps that field's already-existing `RxList<PickListOption>` and
+/// loading `RxBool`s so [SelectionListPage] keeps reacting to the same
+/// Rx state it always has.
+///
+/// Search never paginates: per the picklist/attachment API reference
+/// doc, a typed `&search=` query returns matches directly, so
+/// [loadMore] is a no-op while a search is active.
+class _PickListPager {
+  _PickListPager({
+    required this.perPage,
+    required this.options,
+    required this.isLoading,
+    required this.isLoadingMore,
+    required this.hasMore,
+    required this.fetch,
+  });
+
+  final int perPage;
+  final RxList<PickListOption> options;
+  final RxBool isLoading;
+  final RxBool isLoadingMore;
+  final RxBool hasMore;
+
+  /// `search` is null/empty for a plain page load; non-empty once the
+  /// user has typed something. `page` is ignored server-side once
+  /// `search` is set.
+  final Future<List<PickListOption>> Function(String? search, int page) fetch;
+
+  int _page = 1;
+  String? _activeSearch;
+
+  Future<void> loadFirstPage({
+    String? search,
+    ValueChanged<List<PickListOption>>? onLoaded,
+    VoidCallback? onError,
+  }) async {
+    final trimmed = search?.trim();
+    _activeSearch = (trimmed != null && trimmed.isNotEmpty) ? trimmed : null;
+    _page = 1;
+    isLoading.value = true;
+    try {
+      final results = await fetch(_activeSearch, _page);
+      options.assignAll(results);
+      hasMore.value = _activeSearch == null && results.length == perPage;
+      onLoaded?.call(results);
+    } catch (_) {
+      hasMore.value = false;
+      onError?.call();
+    } finally {
+      isLoading.value = false;
+    }
+  }
+
+  Future<void> loadMore({VoidCallback? onError}) async {
+    if (_activeSearch != null) return; // search results aren't paginated
+    if (!hasMore.value || isLoadingMore.value || isLoading.value) return;
+    final nextPage = _page + 1;
+    isLoadingMore.value = true;
+    try {
+      final results = await fetch(null, nextPage);
+      _page = nextPage;
+      if (results.isEmpty) {
+        hasMore.value = false;
+      } else {
+        final existingIds = options.map((o) => o.value).toSet();
+        options.addAll(results.where((o) => !existingIds.contains(o.value)));
+        hasMore.value = results.length == perPage;
+      }
+    } catch (_) {
+      onError?.call();
+    } finally {
+      isLoadingMore.value = false;
+    }
   }
 }

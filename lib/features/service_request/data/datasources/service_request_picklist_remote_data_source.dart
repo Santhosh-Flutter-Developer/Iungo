@@ -17,14 +17,20 @@ abstract class ServiceRequestPickListRemoteDataSource {
   Future<List<PickListOption>> fetchPriorityOptions();
 
   /// GET .../pickList/forms/serviceRequest/siteId — options for the
-  /// "New Service Request" form's Site field.
-  Future<List<PickListOption>> fetchSiteOptions({String? search});
+  /// "New Service Request" form's Site field. [page] is ignored once
+  /// [search] is non-empty (server-side search returns matches directly,
+  /// per the picklist/attachment API reference doc).
+  Future<List<PickListOption>> fetchSiteOptions({
+    String? search,
+    int page = 1,
+  });
 
   /// GET .../pickList/forms/serviceRequest/resource/building, scoped to
   /// [siteId] — options for the form's Building field.
   Future<List<PickListOption>> fetchBuildingOptions({
     required int siteId,
     String? search,
+    int page = 1,
   });
 
   /// GET .../pickList/forms/serviceRequest/resource/asset, scoped to
@@ -32,6 +38,7 @@ abstract class ServiceRequestPickListRemoteDataSource {
   Future<List<PickListOption>> fetchAssetOptions({
     required int siteId,
     String? search,
+    int page = 1,
   });
 }
 
@@ -69,9 +76,17 @@ class ServiceRequestPickListRemoteDataSourceImpl
     return _fetch(_priorityUrl, {'perPage': 50, 'viewName': 'hidden-all'});
   }
 
+  /// Page size for all three form pickers — also the signal used by the
+  /// caller to know whether another page might exist (a page shorter
+  /// than this means the list is exhausted).
+  static const perPage = 50;
+
   @override
-  Future<List<PickListOption>> fetchSiteOptions({String? search}) {
-    return _fetch(_siteUrl, _pageOrSearchParams(search)
+  Future<List<PickListOption>> fetchSiteOptions({
+    String? search,
+    int page = 1,
+  }) {
+    return _fetch(_siteUrl, _pageOrSearchParams(search, page)
       ..addAll({
         'includeDefaultIdsValue': true,
         'viewName': 'hidden-all',
@@ -82,10 +97,11 @@ class ServiceRequestPickListRemoteDataSourceImpl
   Future<List<PickListOption>> fetchBuildingOptions({
     required int siteId,
     String? search,
+    int page = 1,
   }) {
     return _fetch(
       _buildingUrl,
-      _pageOrSearchParams(search)
+      _pageOrSearchParams(search, page)
         ..addAll({
           'includeDefaultIdsValue': true,
           'viewName': 'hidden-all',
@@ -103,10 +119,11 @@ class ServiceRequestPickListRemoteDataSourceImpl
   Future<List<PickListOption>> fetchAssetOptions({
     required int siteId,
     String? search,
+    int page = 1,
   }) {
     return _fetch(
       _assetUrl,
-      _pageOrSearchParams(search)
+      _pageOrSearchParams(search, page)
         ..addAll({
           'includeDefaultIdsValue': true,
           'viewName': 'hidden-all',
@@ -120,15 +137,18 @@ class ServiceRequestPickListRemoteDataSourceImpl
     );
   }
 
-  /// Dropdowns load with `page`/`perPage`; once the user types, those are
-  /// dropped in favour of `search` (confirmed via the picklist/attachment
-  /// API reference doc).
-  Map<String, dynamic> _pageOrSearchParams(String? search) {
+  /// Dropdowns load with `page`/`perPage` (bumping [page] on every
+  /// scroll-to-bottom load-more call); once the user types, those are
+  /// dropped in favour of `search` — every keystroke re-queries the API
+  /// server-side rather than filtering the already-fetched page
+  /// client-side (confirmed via the picklist/attachment API reference
+  /// doc).
+  Map<String, dynamic> _pageOrSearchParams(String? search, int page) {
     final trimmed = search?.trim();
     if (trimmed != null && trimmed.isNotEmpty) {
       return {'search': trimmed};
     }
-    return {'page': 1, 'perPage': 50};
+    return {'page': page, 'perPage': perPage};
   }
 
   Future<List<PickListOption>> _fetch(

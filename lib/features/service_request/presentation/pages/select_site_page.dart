@@ -32,6 +32,10 @@ class _SelectSitePageState extends State<SelectSitePage> {
         selectedItem: controller.selectedSite.value,
         onSelected: controller.selectSite,
         isLoading: controller.isLoadingSites.value,
+        isLoadingMore: controller.isLoadingMoreSites.value,
+        hasMore: controller.hasMoreSites.value,
+        onLoadMore: controller.onLoadMoreSites,
+        onSearchChanged: controller.onSiteSearchChanged,
       ),
     );
   }
