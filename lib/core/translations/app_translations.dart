@@ -284,6 +284,12 @@ class AppTranslations extends Translations {
       'maintenance_type_proactive': 'Proactive',
       'maintenance_type_corrective': 'Corrective',
       'maintenance_type_preventive': 'Preventive',
+
+      // Purchase Request
+      'purchase_request': 'Purchase Request',
+      'pr_dashboard': 'PR Dashboard',
+      'grn_dashboard': 'GRN Dashboard',
+      'invoice_dashboard': 'Invoice Dashboard',
     },
     'ar_SA': {
       'app_name': 'Iungo',
@@ -560,6 +566,12 @@ class AppTranslations extends Translations {
       'maintenance_type_proactive': 'استباقية',
       'maintenance_type_corrective': 'تصحيحية',
       'maintenance_type_preventive': 'وقائية',
+
+      // Purchase Request
+      'purchase_request': 'طلب الشراء',
+      'pr_dashboard': 'لوحة طلب الشراء',
+      'grn_dashboard': 'لوحة إشعار استلام البضائع',
+      'invoice_dashboard': 'لوحة الفواتير',
     },
   };
 }

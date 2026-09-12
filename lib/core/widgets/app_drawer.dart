@@ -12,6 +12,9 @@ enum DrawerMenuItem {
   awaitingPauseApproval,
   awaitingClosureApproval,
   inventoryRequestAwaitingClientApproval,
+  prDashboard,
+  grnDashboard,
+  invoiceDashboard,
   feedback,
   profile,
   about,
@@ -33,6 +36,14 @@ const _inventoryRequestMenuItems = [
   DrawerMenuItem.inventoryRequestAwaitingClientApproval,
 ];
 
+/// The sub-items under the "Purchase Request" expandable menu — same
+/// pattern as [_workOrderMenuItems] / [_inventoryRequestMenuItems].
+const _purchaseRequestMenuItems = [
+  DrawerMenuItem.prDashboard,
+  DrawerMenuItem.grnDashboard,
+  DrawerMenuItem.invoiceDashboard,
+];
+
 extension _DrawerMenuItemX on DrawerMenuItem {
   IconData get icon {
     switch (this) {
@@ -46,6 +57,12 @@ extension _DrawerMenuItemX on DrawerMenuItem {
         return Icons.playlist_add_check_outlined;
       case DrawerMenuItem.inventoryRequestAwaitingClientApproval:
         return Icons.inventory_2_outlined;
+      case DrawerMenuItem.prDashboard:
+        return Icons.dashboard_outlined;
+      case DrawerMenuItem.grnDashboard:
+        return Icons.local_shipping_outlined;
+      case DrawerMenuItem.invoiceDashboard:
+        return Icons.receipt_long_outlined;
       case DrawerMenuItem.feedback:
         return Icons.edit_outlined;
       case DrawerMenuItem.profile:
@@ -69,6 +86,12 @@ extension _DrawerMenuItemX on DrawerMenuItem {
         return 'awaiting_approval_closure';
       case DrawerMenuItem.inventoryRequestAwaitingClientApproval:
         return 'awaiting_client_approval';
+      case DrawerMenuItem.prDashboard:
+        return 'pr_dashboard';
+      case DrawerMenuItem.grnDashboard:
+        return 'grn_dashboard';
+      case DrawerMenuItem.invoiceDashboard:
+        return 'invoice_dashboard';
       case DrawerMenuItem.feedback:
         return 'feedback';
       case DrawerMenuItem.profile:
@@ -111,6 +134,12 @@ class AppDrawer extends StatelessWidget {
       Get.offAllNamed(AppRoutes.workOrderClosureApprovalList);
     } else if (item == DrawerMenuItem.inventoryRequestAwaitingClientApproval) {
       Get.offAllNamed(AppRoutes.inventoryRequestAwaitingClientApproval);
+    } else if (item == DrawerMenuItem.prDashboard) {
+      Get.offAllNamed(AppRoutes.prDashboard);
+    } else if (item == DrawerMenuItem.grnDashboard) {
+      Get.offAllNamed(AppRoutes.grnDashboard);
+    } else if (item == DrawerMenuItem.invoiceDashboard) {
+      Get.offAllNamed(AppRoutes.invoiceDashboard);
     } else if (item == DrawerMenuItem.profile) {
       Get.toNamed(AppRoutes.profile);
     } else {}
@@ -242,6 +271,10 @@ class AppDrawer extends StatelessWidget {
                     selected: selected,
                     onItemTap: (item) => _handleTap(context, item),
                   ),
+                  _PurchaseRequestExpansionMenu(
+                    selected: selected,
+                    onItemTap: (item) => _handleTap(context, item),
+                  ),
                   for (final item in _itemsBelow)
                     _DrawerRow(
                       icon: item.icon,
@@ -366,6 +399,63 @@ class _InventoryRequestExpansionMenu extends StatelessWidget {
         ),
         children: [
           for (final item in _inventoryRequestMenuItems)
+            _DrawerRow(
+              icon: item.icon,
+              label: item.labelKey.tr,
+              isSelected: item == selected,
+              onTap: () => onItemTap(item),
+              indent: true,
+            ),
+        ],
+      ),
+    );
+  }
+}
+
+/// The "Purchase Request" expandable menu — a parent row (matches the
+/// other drawer rows in icon/label styling) that opens to reveal
+/// "PR Dashboard" / "GRN Dashboard" / "Invoice Dashboard". Auto-expanded
+/// whenever the current screen is one of its children, same pattern as
+/// [_WorkOrderExpansionMenu] / [_InventoryRequestExpansionMenu].
+class _PurchaseRequestExpansionMenu extends StatelessWidget {
+  const _PurchaseRequestExpansionMenu({
+    required this.selected,
+    required this.onItemTap,
+  });
+
+  final DrawerMenuItem selected;
+  final ValueChanged<DrawerMenuItem> onItemTap;
+
+  bool get _isChildSelected => _purchaseRequestMenuItems.contains(selected);
+
+  @override
+  Widget build(BuildContext context) {
+    return Theme(
+      data: Theme.of(context).copyWith(dividerColor: Colors.transparent),
+      child: ExpansionTile(
+        key: PageStorageKey(_isChildSelected),
+        initiallyExpanded: _isChildSelected,
+        tilePadding: const EdgeInsets.symmetric(horizontal: 24),
+        childrenPadding: EdgeInsets.zero,
+        iconColor: AppColors.headingBlueGrey,
+        collapsedIconColor: AppColors.headingBlueGrey,
+        leading: Icon(
+          Icons.shopping_cart_outlined,
+          size: 26,
+          color: AppColors.headingBlueGrey,
+        ),
+        title: Text(
+          'purchase_request'.tr,
+          maxLines: 2,
+          overflow: TextOverflow.ellipsis,
+          style: const TextStyle(
+            fontSize: 17,
+            fontWeight: FontWeight.w600,
+            color: AppColors.headingBlueGrey,
+          ),
+        ),
+        children: [
+          for (final item in _purchaseRequestMenuItems)
             _DrawerRow(
               icon: item.icon,
               label: item.labelKey.tr,

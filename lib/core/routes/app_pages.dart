@@ -14,6 +14,9 @@ import 'package:iungo/features/onboarding/presentation/bindings/onboarding_bindi
 import 'package:iungo/features/onboarding/presentation/pages/onboarding_page.dart';
 import 'package:iungo/features/profile/presentation/bindings/profile_binding.dart';
 import 'package:iungo/features/profile/presentation/pages/profile_page.dart';
+import 'package:iungo/features/purchase_request/presentation/pages/grn_dashboard_page.dart';
+import 'package:iungo/features/purchase_request/presentation/pages/invoice_dashboard_page.dart';
+import 'package:iungo/features/purchase_request/presentation/pages/pr_dashboard_page.dart';
 import 'package:iungo/features/service_request/presentation/bindings/service_request_list_binding.dart';
 import 'package:iungo/features/service_request/presentation/pages/service_request_list_page.dart';
 import 'package:iungo/features/splash/presentation/bindings/splash_binding.dart';
@@ -85,6 +88,21 @@ class AppPages {
       name: AppRoutes.inventoryRequestAwaitingClientApproval,
       page: () => const InventoryRequestListPage(),
       binding: InventoryRequestListBinding(),
+      transition: Transition.rightToLeft,
+    ),
+    GetPage(
+      name: AppRoutes.prDashboard,
+      page: () => const PrDashboardPage(),
+      transition: Transition.rightToLeft,
+    ),
+    GetPage(
+      name: AppRoutes.grnDashboard,
+      page: () => const GrnDashboardPage(),
+      transition: Transition.rightToLeft,
+    ),
+    GetPage(
+      name: AppRoutes.invoiceDashboard,
+      page: () => const InvoiceDashboardPage(),
       transition: Transition.rightToLeft,
     ),
     GetPage(

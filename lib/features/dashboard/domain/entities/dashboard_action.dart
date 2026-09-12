@@ -12,6 +12,9 @@ enum DashboardAction {
   awaitingPauseApproval,
   awaitingClosureApproval,
   inventoryRequestAwaitingClientApproval,
+  prDashboard,
+  grnDashboard,
+  invoiceDashboard,
   profile,
 }
 
@@ -32,6 +35,12 @@ extension DashboardActionX on DashboardAction {
         return Icons.task_alt_outlined;
       case DashboardAction.inventoryRequestAwaitingClientApproval:
         return Icons.inventory_2_outlined;
+      case DashboardAction.prDashboard:
+        return Icons.dashboard_outlined;
+      case DashboardAction.grnDashboard:
+        return Icons.local_shipping_outlined;
+      case DashboardAction.invoiceDashboard:
+        return Icons.receipt_long_outlined;
       case DashboardAction.profile:
         return Icons.person_outline;
     }
@@ -53,6 +62,12 @@ extension DashboardActionX on DashboardAction {
         return 'awaiting_approval_closure';
       case DashboardAction.inventoryRequestAwaitingClientApproval:
         return 'awaiting_client_approval';
+      case DashboardAction.prDashboard:
+        return 'pr_dashboard';
+      case DashboardAction.grnDashboard:
+        return 'grn_dashboard';
+      case DashboardAction.invoiceDashboard:
+        return 'invoice_dashboard';
       case DashboardAction.profile:
         return 'profile';
     }

@@ -15,4 +15,7 @@ abstract class AppRoutes {
   static const workOrderClosureApprovalList = '/work-orders/closure-approval';
   static const inventoryRequestAwaitingClientApproval =
       '/inventory-requests/awaiting-client-approval';
+  static const prDashboard = '/purchase-requests/pr-dashboard';
+  static const grnDashboard = '/purchase-requests/grn-dashboard';
+  static const invoiceDashboard = '/purchase-requests/invoice-dashboard';
 }

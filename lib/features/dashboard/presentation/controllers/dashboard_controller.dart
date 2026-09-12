@@ -26,6 +26,15 @@ class DashboardController extends GetxController {
       case DashboardAction.inventoryRequestAwaitingClientApproval:
         Get.toNamed(AppRoutes.inventoryRequestAwaitingClientApproval);
         break;
+      case DashboardAction.prDashboard:
+        Get.toNamed(AppRoutes.prDashboard);
+        break;
+      case DashboardAction.grnDashboard:
+        Get.toNamed(AppRoutes.grnDashboard);
+        break;
+      case DashboardAction.invoiceDashboard:
+        Get.toNamed(AppRoutes.invoiceDashboard);
+        break;
       case DashboardAction.profile:
         Get.toNamed(AppRoutes.profile);
         break;

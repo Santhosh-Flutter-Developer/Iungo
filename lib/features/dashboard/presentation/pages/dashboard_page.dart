@@ -20,6 +20,9 @@ class DashboardPage extends GetView<DashboardController> {
     DashboardAction.awaitingPauseApproval,
     DashboardAction.awaitingClosureApproval,
     DashboardAction.inventoryRequestAwaitingClientApproval,
+    DashboardAction.prDashboard,
+    DashboardAction.grnDashboard,
+    DashboardAction.invoiceDashboard,
     DashboardAction.profile,
   ];
 
