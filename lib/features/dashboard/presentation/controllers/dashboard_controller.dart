@@ -17,6 +17,18 @@ class DashboardController extends GetxController {
       case DashboardAction.myWorkOrders:
          Get.toNamed(AppRoutes.workOrderList);
         break;
+      case DashboardAction.awaitingPauseApproval:
+        Get.toNamed(AppRoutes.workOrderPauseApprovalList);
+        break;
+      case DashboardAction.awaitingClosureApproval:
+        Get.toNamed(AppRoutes.workOrderClosureApprovalList);
+        break;
+      case DashboardAction.inventoryRequestAwaitingClientApproval:
+        Get.toNamed(AppRoutes.inventoryRequestAwaitingClientApproval);
+        break;
+      case DashboardAction.profile:
+        Get.toNamed(AppRoutes.profile);
+        break;
     }
   }
 
