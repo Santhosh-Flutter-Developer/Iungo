@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:iungo/core/constants/app_colors.dart';
 import 'package:iungo/core/utils/app_date_format.dart';
+import 'package:iungo/features/purchase_request/domain/entities/approval_pipeline.dart';
 import 'package:iungo/features/purchase_request/domain/entities/purchase_request.dart';
 import 'package:iungo/features/purchase_request/presentation/widgets/pr_approval_pipeline_sheet.dart';
 import 'package:iungo/features/purchase_request/presentation/widgets/purchase_request_status_badge.dart';
@@ -24,6 +25,7 @@ class PurchaseRequestCard extends StatelessWidget {
     this.isSubmitting = false,
     this.onApprove,
     this.onReject,
+    this.onPrint,
   });
 
   final PurchaseRequest request;
@@ -36,8 +38,34 @@ class PurchaseRequestCard extends StatelessWidget {
   final VoidCallback? onApprove;
   final VoidCallback? onReject;
 
+  /// Tapping the print icon in the card header. When left null, a
+  /// placeholder "coming soon" snackbar is shown — swap this for the
+  /// real print/PDF integration later, mirroring the printer icon in
+  /// the reference web dashboard's Action column.
+  final VoidCallback? onPrint;
+
+  void _handlePrint() {
+    if (onPrint != null) {
+      onPrint!();
+      return;
+    }
+    Get.snackbar(
+      'pr_print'.tr,
+      'pr_print_coming_soon'.tr,
+      snackPosition: SnackPosition.BOTTOM,
+      backgroundColor: AppColors.primary,
+      colorText: AppColors.white,
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
+    final pipelineSteps = ApprovalPipeline.forRequest(request)
+        .sections
+        .expand((section) => section.steps)
+        .map((step) => step.state)
+        .toList();
+
     return InkWell(
       onTap: onTap,
       borderRadius: BorderRadius.circular(12),
@@ -65,6 +93,12 @@ class PurchaseRequestCard extends StatelessWidget {
                 ),
                 const Spacer(),
                 PurchaseRequestStatusBadge(status: request.status),
+                const SizedBox(width: 8),
+                _CardIconButton(
+                  icon: Icons.print_outlined,
+                  tooltip: 'pr_print'.tr,
+                  onTap: _handlePrint,
+                ),
               ],
             ),
             const SizedBox(height: 14),
@@ -108,13 +142,18 @@ class PurchaseRequestCard extends StatelessWidget {
                         PrApprovalPipelineSheet.show(context, request),
                     child: Row(
                       children: [
-                        Expanded(
-                          child: _InfoItem(
-                            icon: Icons.timeline_outlined,
-                            label: '${'pr_stage'.tr}: '
-                                '${request.currentStage}/${request.totalStages}',
+                        const Icon(Icons.timeline_outlined,
+                            size: 16, color: AppColors.primary),
+                        const SizedBox(width: 6),
+                        Text(
+                          '${'pr_stage'.tr}: ',
+                          style: const TextStyle(
+                            fontSize: 13,
+                            fontWeight: FontWeight.w500,
+                            color: AppColors.textDark,
                           ),
                         ),
+                        Expanded(child: _StageDots(steps: pipelineSteps)),
                         const Icon(
                           Icons.chevron_right,
                           size: 18,
@@ -244,6 +283,79 @@ class _PillChip extends StatelessWidget {
           ),
         ],
       ),
+    );
+  }
+}
+
+/// Small circular icon button used for the card header's print action —
+/// a compact, bordered tap target that fits next to the status badge.
+class _CardIconButton extends StatelessWidget {
+  const _CardIconButton({
+    required this.icon,
+    required this.onTap,
+    this.tooltip,
+  });
+
+  final IconData icon;
+  final VoidCallback onTap;
+  final String? tooltip;
+
+  @override
+  Widget build(BuildContext context) {
+    final button = InkWell(
+      borderRadius: BorderRadius.circular(20),
+      onTap: onTap,
+      child: Container(
+        padding: const EdgeInsets.all(6),
+        decoration: BoxDecoration(
+          color: AppColors.workOrderChipBackground,
+          shape: BoxShape.circle,
+        ),
+        child: Icon(icon, size: 18, color: AppColors.primary),
+      ),
+    );
+    return tooltip == null ? button : Tooltip(message: tooltip!, child: button);
+  }
+}
+
+/// Color-dot row replacing the plain "1/1" stage text — one dot per
+/// approval step across the whole pipeline (Purchase Request / GRN /
+/// Invoice), colored green/orange/red to match [ApprovalStepState].
+/// Mirrors the reference web dashboard's Stage column.
+class _StageDots extends StatelessWidget {
+  const _StageDots({required this.steps});
+
+  final List<ApprovalStepState> steps;
+
+  static Color _colorFor(ApprovalStepState state) {
+    switch (state) {
+      case ApprovalStepState.approved:
+        return const Color(0xFF3D8B4E);
+      case ApprovalStepState.rejected:
+        return const Color(0xFFB3261E);
+      case ApprovalStepState.waiting:
+        return const Color(0xFFC77A1E);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    if (steps.isEmpty) return const SizedBox.shrink();
+    return Wrap(
+      spacing: 5,
+      runSpacing: 5,
+      crossAxisAlignment: WrapCrossAlignment.center,
+      children: [
+        for (final state in steps)
+          Container(
+            width: 10,
+            height: 10,
+            decoration: BoxDecoration(
+              color: _colorFor(state),
+              shape: BoxShape.circle,
+            ),
+          ),
+      ],
     );
   }
 }
