@@ -53,6 +53,9 @@ dependencies:
   open_filex: ^4.5.0 # hand off non-previewable files to the OS's own app
   pdfx: ^2.6.0 # in-app PDF rendering
 
+  # PR Dashboard > Excel export
+  excel: ^4.0.6
+
 dev_dependencies:
   flutter_test:
     sdk: flutter

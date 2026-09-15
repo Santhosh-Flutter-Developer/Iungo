@@ -355,6 +355,28 @@ class AppTranslations extends Translations {
       'pr_select_contract_required': 'Please select a contract',
       'pr_add_at_least_one_item': 'Please add at least one item',
       'pr_submitted_success': 'Purchase Request submitted successfully',
+
+      // PR Dashboard — Excel export
+      'export_excel': 'Export',
+      'export_excel_success': 'Exported to Excel successfully',
+      'export_excel_failed': 'Could not export to Excel',
+      'export_excel_empty': 'Nothing to export in this list',
+
+      // PR Dashboard — Approval Pipeline sheet
+      'pr_approval_pipeline': 'Approval Pipeline',
+      'pr_stage_of': 'Stage @current of @total',
+      'pr_request_overview': 'Request Overview',
+      'pr_request_date': 'Request Date',
+      'pr_total_amount': 'Total Amount',
+      'pr_approved_dash': 'Approved',
+      'pr_rejected_dash': 'Rejected',
+      'pr_waiting_dash': 'Waiting',
+      'pr_approved_by': 'Approved — @name',
+      'pr_rejected_by': 'Rejected — @name',
+      'pr_waiting_in_progress': 'In progress — awaiting review & verification',
+      'pr_approver_label': 'Approver — @name',
+      'pr_grn': 'GRN',
+      'pr_invoice': 'Invoice',
     },
     'ar_SA': {
       'app_name': 'Iungo',
@@ -701,6 +723,28 @@ class AppTranslations extends Translations {
       'pr_select_contract_required': 'الرجاء اختيار العقد',
       'pr_add_at_least_one_item': 'الرجاء إضافة صنف واحد على الأقل',
       'pr_submitted_success': 'تم إرسال طلب الشراء بنجاح',
+
+      // PR Dashboard — Excel export
+      'export_excel': 'تصدير',
+      'export_excel_success': 'تم التصدير إلى إكسل بنجاح',
+      'export_excel_failed': 'تعذر التصدير إلى إكسل',
+      'export_excel_empty': 'لا يوجد ما يمكن تصديره في هذه القائمة',
+
+      // PR Dashboard — Approval Pipeline sheet
+      'pr_approval_pipeline': 'مسار الموافقات',
+      'pr_stage_of': 'المرحلة @current من @total',
+      'pr_request_overview': 'نظرة عامة على الطلب',
+      'pr_request_date': 'تاريخ الطلب',
+      'pr_total_amount': 'المبلغ الإجمالي',
+      'pr_approved_dash': 'تمت الموافقة',
+      'pr_rejected_dash': 'مرفوض',
+      'pr_waiting_dash': 'قيد الانتظار',
+      'pr_approved_by': 'تمت الموافقة — @name',
+      'pr_rejected_by': 'مرفوض — @name',
+      'pr_waiting_in_progress': 'قيد التنفيذ — بانتظار المراجعة والتحقق',
+      'pr_approver_label': 'المعتمِد — @name',
+      'pr_grn': 'إشعار استلام البضائع',
+      'pr_invoice': 'الفاتورة',
     },
   };
 }

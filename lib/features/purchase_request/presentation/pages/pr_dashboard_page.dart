@@ -24,8 +24,9 @@ import 'package:iungo/features/service_request/presentation/widgets/service_requ
 ///
 /// The "Add" button (requestor only) and the role switch in the AppBar
 /// are gated by [PrRoleController] — see [PrRoleSwitch] for why that
-/// exists. Approve/Reject live on the Detail View instead of this list,
-/// same split as every other approval flow in this app.
+/// exists. Approve/Reject also show inline on each card for the
+/// approver role's pending tab (see [PurchaseRequestCard]), in addition
+/// to the Detail View's action bar.
 class PrDashboardPage extends GetView<PrDashboardController> {
   const PrDashboardPage({super.key});
 
@@ -105,15 +106,24 @@ class PrDashboardPage extends GetView<PrDashboardController> {
             ),
             Padding(
               padding: const EdgeInsets.fromLTRB(16, 16, 16, 0),
-              child: Align(
-                alignment: Alignment.centerRight,
-                child: Obx(
-                  () => FilterPillButton(
-                    isActive: controller.hasActiveFilter,
-                    onTap: () =>
-                        PrFilterPage.show(context, controller: controller),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.end,
+                children: [
+                  Obx(
+                    () => _ExportButton(
+                      isLoading: controller.isExporting.value,
+                      onTap: controller.exportToExcel,
+                    ),
                   ),
-                ),
+                  const SizedBox(width: 10),
+                  Obx(
+                    () => FilterPillButton(
+                      isActive: controller.hasActiveFilter,
+                      onTap: () =>
+                          PrFilterPage.show(context, controller: controller),
+                    ),
+                  ),
+                ],
               ),
             ),
             Expanded(
@@ -140,17 +150,84 @@ class PrDashboardPage extends GetView<PrDashboardController> {
                     itemCount: requests.length,
                     itemBuilder: (context, index) {
                       final request = requests[index];
-                      return PurchaseRequestCard(
-                        request: request,
-                        onTap: () => Get.to(
-                          () => const PrDetailPage(),
-                          binding: PrDetailBinding(request),
-                        )?.then((_) => controller.reload()),
-                      );
+                      return Obx(() {
+                        // Approve/Reject only ever show for the
+                        // approver role's pending tab (index 0) — the
+                        // requestor's "Submitted" tab and the
+                        // Completed/Rejected tabs never get the
+                        // buttons. Read both reactively so toggling the
+                        // dev-only role switch updates this immediately.
+                        final showActions = roleController.isApprover &&
+                            controller.selectedTab.value == 0;
+                        return PurchaseRequestCard(
+                          request: request,
+                          onTap: () => Get.to(
+                            () => const PrDetailPage(),
+                            binding: PrDetailBinding(request),
+                          )?.then((_) => controller.reload()),
+                          showApprovalActions: showActions,
+                          isSubmitting: controller.isSubmitting(request.id),
+                          onApprove: () =>
+                              controller.approveFromList(context, request),
+                          onReject: () =>
+                              controller.rejectFromList(context, request),
+                        );
+                      });
                     },
                   ),
                 );
               }),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+/// The round "export to Excel" button shown beside the Filter pill —
+/// mirrors the export icon above the table in the reference web app.
+class _ExportButton extends StatelessWidget {
+  const _ExportButton({required this.isLoading, required this.onTap});
+
+  final bool isLoading;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return InkWell(
+      borderRadius: BorderRadius.circular(24),
+      onTap: isLoading ? null : onTap,
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
+        decoration: BoxDecoration(
+          color: AppColors.white,
+          borderRadius: BorderRadius.circular(24),
+          border: Border.all(color: AppColors.divider),
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            if (isLoading)
+              const SizedBox(
+                width: 16,
+                height: 16,
+                child: CircularProgressIndicator(
+                  strokeWidth: 2,
+                  color: AppColors.primary,
+                ),
+              )
+            else
+              const Icon(Icons.file_download_outlined,
+                  size: 17, color: AppColors.headingBlueGrey),
+            const SizedBox(width: 6),
+            Text(
+              'export_excel'.tr,
+              style: const TextStyle(
+                fontSize: 14,
+                fontWeight: FontWeight.w500,
+                color: AppColors.headingBlueGrey,
+              ),
             ),
           ],
         ),
