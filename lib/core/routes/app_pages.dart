@@ -14,6 +14,7 @@ import 'package:iungo/features/onboarding/presentation/bindings/onboarding_bindi
 import 'package:iungo/features/onboarding/presentation/pages/onboarding_page.dart';
 import 'package:iungo/features/profile/presentation/bindings/profile_binding.dart';
 import 'package:iungo/features/profile/presentation/pages/profile_page.dart';
+import 'package:iungo/features/purchase_request/presentation/bindings/pr_dashboard_binding.dart';
 import 'package:iungo/features/purchase_request/presentation/pages/grn_dashboard_page.dart';
 import 'package:iungo/features/purchase_request/presentation/pages/invoice_dashboard_page.dart';
 import 'package:iungo/features/purchase_request/presentation/pages/pr_dashboard_page.dart';
@@ -93,6 +94,7 @@ class AppPages {
     GetPage(
       name: AppRoutes.prDashboard,
       page: () => const PrDashboardPage(),
+      binding: PrDashboardBinding(),
       transition: Transition.rightToLeft,
     ),
     GetPage(

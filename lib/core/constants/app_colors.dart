@@ -77,4 +77,12 @@ class AppColors {
 
   /// Work Order list card — the light-grey info-grid box background.
   static const Color workOrderInfoGridBackground = Color(0xFFF4F4F4);
+
+  /// PR Dashboard — the green "active" status tile (Action required /
+  /// Submitted, when selected) and the highlighted "Total" row on the
+  /// financial breakdown card.
+  static const Color prStatusGreen = Color(0xFF4C9A78);
+
+  /// PR Dashboard — background of the unselected status tiles.
+  static const Color prTileInactiveBackground = Color(0xFFEDEDED);
 }
