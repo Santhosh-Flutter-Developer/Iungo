@@ -32,6 +32,9 @@ class PrDashboardController extends GetxController
   final Rx<PurchaseRequestFilter> filter = const PurchaseRequestFilter().obs;
 
   @override
+  final Rxn<String> findPrNumber = Rxn<String>();
+
+  @override
   List<String> get contractOptions => PurchaseRequestRepository.contracts;
 
   @override
@@ -75,6 +78,13 @@ class PrDashboardController extends GetxController
           .toList();
     }
 
+    final prNumberQuery = findPrNumber.value;
+    if (prNumberQuery != null && prNumberQuery.isNotEmpty) {
+      final lower = prNumberQuery.toLowerCase();
+      results =
+          results.where((r) => r.prNumber.toLowerCase().contains(lower)).toList();
+    }
+
     return results;
   }
 
@@ -102,7 +112,8 @@ class PrDashboardController extends GetxController
       .where((r) => r.status == PurchaseRequestStatus.rejected)
       .length;
 
-  bool get hasActiveFilter => !filter.value.isEmpty;
+  bool get hasActiveFilter =>
+      !filter.value.isEmpty || findPrNumber.value != null;
 
   @override
   void applyFilter(PurchaseRequestFilter newFilter) {
@@ -111,7 +122,14 @@ class PrDashboardController extends GetxController
 
   @override
   void clearFilter() {
+    findPrNumber.value = null;
     filter.value = const PurchaseRequestFilter();
+  }
+
+  @override
+  void findTicket(String prNumber) {
+    final trimmed = prNumber.trim();
+    findPrNumber.value = trimmed.isEmpty ? null : trimmed;
   }
 
   void onNotificationsTap() {

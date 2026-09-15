@@ -1,15 +1,17 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:iungo/core/constants/app_colors.dart';
+import 'package:iungo/features/purchase_request/domain/entities/pr_search_scope.dart';
 import 'package:iungo/features/purchase_request/presentation/bindings/pr_detail_binding.dart';
 import 'package:iungo/features/purchase_request/presentation/controllers/pr_search_controller.dart';
 import 'package:iungo/features/purchase_request/presentation/pages/pr_detail_page.dart';
 import 'package:iungo/features/purchase_request/presentation/widgets/purchase_request_card.dart';
 
-/// Search screen for the PR Dashboard — matches PR Number or Contract
-/// against the local data set. Same white AppBar + inline text field
-/// chrome as `InventoryRequestSearchPage`, without its field-scope
-/// dropdown (PR search only ever matches those two fields).
+/// Search screen for the PR Dashboard — matches PR Number and/or
+/// Contract against the local data set, narrowed by a field-scope
+/// dropdown ("All Fields" / "PR Number" / "Contract"). Same white
+/// AppBar + inline text field chrome as `InventoryRequestSearchPage`,
+/// including its field-scope dropdown pattern.
 class PrSearchPage extends GetView<PrSearchController> {
   const PrSearchPage({super.key});
 
@@ -99,6 +101,7 @@ class _SearchAppBar extends StatelessWidget implements PreferredSizeWidget {
         ),
       ),
       actions: [
+        _ScopeDropdownButton(controller: controller),
         IconButton(
           icon: const Icon(Icons.close, color: Colors.grey),
           onPressed: () => Get.back(),
@@ -109,6 +112,64 @@ class _SearchAppBar extends StatelessWidget implements PreferredSizeWidget {
         preferredSize: const Size.fromHeight(1),
         child: Container(height: 1, color: AppColors.divider),
       ),
+    );
+  }
+}
+
+class _ScopeDropdownButton extends StatelessWidget {
+  const _ScopeDropdownButton({required this.controller});
+
+  final PrSearchController controller;
+
+  @override
+  Widget build(BuildContext context) {
+    return PopupMenuButton<PrSearchScope>(
+      icon: const Icon(Icons.sort, color: Colors.grey),
+      offset: const Offset(0, 40),
+      color: AppColors.white,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(4)),
+      onSelected: controller.onScopeChanged,
+      itemBuilder: (context) => PrSearchScope.values
+          .map(
+            (item) => PopupMenuItem<PrSearchScope>(
+              value: item,
+              child: _ScopeMenuRow(
+                scope: item,
+                selected: controller.scope.value == item,
+              ),
+            ),
+          )
+          .toList(),
+    );
+  }
+}
+
+class _ScopeMenuRow extends StatelessWidget {
+  const _ScopeMenuRow({required this.scope, required this.selected});
+
+  final PrSearchScope scope;
+  final bool selected;
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Icon(
+          Icons.check,
+          size: 18,
+          color: selected ? AppColors.textDark : AppColors.divider,
+        ),
+        const SizedBox(width: 12),
+        Text(
+          scope.labelKey.tr,
+          style: TextStyle(
+            fontSize: 15,
+            fontWeight: selected ? FontWeight.w500 : FontWeight.w400,
+            color: selected ? AppColors.textDark : AppColors.textMuted,
+          ),
+        ),
+      ],
     );
   }
 }

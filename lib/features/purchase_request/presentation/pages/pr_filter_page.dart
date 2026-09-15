@@ -6,11 +6,10 @@ import 'package:iungo/features/purchase_request/presentation/controllers/pr_filt
 import 'package:iungo/features/service_request/presentation/pages/due_date_range_page.dart';
 import 'package:iungo/features/service_request/presentation/widgets/filter_select_field.dart';
 
-/// "Filter" screen for the PR Dashboard — Contract and Created-date
-/// range, matching exactly what was asked for. Mirrors
-/// `InventoryRequestFilterPage`'s single "Filter" tab (no Find Ticket
-/// tab here, since the PR Dashboard has its own dedicated Search
-/// screen instead).
+/// "Filter" screen for the PR Dashboard — two tabs, mirroring
+/// `InventoryRequestFilterPage`/`WorkOrderFilterPage` exactly: "Filter"
+/// (Contract + Created-date range + Apply) and "Find Ticket" (lookup
+/// by PR Number).
 ///
 /// Driven by [PrFilterControllerLike] rather than the concrete
 /// controller, so the same screen can later drive a live, API-backed
@@ -32,11 +31,28 @@ class PrFilterPage extends StatefulWidget {
   State<PrFilterPage> createState() => _PrFilterPageState();
 }
 
-class _PrFilterPageState extends State<PrFilterPage> {
+class _PrFilterPageState extends State<PrFilterPage>
+    with SingleTickerProviderStateMixin {
+  late final TabController _tabController =
+      TabController(length: 2, vsync: this);
+
   late PurchaseRequestFilter _draft = widget.controller.filter.value;
+  late final _prNumberController = TextEditingController(
+    text: widget.controller.findPrNumber.value ?? '',
+  );
+
+  @override
+  void dispose() {
+    _tabController.dispose();
+    _prNumberController.dispose();
+    super.dispose();
+  }
 
   void _clear() {
-    setState(() => _draft = const PurchaseRequestFilter());
+    setState(() {
+      _draft = const PurchaseRequestFilter();
+      _prNumberController.clear();
+    });
     widget.controller.clearFilter();
     Get.back();
   }
@@ -58,6 +74,13 @@ class _PrFilterPageState extends State<PrFilterPage> {
 
   void _applyFilter() {
     widget.controller.applyFilter(_draft);
+    Get.back();
+  }
+
+  void _findTicket() {
+    final prNumber = _prNumberController.text.trim();
+    if (prNumber.isEmpty) return;
+    widget.controller.findTicket(prNumber);
     Get.back();
   }
 
@@ -108,90 +131,156 @@ class _PrFilterPageState extends State<PrFilterPage> {
                 ],
               ),
             ),
-            const Divider(color: AppColors.divider, height: 1),
+            TabBar(
+              controller: _tabController,
+              labelColor: AppColors.primary,
+              unselectedLabelColor: AppColors.textMuted,
+              indicatorColor: AppColors.primary,
+              indicatorWeight: 2.5,
+              labelStyle: const TextStyle(
+                fontSize: 15,
+                fontWeight: FontWeight.w500,
+              ),
+              unselectedLabelStyle: const TextStyle(
+                fontSize: 15,
+                fontWeight: FontWeight.w500,
+              ),
+              tabs: [
+                Tab(text: 'filter'.tr),
+                Tab(text: 'find_ticket'.tr),
+              ],
+            ),
             Expanded(
-              child: SingleChildScrollView(
-                padding: const EdgeInsets.fromLTRB(20, 24, 20, 24),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
-                  children: [
-                    FilterSelectField<String>(
-                      label: 'pr_select_contract'.tr,
-                      hint: 'pr_select_contract'.tr,
-                      options: widget.controller.contractOptions,
-                      optionLabel: (o) => o,
-                      value: _draft.contract,
-                      onChanged: (v) =>
-                          setState(() => _draft = _draft.copyWith(contract: v)),
-                    ),
-                    const SizedBox(height: 20),
-                    Text(
-                      'set_created_date'.tr,
-                      style: const TextStyle(
-                        fontSize: 15,
-                        fontWeight: FontWeight.w500,
-                        color: AppColors.textDark,
-                      ),
-                    ),
-                    const SizedBox(height: 8),
-                    InkWell(
-                      borderRadius: BorderRadius.circular(6),
-                      onTap: _pickCreatedDateRange,
-                      child: Container(
-                        width: double.infinity,
-                        padding: const EdgeInsets.symmetric(
-                            horizontal: 16, vertical: 16),
-                        decoration: BoxDecoration(
-                          color: AppColors.inputFill,
-                          borderRadius: BorderRadius.circular(6),
-                          border: Border.all(color: AppColors.inputBorder),
-                        ),
-                        child: Row(
-                          children: [
-                            Expanded(
-                              child: Text(
-                                _draft.createdDateStart == null
-                                    ? 'set_created_date'.tr
-                                    : _fmtRange(_draft.createdDateStart,
-                                        _draft.createdDateEnd),
-                                style: TextStyle(
-                                  fontSize: 15,
-                                  color: _draft.createdDateStart == null
-                                      ? const Color(0xFF9A9A9A)
-                                      : AppColors.textDark,
-                                ),
-                              ),
-                            ),
-                            if (_draft.createdDateStart != null)
-                              InkWell(
-                                onTap: () => setState(
-                                  () => _draft =
-                                      _draft.copyWith(clearCreatedDate: true),
-                                ),
-                                child: const Icon(Icons.close,
-                                    size: 18, color: AppColors.inputIcon),
-                              )
-                            else
-                              const Icon(Icons.keyboard_arrow_down,
-                                  color: AppColors.inputIcon),
-                          ],
-                        ),
-                      ),
-                    ),
-                    const SizedBox(height: 32),
-                    SizedBox(
-                      height: 52,
-                      child: ElevatedButton(
-                        onPressed: _applyFilter,
-                        child: Text('apply_filter'.tr),
-                      ),
-                    ),
-                  ],
-                ),
+              child: TabBarView(
+                controller: _tabController,
+                children: [
+                  _buildFilterTab(),
+                  _buildFindTicketTab(),
+                ],
               ),
             ),
           ],
         ),
+      ),
+    );
+  }
+
+  Widget _buildFilterTab() {
+    return SingleChildScrollView(
+      padding: const EdgeInsets.fromLTRB(20, 20, 20, 24),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          FilterSelectField<String>(
+            label: 'pr_select_contract'.tr,
+            hint: 'pr_select_contract'.tr,
+            options: widget.controller.contractOptions,
+            optionLabel: (o) => o,
+            value: _draft.contract,
+            onChanged: (v) =>
+                setState(() => _draft = _draft.copyWith(contract: v)),
+          ),
+          const SizedBox(height: 20),
+          Text(
+            'set_created_date'.tr,
+            style: const TextStyle(
+              fontSize: 15,
+              fontWeight: FontWeight.w500,
+              color: AppColors.textDark,
+            ),
+          ),
+          const SizedBox(height: 8),
+          InkWell(
+            borderRadius: BorderRadius.circular(6),
+            onTap: _pickCreatedDateRange,
+            child: Container(
+              width: double.infinity,
+              padding:
+                  const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+              decoration: BoxDecoration(
+                color: AppColors.inputFill,
+                borderRadius: BorderRadius.circular(6),
+                border: Border.all(color: AppColors.inputBorder),
+              ),
+              child: Row(
+                children: [
+                  Expanded(
+                    child: Text(
+                      _draft.createdDateStart == null
+                          ? 'set_created_date'.tr
+                          : _fmtRange(
+                              _draft.createdDateStart, _draft.createdDateEnd),
+                      style: TextStyle(
+                        fontSize: 15,
+                        color: _draft.createdDateStart == null
+                            ? const Color(0xFF9A9A9A)
+                            : AppColors.textDark,
+                      ),
+                    ),
+                  ),
+                  if (_draft.createdDateStart != null)
+                    InkWell(
+                      onTap: () => setState(
+                        () => _draft = _draft.copyWith(clearCreatedDate: true),
+                      ),
+                      child: const Icon(Icons.close,
+                          size: 18, color: AppColors.inputIcon),
+                    )
+                  else
+                    const Icon(Icons.keyboard_arrow_down,
+                        color: AppColors.inputIcon),
+                ],
+              ),
+            ),
+          ),
+          const SizedBox(height: 32),
+          SizedBox(
+            height: 52,
+            child: ElevatedButton(
+              onPressed: _applyFilter,
+              child: Text('apply_filter'.tr),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildFindTicketTab() {
+    return SingleChildScrollView(
+      padding: const EdgeInsets.fromLTRB(20, 20, 20, 24),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Text(
+            'find_pr_by_number'.tr,
+            style: const TextStyle(
+              fontSize: 15,
+              fontWeight: FontWeight.w500,
+              color: AppColors.textDark,
+            ),
+          ),
+          const SizedBox(height: 8),
+          TextField(
+            controller: _prNumberController,
+            style: const TextStyle(fontSize: 15, color: AppColors.textDark),
+            decoration: InputDecoration(
+              hintText: 'pr_number'.tr,
+              focusedBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(6),
+                borderSide: const BorderSide(color: AppColors.primary, width: 1.4),
+              ),
+            ),
+          ),
+          const SizedBox(height: 32),
+          SizedBox(
+            height: 52,
+            child: ElevatedButton(
+              onPressed: _findTicket,
+              child: Text('find_ticket'.tr),
+            ),
+          ),
+        ],
       ),
     );
   }
