@@ -289,6 +289,11 @@ class AppTranslations extends Translations {
       'purchase_request': 'Purchase Request',
       'pr_dashboard': 'PR Dashboard',
       'grn_dashboard': 'GRN Dashboard',
+      'grn_search_hint': 'Search Number or Contract',
+      'grn_find_by_number': 'Find GRN by Number',
+      'grn_number': 'Number',
+      'grn_delivery_notes': 'Delivery notes',
+      'grn_no_delivery_notes': 'No delivery notes uploaded yet.',
       'invoice_dashboard': 'Invoice Dashboard',
       'add': 'Add',
 
@@ -660,6 +665,11 @@ class AppTranslations extends Translations {
       'purchase_request': 'طلب الشراء',
       'pr_dashboard': 'لوحة طلب الشراء',
       'grn_dashboard': 'لوحة إشعار استلام البضائع',
+      'grn_search_hint': 'البحث عن الرقم أو العقد',
+      'grn_find_by_number': 'البحث عن إشعار استلام البضائع بالرقم',
+      'grn_number': 'الرقم',
+      'grn_delivery_notes': 'ملاحظات التسليم',
+      'grn_no_delivery_notes': 'لم يتم تحميل أي ملاحظات تسليم بعد.',
       'invoice_dashboard': 'لوحة الفواتير',
       'add': 'إضافة',
 
