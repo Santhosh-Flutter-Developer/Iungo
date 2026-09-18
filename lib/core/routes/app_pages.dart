@@ -17,7 +17,8 @@ import 'package:iungo/features/profile/presentation/pages/profile_page.dart';
 import 'package:iungo/features/grn_request/presentation/bindings/grn_dashboard_binding.dart';
 import 'package:iungo/features/grn_request/presentation/pages/grn_dashboard_page.dart';
 import 'package:iungo/features/purchase_request/presentation/bindings/pr_dashboard_binding.dart';
-import 'package:iungo/features/purchase_request/presentation/pages/invoice_dashboard_page.dart';
+import 'package:iungo/features/invoice_request/presentation/bindings/invoice_dashboard_binding.dart';
+import 'package:iungo/features/invoice_request/presentation/pages/invoice_dashboard_page.dart';
 import 'package:iungo/features/purchase_request/presentation/pages/pr_dashboard_page.dart';
 import 'package:iungo/features/service_request/presentation/bindings/service_request_list_binding.dart';
 import 'package:iungo/features/service_request/presentation/pages/service_request_list_page.dart';
@@ -107,6 +108,7 @@ class AppPages {
     GetPage(
       name: AppRoutes.invoiceDashboard,
       page: () => const InvoiceDashboardPage(),
+      binding: InvoiceDashboardBinding(),
       transition: Transition.rightToLeft,
     ),
     GetPage(

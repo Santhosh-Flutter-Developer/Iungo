@@ -5,6 +5,7 @@ import 'package:open_filex/open_filex.dart';
 import 'package:path_provider/path_provider.dart';
 
 import 'package:iungo/core/utils/app_date_format.dart';
+import 'package:iungo/features/purchase_request/domain/entities/approval_pipeline.dart';
 import 'package:iungo/features/purchase_request/domain/entities/purchase_request.dart';
 import 'package:iungo/features/purchase_request/domain/entities/purchase_request_status.dart';
 
@@ -58,6 +59,7 @@ class PrExcelExporter {
     for (var row = 0; row < requests.length; row++) {
       final request = requests[row];
       final rowIndex = row + 1;
+      final pipeline = ApprovalPipeline.forRequest(request);
       final values = <CellValue>[
         TextCellValue(request.prNumber),
         TextCellValue(AppDateFormat.mediumDate(request.requestDate)),
@@ -65,7 +67,7 @@ class PrExcelExporter {
         DoubleCellValue(request.totalAmount),
         TextCellValue(request.status.excelLabel),
         TextCellValue(request.nextApprovalName ?? '--'),
-        TextCellValue('${request.currentStage}/${request.totalStages}'),
+        TextCellValue('${pipeline.currentStage}/${pipeline.totalStages}'),
       ];
       for (var col = 0; col < values.length; col++) {
         sheet

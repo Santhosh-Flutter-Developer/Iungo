@@ -295,6 +295,10 @@ class AppTranslations extends Translations {
       'grn_delivery_notes': 'Delivery notes',
       'grn_no_delivery_notes': 'No delivery notes uploaded yet.',
       'invoice_dashboard': 'Invoice Dashboard',
+      'invoice_search_hint': 'Search Number or Contract',
+      'invoice_find_by_number': 'Find Invoice by Number',
+      'invoice_number': 'Number',
+      'invoice_no_attachment': 'No invoice uploaded yet.',
       'add': 'Add',
 
       // PR Dashboard
@@ -671,6 +675,10 @@ class AppTranslations extends Translations {
       'grn_delivery_notes': 'ملاحظات التسليم',
       'grn_no_delivery_notes': 'لم يتم تحميل أي ملاحظات تسليم بعد.',
       'invoice_dashboard': 'لوحة الفواتير',
+      'invoice_search_hint': 'البحث عن الرقم أو العقد',
+      'invoice_find_by_number': 'البحث عن الفاتورة بالرقم',
+      'invoice_number': 'الرقم',
+      'invoice_no_attachment': 'لم يتم تحميل أي فاتورة بعد.',
       'add': 'إضافة',
 
       // PR Dashboard

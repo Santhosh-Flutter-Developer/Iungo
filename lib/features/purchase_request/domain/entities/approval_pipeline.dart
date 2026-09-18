@@ -138,10 +138,12 @@ class ApprovalPipeline {
         .expand((section) => section.steps)
         .where((step) => step.state != ApprovalStepState.waiting)
         .length;
-    final hasWaitingStep = sections
-        .any((s) => s.steps.any((st) => st.state == ApprovalStepState.waiting));
 
-    var currentStage = completedSteps + (hasWaitingStep ? 1 : 0);
+    // A waiting step hasn't happened yet, so it doesn't count towards
+    // "current stage" — e.g. 4 steps resolved + 1 still waiting reads
+    // as "Stage 4 of 5", not "Stage 5 of 5". Once nothing is waiting,
+    // currentStage naturally equals totalStages (fully done).
+    var currentStage = completedSteps;
     final effectiveTotal = totalStages == 0 ? 1 : totalStages;
     if (currentStage < 1) currentStage = 1;
     if (currentStage > effectiveTotal) currentStage = effectiveTotal;

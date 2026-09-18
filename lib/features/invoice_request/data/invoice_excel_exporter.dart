@@ -5,22 +5,22 @@ import 'package:open_filex/open_filex.dart';
 import 'package:path_provider/path_provider.dart';
 
 import 'package:iungo/core/utils/app_date_format.dart';
-import 'package:iungo/features/grn_request/domain/entities/grn_approval_pipeline_builder.dart';
-import 'package:iungo/features/grn_request/domain/entities/grn_request.dart';
+import 'package:iungo/features/invoice_request/domain/entities/invoice_approval_pipeline_builder.dart';
+import 'package:iungo/features/invoice_request/domain/entities/invoice_request.dart';
 import 'package:iungo/features/purchase_request/domain/entities/purchase_request_status.dart';
 
-/// Builds and opens an `.xlsx` export of the GRN Dashboard list — mirrors
-/// the reference web app's export icon above the GRN table
+/// Builds and opens an `.xlsx` export of the Invoice Dashboard list —
+/// mirrors the reference web app's export icon above the Invoice table
 /// (Number/Date/Contract/Total/Status/Next Approval/Stage columns).
-/// Mirrors `PrExcelExporter` shape for shape.
-class GrnExcelExporter {
-  GrnExcelExporter._();
+/// Mirrors `GrnExcelExporter` shape for shape.
+class InvoiceExcelExporter {
+  InvoiceExcelExporter._();
 
-  /// Builds one sheet named [sheetName] from [requests], saves it to the
-  /// app's temp directory as [fileName], and hands it off to the OS's
-  /// default viewer via `open_filex`. Returns the saved file path.
+  /// Builds one sheet named [sheetName] from [requests], saves it to
+  /// the app's temp directory as [fileName], and hands it off to the
+  /// OS's default viewer via `open_filex`. Returns the saved file path.
   static Future<String> exportAndOpen({
-    required List<GrnRequest> requests,
+    required List<InvoiceRequest> requests,
     required String sheetName,
     required String fileName,
   }) async {
@@ -55,7 +55,7 @@ class GrnExcelExporter {
     for (var row = 0; row < requests.length; row++) {
       final request = requests[row];
       final rowIndex = row + 1;
-      final pipeline = GrnApprovalPipelineBuilder.build(request);
+      final pipeline = InvoiceApprovalPipelineBuilder.build(request);
       final values = <CellValue>[
         TextCellValue(request.number),
         TextCellValue(AppDateFormat.mediumDate(request.requestDate)),
