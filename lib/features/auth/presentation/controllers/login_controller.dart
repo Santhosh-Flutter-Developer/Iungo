@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart' show debugPrint, kDebugMode;
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:iungo/core/routes/app_routes.dart';
@@ -56,37 +57,99 @@ class LoginController extends GetxController {
       final email = emailController.text.trim();
       final password = passwordController.text;
 
-      final user = await _loginUseCase(
+      final result = await _loginUseCase(
         email: email,
         password: password,
         role: role.name,
       );
+      final user = result.user;
+
+      // The old login API was called with the email returned by the new
+      // auth API, so `user.email` is that email (the typed value is only
+      // a last-resort fallback).
+      final sessionEmail = user.email.isNotEmpty ? user.email : email;
 
       final displayName = (user.name != null && user.name!.trim().isNotEmpty)
           ? user.name!.trim()
-          : email.split('@').first;
+          : sessionEmail.split('@').first;
 
       await _session.setUser(
         name: displayName,
-        email: user.email.isNotEmpty ? user.email : email,
+        email: sessionEmail,
         id: user.id,
         authToken: user.token,
       );
 
+      // Extra profile data from the new auth API (kept for later screens,
+      // e.g. PR create). The returned password is not stored.
+      await _session.setAuthProfile(
+        userId: result.auth.userId,
+        username: result.auth.username,
+        userType: result.auth.userType,
+        loginRecordId: result.auth.loginRecordId,
+        redirectionPage: result.auth.redirectionPage,
+      );
+
       AppSnackbar.showSuccess('logged_in_success'.tr);
       Get.offAllNamed(AppRoutes.dashboard);
+    } on AuthApiException catch (e) {
+      // New auth API failed — the old login API was never called.
+      _debugLog('NEW auth API failed: ${e.type.name}, code ${e.statusCode}');
+      AppSnackbar.showError(_authApiErrorMessage(e));
     } on AccountNotFoundException {
+      _debugLog('OLD login failed: account not found');
       AppSnackbar.showError('account_not_found'.tr);
     } on AuthForbiddenException catch (e) {
+      _debugLog('OLD login failed: forbidden');
       AppSnackbar.showError(e.message);
     } on AuthServerException catch (e) {
+      _debugLog('OLD login failed: ${e.message}');
       AppSnackbar.showError(
         e.message.trim().isNotEmpty ? e.message : 'account_not_found'.tr,
       );
-    } catch (_) {
+    } catch (e) {
+      _debugLog('unexpected error: ${e.runtimeType}');
       AppSnackbar.showError('account_not_found'.tr);
     } finally {
       isLoading.value = false;
+    }
+  }
+
+  /// Debug-only breadcrumb showing WHICH step of the login failed. Never
+  /// logs credentials or response bodies.
+  void _debugLog(String message) {
+    if (kDebugMode) debugPrint('[Login] $message');
+  }
+
+  /// User-facing text for a failed new-auth-API call. The server's own
+  /// `message` is shown for credential/request rejections (that's the
+  /// meaningful text, e.g. "Invalid credentials"); everything else gets a
+  /// translated, non-technical message.
+  String _authApiErrorMessage(AuthApiException e) {
+    final trimmed = e.message?.trim();
+    final serverMessage =
+        (trimmed == null || trimmed.isEmpty) ? null : trimmed;
+
+    switch (e.type) {
+      case AuthApiFailureType.unauthorized:
+      case AuthApiFailureType.rejected:
+        return serverMessage ?? 'auth_invalid_credentials'.tr;
+      case AuthApiFailureType.badRequest:
+        return serverMessage ?? 'auth_bad_request'.tr;
+      case AuthApiFailureType.forbidden:
+        return serverMessage ?? 'auth_access_denied'.tr;
+      case AuthApiFailureType.noInternet:
+        return 'auth_no_internet'.tr;
+      case AuthApiFailureType.timeout:
+        return 'auth_timeout'.tr;
+      case AuthApiFailureType.invalidResponse:
+        return 'auth_invalid_response'.tr;
+      case AuthApiFailureType.notFound:
+        return 'auth_service_not_found'.tr;
+      case AuthApiFailureType.serverError:
+        return 'auth_server_error'.tr;
+      case AuthApiFailureType.unknown:
+        return 'auth_unknown_error'.tr;
     }
   }
 

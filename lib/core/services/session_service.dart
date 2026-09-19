@@ -12,6 +12,11 @@ class SessionService extends GetxService {
   static const _keyUserId = 'auth_user_id';
   static const _keyUserName = 'auth_user_name';
   static const _keyUserEmail = 'auth_user_email';
+  static const _keyAuthUserId = 'auth_portal_user_id';
+  static const _keyAuthUsername = 'auth_portal_username';
+  static const _keyUserType = 'auth_user_type';
+  static const _keyLoginRecordId = 'auth_login_record_id';
+  static const _keyRedirectionPage = 'auth_redirection_page';
   static const _keyLanguageCode = 'app_language_code';
   static const _keyCountryCode = 'app_country_code';
 
@@ -20,6 +25,14 @@ class SessionService extends GetxService {
   final Rx<String?> userId = Rx<String?>(null);
   final Rx<String?> token = Rx<String?>(null);
   final RxBool isLoggedIn = false.obs;
+
+  // Extra profile data returned by the new auth API (auth.php). The
+  // password returned by that API is deliberately never stored.
+  final Rx<String?> authUserId = Rx<String?>(null);
+  final Rx<String?> authUsername = Rx<String?>(null);
+  final Rx<String?> userType = Rx<String?>(null);
+  final Rx<int?> loginRecordId = Rx<int?>(null);
+  final Rx<String?> redirectionPage = Rx<String?>(null);
 
   late final SharedPreferences _prefs;
 
@@ -34,6 +47,11 @@ class SessionService extends GetxService {
     userId.value = _prefs.getString(_keyUserId);
     userName.value = _prefs.getString(_keyUserName);
     userEmail.value = _prefs.getString(_keyUserEmail);
+    authUserId.value = _prefs.getString(_keyAuthUserId);
+    authUsername.value = _prefs.getString(_keyAuthUsername);
+    userType.value = _prefs.getString(_keyUserType);
+    loginRecordId.value = _prefs.getInt(_keyLoginRecordId);
+    redirectionPage.value = _prefs.getString(_keyRedirectionPage);
 
     return this;
   }
@@ -60,6 +78,38 @@ class SessionService extends GetxService {
     await _prefs.setString(_keyToken, authToken ?? '');
   }
 
+  /// Persists the extra profile fields returned by the new auth API
+  /// (`auth.php`) so other features (e.g. PR create) can use them later.
+  Future<void> setAuthProfile({
+    String? userId,
+    String? username,
+    String? userType,
+    int? loginRecordId,
+    String? redirectionPage,
+  }) async {
+    authUserId.value = userId;
+    authUsername.value = username;
+    this.userType.value = userType;
+    this.loginRecordId.value = loginRecordId;
+    this.redirectionPage.value = redirectionPage;
+
+    await _setOrRemoveString(_keyAuthUserId, userId);
+    await _setOrRemoveString(_keyAuthUsername, username);
+    await _setOrRemoveString(_keyUserType, userType);
+    await _setOrRemoveString(_keyRedirectionPage, redirectionPage);
+    if (loginRecordId == null) {
+      await _prefs.remove(_keyLoginRecordId);
+    } else {
+      await _prefs.setInt(_keyLoginRecordId, loginRecordId);
+    }
+  }
+
+  Future<void> _setOrRemoveString(String key, String? value) {
+    return (value == null || value.isEmpty)
+        ? _prefs.remove(key)
+        : _prefs.setString(key, value);
+  }
+
   /// Clears the session on sign-out, both in memory and on disk.
   Future<void> clear() async {
     userName.value = null;
@@ -67,7 +117,17 @@ class SessionService extends GetxService {
     userId.value = null;
     token.value = null;
     isLoggedIn.value = false;
+    authUserId.value = null;
+    authUsername.value = null;
+    userType.value = null;
+    loginRecordId.value = null;
+    redirectionPage.value = null;
 
+    await _prefs.remove(_keyAuthUserId);
+    await _prefs.remove(_keyAuthUsername);
+    await _prefs.remove(_keyUserType);
+    await _prefs.remove(_keyLoginRecordId);
+    await _prefs.remove(_keyRedirectionPage);
     await _prefs.remove(_keyIsLoggedIn);
     await _prefs.remove(_keyToken);
     await _prefs.remove(_keyUserId);

@@ -34,3 +34,55 @@ class AuthServerException implements Exception {
   @override
   String toString() => message;
 }
+
+/// Why the *new* authentication API (`auth.php`) call failed. Kept as a
+/// type (rather than a hard-coded English string) so the UI can show a
+/// translated message for each case.
+enum AuthApiFailureType {
+  /// No connectivity / server unreachable.
+  noInternet,
+
+  /// Connect / send / receive timeout.
+  timeout,
+
+  /// Response wasn't JSON, or `code` / `data.email` / `data.password`
+  /// were missing or empty.
+  invalidResponse,
+
+  /// HTTP 400 (or body `code` 400).
+  badRequest,
+
+  /// HTTP 401 (or body `code` 401) — typically wrong credentials.
+  unauthorized,
+
+  /// HTTP 403 (or body `code` 403).
+  forbidden,
+
+  /// HTTP 404 (or body `code` 404).
+  notFound,
+
+  /// HTTP 5xx (500 / 502 / 503 / ...).
+  serverError,
+
+  /// Any other non-success application `code` (e.g. 422).
+  rejected,
+
+  /// Anything unexpected.
+  unknown,
+}
+
+/// Thrown by the new authentication API. When this is thrown the old
+/// login API is never called.
+///
+/// [message] is only ever the server's own JSON `message` field (never a
+/// raw exception string), and it never contains credentials.
+class AuthApiException implements Exception {
+  const AuthApiException(this.type, {this.message, this.statusCode});
+
+  final AuthApiFailureType type;
+  final String? message;
+  final int? statusCode;
+
+  @override
+  String toString() => 'AuthApiException(${type.name}, status: $statusCode)';
+}
