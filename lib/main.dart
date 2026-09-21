@@ -5,10 +5,17 @@ import 'package:iungo/core/routes/app_pages.dart';
 import 'package:iungo/core/routes/app_routes.dart';
 import 'package:iungo/core/services/session_service.dart';
 import 'package:iungo/core/theme/app_theme.dart';
+import 'package:iungo/core/network/dev_certificate_override.dart';
 import 'package:iungo/core/translations/app_translations.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
+
+  // TEMPORARY debug-only SSL workaround for iungo.citgroupltd.com's
+  // certificate chain (see dev_certificate_override_io.dart) — covers
+  // the widgets (e.g. Image.network) that can't take a per-request Dio
+  // override. Remove once the server's certificate chain is fixed.
+  applyDevCertificateOverrideGlobally();
 
   // Load any persisted session/language before the first frame so the
   // splash screen and the initial locale are correct immediately —

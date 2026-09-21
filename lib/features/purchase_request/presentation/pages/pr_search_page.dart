@@ -7,11 +7,12 @@ import 'package:iungo/features/purchase_request/presentation/controllers/pr_sear
 import 'package:iungo/features/purchase_request/presentation/pages/pr_detail_page.dart';
 import 'package:iungo/features/purchase_request/presentation/widgets/purchase_request_card.dart';
 
-/// Search screen for the PR Dashboard — matches PR Number and/or
-/// Contract against the local data set, narrowed by a field-scope
-/// dropdown ("All Fields" / "PR Number" / "Contract"). Same white
-/// AppBar + inline text field chrome as `InventoryRequestSearchPage`,
-/// including its field-scope dropdown pattern.
+/// Search screen for the PR Dashboard — searches PR Number and/or
+/// Contract on the server (within the dashboard's current tab), narrowed
+/// by a field-scope dropdown ("All Fields" / "PR Number" / "Contract").
+/// Same white AppBar + inline text field chrome as
+/// `InventoryRequestSearchPage`, including its field-scope dropdown
+/// pattern.
 class PrSearchPage extends GetView<PrSearchController> {
   const PrSearchPage({super.key});
 
@@ -47,8 +48,15 @@ class PrSearchPage extends GetView<PrSearchController> {
               request: controller.results[index],
               onTap: () => Get.to(
                 () => const PrDetailPage(),
-                binding: PrDetailBinding(controller.results[index]),
-              ),
+                binding: PrDetailBinding(
+                  controller.results[index],
+                  canDecide: controller.canDecide,
+                ),
+              )?.then((result) {
+                // Approved/rejected on the detail screen -> re-run the
+                // search so this list reflects the server.
+                if (result == true) controller.refreshResults();
+              }),
             ),
           );
         }),

@@ -1,12 +1,16 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:iungo/core/constants/app_colors.dart';
-import 'package:iungo/core/utils/app_date_format.dart';
+import 'package:iungo/features/purchase_request/domain/entities/pr_attachment.dart';
 import 'package:iungo/features/purchase_request/domain/entities/purchase_request.dart';
+import 'package:iungo/features/purchase_request/presentation/controllers/pr_detail_controller.dart';
+import 'package:iungo/features/purchase_request/presentation/controllers/pr_role_controller.dart';
+import 'package:iungo/features/purchase_request/presentation/widgets/pr_attachment_tile.dart';
 import 'package:iungo/features/purchase_request/presentation/widgets/pr_financial_breakdown_card.dart';
 
 /// Summary tab of the PR Detail View — General Specification fields,
-/// the Financial Breakdown card, and the quotation attachment (if any).
+/// the Financial Breakdown card, and the attachments (if any). Every
+/// value comes from the API record.
 /// Field grid styling mirrors
 /// `InventoryRequestDetailOverviewTab`'s `_FieldPairRow`/`_FieldItem`.
 class PrSummaryTab extends StatelessWidget {
@@ -34,11 +38,11 @@ class PrSummaryTab extends StatelessWidget {
           leftLabel: 'pr_work_order_no'.tr,
           leftValue: request.workOrderNo,
           rightLabel: 'created'.tr,
-          rightValue: AppDateFormat.mediumDate(request.requestDate),
+          rightValue: request.requestDateLabel,
         ),
         _FieldPairRow(
           leftLabel: 'pr_delivery_date'.tr,
-          leftValue: AppDateFormat.mediumDate(request.deliveryDate),
+          leftValue: request.deliveryDateLabel,
           rightLabel: 'pr_category'.tr,
           rightValue: request.category,
         ),
@@ -52,7 +56,7 @@ class PrSummaryTab extends StatelessWidget {
           leftLabel: 'pr_next_approval'.tr,
           leftValue: request.nextApprovalName ?? '--',
           rightLabel: 'pr_stage'.tr,
-          rightValue: '${request.currentStage}/${request.totalStages}',
+          rightValue: request.stageLabel,
           isLast: true,
         ),
         const SizedBox(height: 10),
@@ -76,19 +80,7 @@ class PrSummaryTab extends StatelessWidget {
         const Divider(color: AppColors.divider, height: 1),
         const SizedBox(height: 20),
         PrFinancialBreakdownCard(request: request),
-        if (request.quotationFileNames.isNotEmpty) ...[
-          const SizedBox(height: 24),
-          Text(
-            'pr_quotation'.tr,
-            style: const TextStyle(fontSize: 13, color: AppColors.labelGrey),
-          ),
-          const SizedBox(height: 10),
-          for (final fileName in request.quotationFileNames)
-            Padding(
-              padding: const EdgeInsets.only(bottom: 10),
-              child: _QuotationTile(fileName: fileName),
-            ),
-        ],
+        PrAttachmentsSection(request: request),
       ],
     );
   }
@@ -154,56 +146,60 @@ class _FieldItem extends StatelessWidget {
   }
 }
 
-class _QuotationTile extends StatelessWidget {
-  const _QuotationTile({required this.fileName});
+/// The "Quotation" attachment list.
+///
+///  * Requestor (or anyone on a non-actionable request): plain
+///    downloadable files.
+///  * Approver on an Action Required request that is still pending: the
+///    files become a single-selection (radio-style) list — exactly one
+///    must be selected before the request can be approved. The selected
+///    file's name is what `selected_attachments` carries.
+class PrAttachmentsSection extends StatelessWidget {
+  const PrAttachmentsSection({super.key, required this.request});
 
-  final String fileName;
+  final PurchaseRequest request;
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.all(14),
-      decoration: BoxDecoration(
-        color: AppColors.white,
-        borderRadius: BorderRadius.circular(10),
-        border: Border.all(color: AppColors.divider),
-      ),
-      child: Row(
+    if (request.attachments.isEmpty) return const SizedBox.shrink();
+
+    final controller = Get.find<PrDetailController>();
+    final roleController = Get.find<PrRoleController>();
+
+    return Obx(() {
+      final selectable = roleController.isApprover &&
+          controller.canDecide &&
+          controller.pr.isActionable;
+
+      return Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Container(
-            width: 40,
-            height: 40,
-            alignment: Alignment.center,
-            decoration: BoxDecoration(
-              color: AppColors.cardBackground,
-              borderRadius: BorderRadius.circular(8),
-            ),
-            child: const Icon(
-              Icons.insert_drive_file_outlined,
-              size: 20,
-              color: AppColors.primary,
-            ),
+          const SizedBox(height: 24),
+          Text(
+            'pr_quotation'.tr,
+            style: const TextStyle(fontSize: 13, color: AppColors.labelGrey),
           ),
-          const SizedBox(width: 12),
-          Expanded(
-            child: Text(
-              fileName,
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-              style: const TextStyle(
-                fontSize: 14,
-                fontWeight: FontWeight.w500,
-                color: AppColors.textDark,
+          if (selectable) ...[
+            const SizedBox(height: 4),
+            Text(
+              'pr_select_attachment_hint'.tr,
+              style: const TextStyle(fontSize: 12, color: AppColors.textMuted),
+            ),
+          ],
+          const SizedBox(height: 10),
+          for (final PrAttachment attachment in request.attachments)
+            Padding(
+              padding: const EdgeInsets.only(bottom: 10),
+              child: PrAttachmentTile(
+                attachment: attachment,
+                selectable: selectable,
+                selected:
+                    selectable && controller.isAttachmentSelected(attachment),
+                onSelect: () => controller.selectAttachment(attachment),
               ),
             ),
-          ),
-          const Icon(
-            Icons.download_outlined,
-            size: 20,
-            color: AppColors.headingBlueGrey,
-          ),
         ],
-      ),
-    );
+      );
+    });
   }
 }

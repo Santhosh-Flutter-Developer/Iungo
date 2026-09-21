@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:iungo/core/constants/app_colors.dart';
+import 'package:iungo/features/purchase_request/domain/entities/contract_option.dart';
 import 'package:iungo/features/purchase_request/domain/entities/purchase_request_filter.dart';
 import 'package:iungo/features/purchase_request/presentation/controllers/pr_filter_controller_like.dart';
 import 'package:iungo/features/service_request/presentation/pages/due_date_range_page.dart';
@@ -12,8 +13,9 @@ import 'package:iungo/features/service_request/presentation/widgets/filter_selec
 /// by PR Number).
 ///
 /// Driven by [PrFilterControllerLike] rather than the concrete
-/// controller, so the same screen can later drive a live, API-backed
-/// controller too.
+/// controller. The Contract dropdown is filled from the
+/// `fetch_contract_code` API, "Apply Filter" / "Find Ticket" run a
+/// server-side search, and "Clear" resets every criterion.
 class PrFilterPage extends StatefulWidget {
   const PrFilterPage({super.key, required this.controller});
 
@@ -40,6 +42,16 @@ class _PrFilterPageState extends State<PrFilterPage>
   late final _prNumberController = TextEditingController(
     text: widget.controller.findPrNumber.value ?? '',
   );
+
+  @override
+  void initState() {
+    super.initState();
+    // Fill the Contract dropdown from the API (a no-op when it's
+    // already loaded).
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) widget.controller.ensureContractsLoaded();
+    });
+  }
 
   @override
   void dispose() {
@@ -78,8 +90,9 @@ class _PrFilterPageState extends State<PrFilterPage>
   }
 
   void _findTicket() {
+    // Trimmed; an empty number clears the PR-number search and reloads
+    // the current list.
     final prNumber = _prNumberController.text.trim();
-    if (prNumber.isEmpty) return;
     widget.controller.findTicket(prNumber);
     Get.back();
   }
@@ -171,15 +184,69 @@ class _PrFilterPageState extends State<PrFilterPage>
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          FilterSelectField<String>(
-            label: 'pr_select_contract'.tr,
-            hint: 'pr_select_contract'.tr,
-            options: widget.controller.contractOptions,
-            optionLabel: (o) => o,
-            value: _draft.contract,
-            onChanged: (v) =>
-                setState(() => _draft = _draft.copyWith(contract: v)),
-          ),
+          Obx(() {
+            final controller = widget.controller;
+            final loading = controller.isLoadingContracts.value;
+            final error = controller.contractsError.value;
+            final options = controller.contractOptions.toList();
+            return Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                FilterSelectField<ContractOption>(
+                  label: 'pr_select_contract'.tr,
+                  hint: 'pr_select_contract'.tr,
+                  options: options,
+                  optionLabel: (o) => o.displayLabel,
+                  value: _draft.contract,
+                  onChanged: (v) =>
+                      setState(() => _draft = _draft.copyWith(contract: v)),
+                ),
+                if (loading)
+                  const Padding(
+                    padding: EdgeInsets.only(top: 8),
+                    child: LinearProgressIndicator(
+                      minHeight: 2,
+                      color: AppColors.primary,
+                    ),
+                  )
+                else if (error != null)
+                  Padding(
+                    padding: const EdgeInsets.only(top: 8),
+                    child: Row(
+                      children: [
+                        Expanded(
+                          child: Text(
+                            error,
+                            style: const TextStyle(
+                              fontSize: 13,
+                              color: AppColors.attachmentDeleteText,
+                            ),
+                          ),
+                        ),
+                        TextButton(
+                          onPressed: controller.reloadContracts,
+                          child: Text(
+                            'retry'.tr,
+                            style: const TextStyle(color: AppColors.primary),
+                          ),
+                        ),
+                      ],
+                    ),
+                  )
+                else if (options.isEmpty)
+                  Padding(
+                    padding: const EdgeInsets.only(top: 8),
+                    child: Text(
+                      'pr_no_contracts_found'.tr,
+                      style: const TextStyle(
+                        fontSize: 13,
+                        color: AppColors.textMuted,
+                      ),
+                    ),
+                  ),
+              ],
+            );
+          }),
           const SizedBox(height: 20),
           Text(
             'set_created_date'.tr,

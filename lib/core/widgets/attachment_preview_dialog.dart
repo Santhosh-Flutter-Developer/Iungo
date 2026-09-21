@@ -2,6 +2,7 @@ import 'dart:io';
 import 'dart:typed_data';
 
 import 'package:flutter/foundation.dart';
+import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:open_filex/open_filex.dart';
@@ -27,6 +28,7 @@ class AttachmentPreviewData {
     this.bytes,
     this.localPath,
     this.authHeaders,
+    this.dio,
   });
 
   final String name;
@@ -55,6 +57,12 @@ class AttachmentPreviewData {
   /// Headers (Bearer token, etc.) required to fetch [previewUrl] /
   /// [downloadUrl] from the portal host.
   final Map<String, String>? authHeaders;
+
+  /// A `Dio` already configured for [previewUrl]/[downloadUrl]'s host
+  /// (e.g. a certificate override). Left null to use whichever `Dio`
+  /// GetX has registered ambiently, which is the right default for
+  /// hosts the app's normal API client already talks to.
+  final Dio? dio;
 }
 
 /// Shows the attachment preview as a full-screen page — the same
@@ -167,6 +175,7 @@ class _AttachmentPreviewPageState extends State<_AttachmentPreviewPage> {
         url,
         widget.data.name,
         headers: widget.data.authHeaders,
+        dio: widget.data.dio,
       );
       if (result.type != ResultType.done && mounted) {
         AppSnackbar.showError('open_attachment_failed'.tr);
@@ -255,6 +264,7 @@ class _PdfPreviewState extends State<_PdfPreview> {
       bytes = await AttachmentFileService.instance.fetchBytes(
         url,
         headers: widget.data.authHeaders,
+        dio: widget.data.dio,
       );
     } else {
       throw StateError('No source available for this attachment.');

@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:iungo/core/constants/app_colors.dart';
-import 'package:iungo/core/utils/app_date_format.dart';
 import 'package:iungo/features/purchase_request/domain/entities/approval_pipeline.dart';
 import 'package:iungo/features/purchase_request/domain/entities/purchase_request.dart';
 import 'package:iungo/features/purchase_request/presentation/widgets/pr_approval_pipeline_sheet.dart';
+import 'package:iungo/features/purchase_request/presentation/widgets/pr_attachment_tile.dart';
 import 'package:iungo/features/purchase_request/presentation/widgets/purchase_request_status_badge.dart';
 
 /// One card in the PR Dashboard list. Tapping it opens the Detail View.
@@ -38,24 +38,17 @@ class PurchaseRequestCard extends StatelessWidget {
   final VoidCallback? onApprove;
   final VoidCallback? onReject;
 
-  /// Tapping the print icon in the card header. When left null, a
-  /// placeholder "coming soon" snackbar is shown — swap this for the
-  /// real print/PDF integration later, mirroring the printer icon in
-  /// the reference web dashboard's Action column.
+  /// Tapping the print icon in the card header. When left null it opens
+  /// the request's printable PDF (the API's `pdf_path`) in the in-app
+  /// viewer.
   final VoidCallback? onPrint;
 
-  void _handlePrint() {
+  void _handlePrint(BuildContext context) {
     if (onPrint != null) {
       onPrint!();
       return;
     }
-    Get.snackbar(
-      'pr_print'.tr,
-      'pr_print_coming_soon'.tr,
-      snackPosition: SnackPosition.BOTTOM,
-      backgroundColor: AppColors.primary,
-      colorText: AppColors.white,
-    );
+    openPrPdf(context, request);
   }
 
   @override
@@ -97,7 +90,7 @@ class PurchaseRequestCard extends StatelessWidget {
                 _CardIconButton(
                   icon: Icons.print_outlined,
                   tooltip: 'pr_print'.tr,
-                  onTap: _handlePrint,
+                  onTap: () => _handlePrint(context),
                 ),
               ],
             ),
@@ -109,8 +102,7 @@ class PurchaseRequestCard extends StatelessWidget {
             const SizedBox(height: 10),
             _PillChip(
               icon: Icons.calendar_today_outlined,
-              label: '${'created'.tr}: '
-                  '${AppDateFormat.mediumDate(request.requestDate)}',
+              label: '${'created'.tr}: ${request.requestDateLabel}',
             ),
             const SizedBox(height: 14),
             Container(
@@ -340,7 +332,17 @@ class _StageDots extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    if (steps.isEmpty) return const SizedBox.shrink();
+    // No pipeline came back from the API.
+    if (steps.isEmpty) {
+      return const Text(
+        '--',
+        style: TextStyle(
+          fontSize: 13,
+          fontWeight: FontWeight.w500,
+          color: AppColors.textDark,
+        ),
+      );
+    }
     return Wrap(
       spacing: 5,
       runSpacing: 5,

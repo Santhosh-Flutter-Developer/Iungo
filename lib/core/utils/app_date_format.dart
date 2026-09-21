@@ -52,6 +52,22 @@ class AppDateFormat {
     return '${_months[riyadh.month - 1]} ${riyadh.day}, ${riyadh.year}';
   }
 
+  /// [mediumDate], or "--" when [date] is null (a date the API didn't
+  /// send).
+  static String mediumDateOrDash(DateTime? date) =>
+      date == null ? '--' : mediumDate(date);
+
+  /// "Sep 12, 2026 08:47" — a wall-clock timestamp shown exactly as the
+  /// server wrote it, with NO timezone conversion. Used for values whose
+  /// timezone isn't specified (e.g. an approval's `accepted_time`),
+  /// where converting would only guess. Pass the components in the
+  /// `DateTime` as-is (the mapper stores them as UTC so nothing shifts).
+  static String mediumDateTimeAsIs(DateTime date) {
+    final hh = date.hour.toString().padLeft(2, '0');
+    final mm = date.minute.toString().padLeft(2, '0');
+    return '${_months[date.month - 1]} ${date.day}, ${date.year} $hh:$mm';
+  }
+
   /// "Jul 9, 2026 (19:11PM)" — matches the reference screenshot's raw
   /// 24-hour clock value with an AM/PM suffix appended, kept as-is
   /// (quirk and all) to match the design exactly. Renders in Riyadh

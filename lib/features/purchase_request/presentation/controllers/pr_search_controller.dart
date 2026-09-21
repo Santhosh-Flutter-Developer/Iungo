@@ -1,22 +1,34 @@
 import 'dart:async';
 
 import 'package:get/get.dart';
+import 'package:iungo/core/services/session_service.dart';
+import 'package:iungo/core/widgets/app_snackbar.dart';
+import 'package:iungo/features/purchase_request/data/models/pr_list_query.dart';
 import 'package:iungo/features/purchase_request/data/purchase_request_repository.dart';
-import 'package:iungo/features/purchase_request/domain/entities/purchase_request.dart';
+import 'package:iungo/features/purchase_request/domain/entities/pr_list_page.dart';
 import 'package:iungo/features/purchase_request/domain/entities/pr_search_scope.dart';
+import 'package:iungo/features/purchase_request/domain/entities/purchase_request.dart';
+import 'package:iungo/features/purchase_request/presentation/controllers/pr_dashboard_controller.dart';
+import 'package:iungo/features/purchase_request/presentation/utils/pr_error_message.dart';
+import 'package:iungo/features/purchase_request/presentation/utils/pr_session.dart';
 
-/// Search screen controller for the PR Dashboard. Matches PR Number
-/// and/or Contract against the same local data set the dashboard
-/// uses, narrowed by a field-scope dropdown ("All Fields" / "PR
-/// Number" / "Contract") — mirrors `InventoryRequestSearchController`'s
-/// debounce + scope handling, simplified since there's no server
-/// round trip yet.
+/// Search screen controller for the PR Dashboard. Searches the
+/// SERVER (never a local copy) on the dashboard's current tab: the PR
+/// number goes in `search_data.pr_number`, a contract in
+/// `search_data.contract_search`. "All Fields" runs both searches and
+/// merges the (de-duplicated) results. Debounced, and a response that
+/// arrives after the query changed is discarded.
 class PrSearchController extends GetxController {
-  PrSearchController(this._repository);
+  PrSearchController(this._repository, this._session, this._dashboard);
 
   final PurchaseRequestRepository _repository;
+  final SessionService _session;
+  final PrDashboardController _dashboard;
 
   static const _debounceDuration = Duration(milliseconds: 400);
+
+  /// One page of results — plenty for a "find this PR" lookup.
+  static const int _resultLimit = 50;
 
   final RxString query = ''.obs;
   final Rx<PrSearchScope> scope = PrSearchScope.allFields.obs;
@@ -25,7 +37,11 @@ class PrSearchController extends GetxController {
   final RxList<PurchaseRequest> results = <PurchaseRequest>[].obs;
 
   Timer? _debounce;
-  List<PurchaseRequest>? _cache;
+  int _searchToken = 0;
+
+  /// Whether a request opened from these results may be approved/rejected
+  /// (only when searching inside the approver's Action Required tab).
+  bool get canDecide => _dashboard.isActionRequiredTab;
 
   void onQueryChanged(String value) {
     query.value = value;
@@ -33,6 +49,7 @@ class PrSearchController extends GetxController {
 
     final trimmed = value.trim();
     if (trimmed.isEmpty) {
+      _searchToken++; // discard any search still in flight
       isSearching.value = false;
       hasSearched.value = false;
       results.clear();
@@ -60,21 +77,69 @@ class PrSearchController extends GetxController {
     _runSearch(trimmed);
   }
 
+  /// Re-runs the current query — used after returning from a detail
+  /// screen where the request may have been approved/rejected.
+  Future<void> refreshResults() async {
+    // The dashboard behind this screen (list + tile counts) is stale too.
+    _dashboard.reload();
+
+    final trimmed = query.value.trim();
+    if (trimmed.isEmpty) return;
+    await _runSearch(trimmed);
+  }
+
   Future<void> _runSearch(String trimmed) async {
-    _cache ??= await _repository.fetchAll();
-    final lower = trimmed.toLowerCase();
-    final matches = switch (scope.value) {
-      PrSearchScope.prNumber => (PurchaseRequest r) =>
-          r.prNumber.toLowerCase().contains(lower),
-      PrSearchScope.contract => (PurchaseRequest r) =>
-          r.contract.toLowerCase().contains(lower),
-      PrSearchScope.allFields => (PurchaseRequest r) =>
-          r.prNumber.toLowerCase().contains(lower) ||
-          r.contract.toLowerCase().contains(lower),
-    };
-    results.assignAll(_cache!.where(matches));
-    isSearching.value = false;
-    hasSearched.value = true;
+    final token = ++_searchToken;
+    try {
+      final userId = requirePrUserId(_session);
+      final type = _dashboard.currentType;
+      final pageLogin = _dashboard.currentPageLogin;
+
+      Future<PrListPage> fetch({
+        String prNumber = '',
+        List<String> contracts = const [],
+      }) {
+        return _repository.fetchPurchaseRequests(
+          PrListQuery(
+            userId: userId,
+            types: type,
+            pageLogin: pageLogin,
+            pageNumber: 1,
+            pageLimit: _resultLimit,
+            prNumber: prNumber,
+            contractSearch: contracts,
+          ),
+        );
+      }
+
+      final pages = switch (scope.value) {
+        PrSearchScope.prNumber => [await fetch(prNumber: trimmed)],
+        PrSearchScope.contract => [await fetch(contracts: [trimmed])],
+        PrSearchScope.allFields => await Future.wait([
+            fetch(prNumber: trimmed),
+            fetch(contracts: [trimmed]),
+          ]),
+      };
+      if (token != _searchToken) return;
+
+      final seen = <int>{};
+      final merged = <PurchaseRequest>[];
+      for (final page in pages) {
+        for (final record in page.records) {
+          if (seen.add(record.id)) merged.add(record);
+        }
+      }
+      results.assignAll(merged);
+    } catch (e) {
+      if (token != _searchToken) return;
+      results.clear();
+      AppSnackbar.showError(prErrorMessage(e, fallbackKey: 'pr_load_failed'));
+    } finally {
+      if (token == _searchToken) {
+        isSearching.value = false;
+        hasSearched.value = true;
+      }
+    }
   }
 
   @override

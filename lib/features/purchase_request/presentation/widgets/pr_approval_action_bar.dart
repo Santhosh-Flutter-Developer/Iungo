@@ -1,15 +1,20 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:iungo/core/constants/app_colors.dart';
+import 'package:iungo/core/widgets/app_snackbar.dart';
 import 'package:iungo/core/widgets/approval_dialogs.dart';
 import 'package:iungo/features/purchase_request/presentation/controllers/pr_detail_controller.dart';
 import 'package:iungo/features/purchase_request/presentation/controllers/pr_role_controller.dart';
 
 /// Sticky bottom "Reject" / "Approve" bar for the PR Detail View — only
-/// shown for the Approver role (see [PrRoleController]) while the
-/// request is still pending. Mirrors
-/// `InventoryRequestApprovalActionBar` exactly, including its
+/// shown for the Approver role (see [PrRoleController]) on a request
+/// opened from the Action Required list that is still actionable per the
+/// API record. Mirrors `InventoryRequestApprovalActionBar`, including its
 /// Approve/Reject confirmation dialogs.
+///
+/// Approve first checks that exactly one attachment is selected (see
+/// `PrSummaryTab`'s attachment section) and only then asks for
+/// confirmation; Reject collects the mandatory remarks.
 class PrApprovalActionBar extends GetView<PrDetailController> {
   const PrApprovalActionBar({super.key});
 
@@ -18,7 +23,9 @@ class PrApprovalActionBar extends GetView<PrDetailController> {
     final roleController = Get.find<PrRoleController>();
 
     return Obx(() {
-      if (!roleController.isApprover || !controller.pr.isPendingApproval) {
+      if (!roleController.isApprover ||
+          !controller.canDecide ||
+          !controller.pr.isActionable) {
         return const SizedBox.shrink();
       }
 
@@ -93,6 +100,16 @@ class PrApprovalActionBar extends GetView<PrDetailController> {
   }
 
   Future<void> _confirmApprove(BuildContext context) async {
+    // Exactly one attachment must be selected. Checked up front so the
+    // approver isn't asked to confirm something that can't go through
+    // (and checked again inside approveRequest right before the API
+    // call).
+    final validation = controller.approvalSelectionError();
+    if (validation != null) {
+      AppSnackbar.showError(validation);
+      return;
+    }
+
     final confirmed = await showApproveRequestDialog(context);
     if (confirmed == true) {
       await controller.approveRequest();
@@ -101,8 +118,10 @@ class PrApprovalActionBar extends GetView<PrDetailController> {
 
   Future<void> _confirmReject(BuildContext context) async {
     final remarks = await showRejectRequestDialog(context);
-    if (remarks != null && remarks.trim().isNotEmpty) {
-      await controller.rejectRequest(remarks.trim());
+    // null = cancelled. Anything else goes to the controller, which
+    // enforces the mandatory-remarks rule before calling the API.
+    if (remarks != null) {
+      await controller.rejectRequest(remarks);
     }
   }
 }

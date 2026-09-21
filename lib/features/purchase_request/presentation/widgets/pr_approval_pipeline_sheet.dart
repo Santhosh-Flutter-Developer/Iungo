@@ -3,13 +3,18 @@ import 'package:get/get.dart';
 import 'package:iungo/core/constants/app_colors.dart';
 import 'package:iungo/core/utils/app_date_format.dart';
 import 'package:iungo/features/purchase_request/domain/entities/approval_pipeline.dart';
+import 'package:iungo/features/purchase_request/domain/entities/pr_attachment.dart';
 import 'package:iungo/features/purchase_request/domain/entities/purchase_request.dart';
+import 'package:iungo/features/purchase_request/presentation/widgets/pr_attachment_tile.dart';
 
 /// The "Approval Pipeline" sheet opened by tapping a request's Stage
 /// row on the PR Dashboard list — a Request Overview box followed by
 /// each pipeline section (Purchase Request / GRN / Invoice) as a
 /// vertical status timeline, with that section's attachments (if any)
-/// underneath. Mirrors the reference web app's pipeline modal.
+/// underneath. Mirrors the reference web app's pipeline modal. Everything
+/// shown — the stage counter, the module names, each approver's state,
+/// name and decision time, and the files — is built from the request's
+/// API `pipeline[]`, `attachments[]`, `delivery_notes[]` and `invoices[]`.
 class PrApprovalPipelineSheet extends StatelessWidget {
   const PrApprovalPipelineSheet({super.key, required this.request});
 
@@ -60,6 +65,20 @@ class PrApprovalPipelineSheet extends StatelessWidget {
                       ),
                     ),
                     const SizedBox(height: 12),
+                    if (pipeline.sections.isEmpty)
+                      Padding(
+                        padding: const EdgeInsets.symmetric(vertical: 24),
+                        child: Center(
+                          child: Text(
+                            'pr_no_pipeline'.tr,
+                            textAlign: TextAlign.center,
+                            style: const TextStyle(
+                              fontSize: 14,
+                              color: AppColors.textMuted,
+                            ),
+                          ),
+                        ),
+                      ),
                     for (final section in pipeline.sections)
                       _PipelineSectionView(section: section),
                   ],
@@ -96,17 +115,19 @@ class _Header extends StatelessWidget {
                     color: AppColors.textDark,
                   ),
                 ),
-                const SizedBox(height: 2),
-                Text(
-                  'pr_stage_of'.trParams({
-                    'current': '${pipeline.currentStage}',
-                    'total': '${pipeline.totalStages}',
-                  }),
-                  style: const TextStyle(
-                    fontSize: 13,
-                    color: AppColors.textMuted,
+                if (pipeline.totalStages > 0) ...[
+                  const SizedBox(height: 2),
+                  Text(
+                    'pr_stage_of'.trParams({
+                      'current': '${pipeline.currentStage}',
+                      'total': '${pipeline.totalStages}',
+                    }),
+                    style: const TextStyle(
+                      fontSize: 13,
+                      color: AppColors.textMuted,
+                    ),
                   ),
-                ),
+                ],
               ],
             ),
           ),
@@ -149,7 +170,7 @@ class _RequestOverviewCard extends StatelessWidget {
           _OverviewRow(label: 'pr_number'.tr, value: request.prNumber),
           _OverviewRow(
             label: 'pr_request_date'.tr,
-            value: AppDateFormat.mediumDate(request.requestDate),
+            value: request.requestDateLabel,
           ),
           _OverviewRow(label: 'pr_contract'.tr, value: request.contract),
           _OverviewRow(
@@ -212,7 +233,9 @@ class _PipelineSectionView extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            section.title,
+            section.title.trim().isEmpty
+                ? 'pr_purchase_request'.tr
+                : section.title,
             style: const TextStyle(
               fontSize: 15,
               fontWeight: FontWeight.w700,
@@ -252,10 +275,17 @@ class _PipelineSectionView extends StatelessWidget {
                     ],
                   ),
                   const SizedBox(height: 10),
-                  for (final fileName in section.attachmentFileNames)
+                  for (var i = 0;
+                      i < section.attachmentFileNames.length;
+                      i++)
                     Padding(
                       padding: const EdgeInsets.only(bottom: 8),
-                      child: _AttachmentTile(fileName: fileName),
+                      child: _AttachmentTile(
+                        fileName: section.attachmentFileNames[i],
+                        url: i < section.attachmentUrls.length
+                            ? section.attachmentUrls[i]
+                            : null,
+                      ),
                     ),
                 ],
               ),
@@ -296,6 +326,9 @@ class _StepRow extends StatelessWidget {
         title = 'pr_waiting_dash'.tr;
         subtitle = 'pr_waiting_in_progress'.tr;
     }
+    final decidedAt = step.state == ApprovalStepState.waiting
+        ? null
+        : step.acceptedTime;
 
     return Padding(
       padding: EdgeInsets.only(bottom: isLast ? 0 : 16),
@@ -330,6 +363,16 @@ class _StepRow extends StatelessWidget {
                     color: AppColors.textMuted,
                   ),
                 ),
+                if (decidedAt != null) ...[
+                  const SizedBox(height: 2),
+                  Text(
+                    AppDateFormat.mediumDateTimeAsIs(decidedAt),
+                    style: const TextStyle(
+                      fontSize: 12,
+                      color: AppColors.textMuted,
+                    ),
+                  ),
+                ],
                 if (step.state == ApprovalStepState.waiting) ...[
                   const SizedBox(height: 4),
                   Text(
@@ -369,39 +412,50 @@ class _StepRow extends StatelessWidget {
 }
 
 class _AttachmentTile extends StatelessWidget {
-  const _AttachmentTile({required this.fileName});
+  const _AttachmentTile({required this.fileName, this.url});
 
   final String fileName;
 
+  /// Where the file can be downloaded from — null when unknown (the
+  /// tile is then just a label).
+  final String? url;
+
   @override
   Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-      decoration: BoxDecoration(
-        color: AppColors.white,
-        borderRadius: BorderRadius.circular(10),
-        border: Border.all(color: AppColors.divider),
-      ),
-      child: Row(
-        children: [
-          const Icon(Icons.picture_as_pdf_outlined,
-              size: 18, color: AppColors.attachmentDeleteText),
-          const SizedBox(width: 10),
-          Expanded(
-            child: Text(
-              fileName,
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-              style: const TextStyle(
-                fontSize: 13,
-                fontWeight: FontWeight.w500,
-                color: AppColors.textDark,
+    final fileUrl = url;
+    return InkWell(
+      borderRadius: BorderRadius.circular(10),
+      onTap: fileUrl == null
+          ? null
+          : () => openPrAttachment(context, PrAttachment.fromUrl(fileUrl)),
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+        decoration: BoxDecoration(
+          color: AppColors.white,
+          borderRadius: BorderRadius.circular(10),
+          border: Border.all(color: AppColors.divider),
+        ),
+        child: Row(
+          children: [
+            const Icon(Icons.picture_as_pdf_outlined,
+                size: 18, color: AppColors.attachmentDeleteText),
+            const SizedBox(width: 10),
+            Expanded(
+              child: Text(
+                fileName,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: const TextStyle(
+                  fontSize: 13,
+                  fontWeight: FontWeight.w500,
+                  color: AppColors.textDark,
+                ),
               ),
             ),
-          ),
-          const Icon(Icons.download_outlined,
-              size: 18, color: AppColors.headingBlueGrey),
-        ],
+            const Icon(Icons.download_outlined,
+                size: 18, color: AppColors.headingBlueGrey),
+          ],
+        ),
       ),
     );
   }

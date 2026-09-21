@@ -28,3 +28,27 @@ void applyDevCertificateOverride(Dio dio) {
     };
   }
 }
+
+/// The same workaround, applied process-wide via [HttpOverrides.global].
+///
+/// [Dio] instances only need [applyDevCertificateOverride] above, but a
+/// few widgets (`Image.network`, for a quotation/delivery-note image
+/// attachment) talk to [_trustedDevHost] through Flutter's own
+/// `HttpClient` with no way to hand it a per-request override, so this
+/// covers those. Safe to call once at startup: still debug-only, and
+/// still scoped to [_trustedDevHost] alone.
+void applyDevCertificateOverrideGlobally() {
+  if (!kDebugMode) return;
+  HttpOverrides.global = _DevCertificateHttpOverrides();
+}
+
+class _DevCertificateHttpOverrides extends HttpOverrides {
+  @override
+  HttpClient createHttpClient(SecurityContext? context) {
+    final client = super.createHttpClient(context);
+    client.badCertificateCallback =
+        (X509Certificate cert, String host, int port) =>
+            host == _trustedDevHost;
+    return client;
+  }
+}

@@ -6,11 +6,18 @@ class AppUrls {
   /// resolved against this before use.
   static const String portalHost = 'https://citgroup.facilioclients.com';
 
-  /// Iungo backend (PHP) used by the Create Purchase Request flow.
-  static const String iungoApiBase = 'https://iungo.citgroupltd.com/api';
+  /// Iungo backend (PHP) used by the Purchase Request flows.
+  static const String iungoHost = 'https://iungo.citgroupltd.com';
+  static const String iungoApiBase = '$iungoHost/api';
 
-  /// Contract-code lookup (`fetch_contract_code`) and PR save
-  /// (`save_purchase_request`) — both are actions on this one endpoint.
+  /// Folder the Purchase Request attachments (quotations, delivery
+  /// notes, invoices) are served from — every attachment URL in the
+  /// API guide lives here.
+  static const String iungoUploadBase = '$iungoHost/include/images/upload';
+
+  /// Purchase Request list, approve/reject, contract-code lookup
+  /// (`fetch_contract_code`) and PR save (`save_purchase_request`) — all
+  /// on this one endpoint.
   static const String purchaseRequestApi = '$iungoApiBase/purchase_request.php';
 
   /// Multipart attachment upload used before saving a PR.

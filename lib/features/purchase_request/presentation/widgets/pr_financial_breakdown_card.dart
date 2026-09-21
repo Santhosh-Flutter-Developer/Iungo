@@ -29,7 +29,7 @@ class PrFinancialBreakdownCard extends StatelessWidget {
           const SizedBox(height: 12),
           _Row(
             label: 'pr_administrative_expenses'.tr,
-            value: '${request.administrativeExpensesPercent.toStringAsFixed(0)} %',
+            value: '${_percent(request.administrativeExpensesPercent)} %',
           ),
           const SizedBox(height: 12),
           _Row(
@@ -53,6 +53,13 @@ class PrFinancialBreakdownCard extends StatelessWidget {
       ),
     );
   }
+}
+
+/// "6" for a whole percentage, "6.5" otherwise.
+String _percent(double value) {
+  final rounded = value.roundToDouble();
+  if ((value - rounded).abs() < 0.005) return rounded.toStringAsFixed(0);
+  return value.toStringAsFixed(2).replaceFirst(RegExp(r'0+$'), '');
 }
 
 class _Row extends StatelessWidget {

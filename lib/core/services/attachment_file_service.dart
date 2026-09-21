@@ -23,17 +23,25 @@ class AttachmentFileService {
 
   final Map<String, Uint8List> _cache = {};
 
-  Dio get _dio => Get.isRegistered<Dio>() ? Get.find<Dio>() : Dio();
+  Dio _resolveDio(Dio? override) =>
+      override ?? (Get.isRegistered<Dio>() ? Get.find<Dio>() : Dio());
 
   /// Downloads (or returns the cached copy of) the raw bytes at [url].
+  ///
+  /// [dio] lets a caller hand in a client already configured for [url]'s
+  /// host (certificate overrides, auth, timeouts, ...) instead of
+  /// relying on whichever `Dio` happens to be registered under GetX's
+  /// ambient `Dio` type — which may be configured for a different host
+  /// entirely.
   Future<Uint8List> fetchBytes(
     String url, {
     Map<String, String>? headers,
+    Dio? dio,
   }) async {
     final cached = _cache[url];
     if (cached != null) return cached;
 
-    final response = await _dio.get<List<int>>(
+    final response = await _resolveDio(dio).get<List<int>>(
       url,
       options: Options(
         responseType: ResponseType.bytes,
@@ -54,8 +62,9 @@ class AttachmentFileService {
     String url,
     String fileName, {
     Map<String, String>? headers,
+    Dio? dio,
   }) async {
-    final bytes = await fetchBytes(url, headers: headers);
+    final bytes = await fetchBytes(url, headers: headers, dio: dio);
     final dir = await getTemporaryDirectory();
     final safeName = fileName.trim().isEmpty ? 'attachment' : fileName.trim();
     final file = File('${dir.path}/$safeName');

@@ -24,8 +24,25 @@ class PrSupplyItemsTab extends StatelessWidget {
           style: const TextStyle(fontSize: 13, color: AppColors.labelGrey),
         ),
         const SizedBox(height: 14),
+        if (request.items.isEmpty)
+          Padding(
+            padding: const EdgeInsets.symmetric(vertical: 24),
+            child: Center(
+              child: Text(
+                'pr_no_items'.tr,
+                style: const TextStyle(
+                  fontSize: 14,
+                  color: AppColors.textMuted,
+                ),
+              ),
+            ),
+          ),
         for (var i = 0; i < request.items.length; i++)
-          _SupplyItemTile(index: i + 1, item: request.items[i]),
+          _SupplyItemTile(
+            // The API's own S.No when it sent one, otherwise the row order.
+            index: request.items[i].sno ?? i + 1,
+            item: request.items[i],
+          ),
         const SizedBox(height: 10),
         PrFinancialBreakdownCard(request: request),
       ],
@@ -106,7 +123,7 @@ class _SupplyItemTile extends StatelessWidget {
                   borderRadius: BorderRadius.circular(4),
                 ),
                 child: Text(
-                  item.type.labelKey.tr,
+                  _typeBadgeLabel(item),
                   style: const TextStyle(
                     fontSize: 11,
                     fontWeight: FontWeight.w600,
@@ -155,6 +172,16 @@ class _SupplyItemTile extends StatelessWidget {
       ),
     );
   }
+}
+
+/// The badge text: the translated Inventory / Non Inventory label for
+/// the two material types this app knows, otherwise the API's own
+/// `material_type` text.
+String _typeBadgeLabel(PurchaseRequestItem item) {
+  final raw = (item.materialTypeLabel ?? '').trim();
+  final lower = raw.toLowerCase();
+  final recognised = lower.isEmpty || lower == 'inventory' || lower.contains('non');
+  return recognised ? item.type.labelKey.tr : raw;
 }
 
 class _Stat extends StatelessWidget {

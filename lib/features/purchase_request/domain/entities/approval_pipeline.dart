@@ -1,5 +1,6 @@
+import 'package:iungo/features/purchase_request/domain/entities/pr_attachment.dart';
+import 'package:iungo/features/purchase_request/domain/entities/pr_pipeline_stage.dart';
 import 'package:iungo/features/purchase_request/domain/entities/purchase_request.dart';
-import 'package:iungo/features/purchase_request/domain/entities/purchase_request_status.dart';
 
 /// State of one step inside an [ApprovalPipelineSection] — drives the
 /// green check / orange dot / red cross shown against each step in the
@@ -13,6 +14,8 @@ class ApprovalPipelineStep {
     required this.state,
     required this.approverName,
     this.stageLabel,
+    this.label,
+    this.acceptedTime,
   });
 
   final ApprovalStepState state;
@@ -20,6 +23,14 @@ class ApprovalPipelineStep {
 
   /// e.g. "Stage 5" — only shown on the current in-progress step.
   final String? stageLabel;
+
+  /// The API's own label for the step ("Waiting", "Approved", ...). Only
+  /// used as the title when the API's state code isn't one this app
+  /// knows how to translate.
+  final String? label;
+
+  /// When the step was decided (wall-clock, as sent by the server).
+  final DateTime? acceptedTime;
 }
 
 /// One stage of the overall pipeline — "Purchase Request", "GRN", or
@@ -31,18 +42,21 @@ class ApprovalPipelineSection {
     required this.steps,
     this.attachmentsLabel,
     this.attachmentFileNames = const [],
+    this.attachmentUrls = const [],
   });
 
   final String title;
   final List<ApprovalPipelineStep> steps;
   final String? attachmentsLabel;
   final List<String> attachmentFileNames;
+
+  /// Download URLs parallel to [attachmentFileNames] (same length and
+  /// order) — empty for pipelines whose files can't be opened.
+  final List<String> attachmentUrls;
 }
 
-/// The full multi-stage approval trail for one [PurchaseRequest],
-/// backing the "Approval Pipeline" sheet opened from the list's Stage
-/// row. GRN/Invoice stages only follow once the Purchase Request stage
-/// itself is approved, matching the reference flow.
+/// The full multi-stage approval trail for one request, backing the
+/// "Approval Pipeline" sheet opened from the list's Stage row.
 class ApprovalPipeline {
   const ApprovalPipeline({
     required this.currentStage,
@@ -54,117 +68,133 @@ class ApprovalPipeline {
   final int totalStages;
   final List<ApprovalPipelineSection> sections;
 
-  /// Builds the pipeline for [request]. There is no dedicated pipeline
-  /// API yet — the Purchase Request stage reflects the request's own
-  /// status/approver fields directly, and (once that stage is approved)
-  /// a representative GRN/Invoice trail is generated so the sheet has
-  /// something to show. Swap this for a real fetched pipeline once the
-  /// backend exposes one.
+  /// Builds the pipeline for [request] from the API's `pipeline[]`:
+  /// steps are grouped by their `module` (in the order the modules first
+  /// appear), and each module gets the files that belong to it —
+  /// `attachments[]` for the Purchase Request module, `delivery_notes[]`
+  /// for GRN and `invoices[]` for Invoice. Files whose module never
+  /// appears in the pipeline still get a section of their own so they
+  /// are not lost.
   factory ApprovalPipeline.forRequest(PurchaseRequest request) {
-    final approverPool = _approverPool(request.id);
+    final moduleOrder = <String>[];
+    final stepsByModule = <String, List<PrPipelineStage>>{};
+    for (final stage in request.pipeline) {
+      final module = stage.module.trim();
+      if (!stepsByModule.containsKey(module)) {
+        moduleOrder.add(module);
+        stepsByModule[module] = <PrPipelineStage>[];
+      }
+      stepsByModule[module]!.add(stage);
+    }
 
-    final prStep = switch (request.status) {
-      PurchaseRequestStatus.pending => ApprovalPipelineStep(
-          state: ApprovalStepState.waiting,
-          approverName: request.nextApprovalName ?? approverPool[0],
-          stageLabel: 'Stage ${request.currentStage}',
-        ),
-      PurchaseRequestStatus.rejected => ApprovalPipelineStep(
-          state: ApprovalStepState.rejected,
-          approverName: request.nextApprovalName ?? approverPool[0],
-        ),
-      PurchaseRequestStatus.approved => ApprovalPipelineStep(
-          state: ApprovalStepState.approved,
-          approverName: approverPool[0],
-        ),
-    };
+    final sections = <ApprovalPipelineSection>[];
+    final usedKinds = <_ModuleKind>{};
 
-    final sections = <ApprovalPipelineSection>[
-      ApprovalPipelineSection(
-        title: 'Purchase Request',
-        steps: [prStep],
-        attachmentsLabel: request.quotationFileNames.isEmpty
-            ? null
-            : 'Purchase Request Attachments',
-        attachmentFileNames: request.quotationFileNames,
-      ),
-    ];
-
-    if (request.status == PurchaseRequestStatus.approved) {
+    for (final module in moduleOrder) {
+      final kind = _kindOf(module);
+      // Only the first section of a kind gets that kind's files.
+      final files = usedKinds.add(kind)
+          ? _filesFor(kind, request)
+          : const <PrAttachment>[];
       sections.add(
-        ApprovalPipelineSection(
-          title: 'GRN',
-          steps: [
-            ApprovalPipelineStep(
-              state: ApprovalStepState.approved,
-              approverName: approverPool[1],
-            ),
-            ApprovalPipelineStep(
-              state: ApprovalStepState.approved,
-              approverName: approverPool[2],
-            ),
-          ],
-          attachmentsLabel: 'Delivery Notes',
-          attachmentFileNames: request.quotationFileNames.isNotEmpty
-              ? request.quotationFileNames
-              : const ['delivery_note.pdf'],
-        ),
-      );
-      sections.add(
-        ApprovalPipelineSection(
-          title: 'Invoice',
-          steps: [
-            ApprovalPipelineStep(
-              state: ApprovalStepState.approved,
-              approverName: approverPool[2],
-            ),
-            ApprovalPipelineStep(
-              state: ApprovalStepState.waiting,
-              approverName: approverPool[3],
-              stageLabel: 'Stage ${request.totalStages}',
-            ),
-          ],
-          attachmentsLabel: 'Invoices',
-          attachmentFileNames: const ['invoice.pdf'],
+        _section(
+          title: module,
+          stages: stepsByModule[module]!,
+          kind: kind,
+          files: files,
         ),
       );
     }
 
-    final totalStages = sections.fold<int>(
-      0,
-      (sum, section) => sum + section.steps.length,
-    );
-    final completedSteps = sections
-        .expand((section) => section.steps)
-        .where((step) => step.state != ApprovalStepState.waiting)
-        .length;
+    // Files whose stage isn't part of the pipeline.
+    for (final kind in _ModuleKind.values) {
+      if (usedKinds.contains(kind)) continue;
+      final files = _filesFor(kind, request);
+      if (files.isEmpty) continue;
+      sections.add(
+        _section(
+          title: _defaultTitle(kind),
+          stages: const [],
+          kind: kind,
+          files: files,
+        ),
+      );
+    }
 
-    // A waiting step hasn't happened yet, so it doesn't count towards
-    // "current stage" — e.g. 4 steps resolved + 1 still waiting reads
-    // as "Stage 4 of 5", not "Stage 5 of 5". Once nothing is waiting,
-    // currentStage naturally equals totalStages (fully done).
-    var currentStage = completedSteps;
-    final effectiveTotal = totalStages == 0 ? 1 : totalStages;
-    if (currentStage < 1) currentStage = 1;
-    if (currentStage > effectiveTotal) currentStage = effectiveTotal;
-
+    final total = request.totalStages;
     return ApprovalPipeline(
-      currentStage: currentStage,
-      totalStages: effectiveTotal,
+      currentStage: request.currentStage,
+      totalStages: total,
       sections: sections,
     );
   }
 
-  /// Small, deterministic (id-seeded) pool of approver names so the
-  /// same request always shows the same synthetic names across opens.
-  static List<String> _approverPool(int seed) {
-    const names = [
-      'Gladson Aby',
-      'Approver3',
-      'prem',
-      'mari',
-    ];
-    final offset = seed % names.length;
-    return List.generate(names.length, (i) => names[(i + offset) % names.length]);
+  static ApprovalPipelineSection _section({
+    required String title,
+    required List<PrPipelineStage> stages,
+    required _ModuleKind kind,
+    required List<PrAttachment> files,
+  }) {
+    return ApprovalPipelineSection(
+      title: title,
+      steps: [
+        for (final stage in stages)
+          ApprovalPipelineStep(
+            state: stage.stepState,
+            approverName: stage.name,
+            stageLabel: stage.stage == null ? null : 'Stage ${stage.stage}',
+            label: stage.label,
+            acceptedTime: stage.acceptedTime,
+          ),
+      ],
+      attachmentsLabel: files.isEmpty ? null : _attachmentsLabel(kind),
+      attachmentFileNames: [for (final f in files) f.name],
+      attachmentUrls: [for (final f in files) f.url],
+    );
+  }
+
+  static _ModuleKind _kindOf(String module) {
+    final m = module.toLowerCase();
+    if (m.contains('grn') || m.contains('delivery')) {
+      return _ModuleKind.grn;
+    }
+    if (m.contains('invoice')) return _ModuleKind.invoice;
+    return _ModuleKind.purchaseRequest;
+  }
+
+  static List<PrAttachment> _filesFor(_ModuleKind kind, PurchaseRequest r) {
+    switch (kind) {
+      case _ModuleKind.purchaseRequest:
+        return r.attachments;
+      case _ModuleKind.grn:
+        return r.deliveryNotes;
+      case _ModuleKind.invoice:
+        return r.invoices;
+    }
+  }
+
+  static String _attachmentsLabel(_ModuleKind kind) {
+    switch (kind) {
+      case _ModuleKind.purchaseRequest:
+        return 'Purchase Request Attachments';
+      case _ModuleKind.grn:
+        return 'Delivery Notes';
+      case _ModuleKind.invoice:
+        return 'Invoices';
+    }
+  }
+
+  static String _defaultTitle(_ModuleKind kind) {
+    switch (kind) {
+      case _ModuleKind.purchaseRequest:
+        return 'Purchase Request';
+      case _ModuleKind.grn:
+        return 'GRN';
+      case _ModuleKind.invoice:
+        return 'Invoice';
+    }
   }
 }
+
+/// Which family of files a pipeline module owns.
+enum _ModuleKind { purchaseRequest, grn, invoice }

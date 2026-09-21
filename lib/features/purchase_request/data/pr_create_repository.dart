@@ -8,8 +8,8 @@ import 'package:iungo/features/service_request/domain/entities/attachment_file.d
 
 /// Everything the "Add Purchase Request" form needs from the network:
 /// contract codes, inventory materials, attachment upload and the final
-/// save. Kept separate from [PurchaseRequestRepository] (the local,
-/// seed-data-backed list used by the dashboard) so neither is affected
+/// save. Kept separate from [PurchaseRequestRepository] (the list /
+/// approve / reject side used by the dashboard) so neither is affected
 /// by the other.
 class PrCreateRepository {
   PrCreateRepository(this._remote, this._materials);

@@ -1,105 +1,62 @@
-import 'package:iungo/features/purchase_request/data/purchase_request_seed_data.dart';
-import 'package:iungo/features/purchase_request/domain/entities/purchase_request.dart';
-import 'package:iungo/features/purchase_request/domain/entities/purchase_request_item.dart';
-import 'package:iungo/features/purchase_request/domain/entities/purchase_request_status.dart';
+import 'package:iungo/features/purchase_request/data/datasources/pr_create_remote_data_source.dart';
+import 'package:iungo/features/purchase_request/data/datasources/pr_remote_data_source.dart';
+import 'package:iungo/features/purchase_request/data/models/pr_decision_request.dart';
+import 'package:iungo/features/purchase_request/data/models/pr_list_query.dart';
+import 'package:iungo/features/purchase_request/domain/entities/contract_option.dart';
+import 'package:iungo/features/purchase_request/domain/entities/pr_list_page.dart';
 
-/// Local, in-memory stand-in for the future Purchase Request API.
+/// Everything the PR Dashboard / Detail / Search screens need from the
+/// Purchase Request API — the paginated list, the contract picklist and
+/// the approve/reject actions. Registered as a single permanent instance
+/// (see `PrDashboardBinding`). It holds no per-user state: the logged-in
+/// user's id is always passed in by the caller from the session.
 ///
-/// UI-only for now, per the current task: every method already has the
-/// async shape (`Future`, simulated network delay) the real
-/// implementation will need, so swapping the body for a live Dio call
-/// later shouldn't require touching any controller/page that depends on
-/// this class. Registered as a single permanent instance (see
-/// `PrDashboardBinding`) so the list, detail, search, filter, and create
-/// screens all read/write the same in-memory data set.
+/// The record returned by the list API already carries the full detail
+/// (items, attachments, pipeline...), so there is deliberately no
+/// separate "fetch details" call — the API guide documents none.
 class PurchaseRequestRepository {
-  PurchaseRequestRepository() : _requests = buildPurchaseRequestSeed();
+  PurchaseRequestRepository(this._remote, this._createRemote);
 
-  final List<PurchaseRequest> _requests;
+  final PrRemoteDataSource _remote;
 
-  /// Contract picklist — mirrors the "Contract Code" dropdown on the
-  /// reference "Add Purchase Request" form / the list's "Select
-  /// Contract" filter.
-  static const List<String> contracts = [
-    'Diriyah - DIR',
-    'Riyadh - RYD',
-    'Jeddah - JED',
-    'Dammam - DMM',
-  ];
+  /// Reused for `fetch_contract_code`, which the Add Purchase Request
+  /// form already calls.
+  final PrCreateRemoteDataSource _createRemote;
 
-  Future<List<PurchaseRequest>> fetchAll() async {
-    await Future.delayed(const Duration(milliseconds: 500));
-    return List.unmodifiable(_requests);
+  Future<PrListPage> fetchPurchaseRequests(PrListQuery query) =>
+      _remote.fetchPurchaseRequests(query);
+
+  Future<List<ContractOption>> fetchContracts({required String userId}) =>
+      _createRemote.fetchContracts(userId: userId);
+
+  /// Approves [prId] with exactly one selected attachment
+  /// ([attachmentFileName]). Returns the server's message.
+  Future<String?> approvePurchaseRequest({
+    required int prId,
+    required String userId,
+    required String attachmentFileName,
+  }) {
+    return _remote.submitDecision(
+      PrDecisionRequest.approve(
+        prId: prId,
+        userId: userId,
+        attachmentFileName: attachmentFileName,
+      ),
+    );
   }
 
-  /// Approves/rejects [id]'s current pending stage. `remarks` is
-  /// required by the reject flow (enforced by the Reject dialog before
-  /// this is ever called); approve doesn't collect one.
-  Future<PurchaseRequest> submitDecision({
-    required int id,
-    required bool approve,
-    String? remarks,
-  }) async {
-    await Future.delayed(const Duration(milliseconds: 600));
-    final index = _requests.indexWhere((r) => r.id == id);
-    if (index == -1) {
-      throw StateError('Purchase Request $id not found');
-    }
-    final updated = _requests[index].copyWith(
-      status: approve
-          ? PurchaseRequestStatus.approved
-          : PurchaseRequestStatus.rejected,
-      clearNextApprovalName: true,
+  /// Rejects [prId] with mandatory [remarks].
+  Future<String?> rejectPurchaseRequest({
+    required int prId,
+    required String userId,
+    required String remarks,
+  }) {
+    return _remote.submitDecision(
+      PrDecisionRequest.reject(
+        prId: prId,
+        userId: userId,
+        remarks: remarks,
+      ),
     );
-    _requests[index] = updated;
-    return updated;
-  }
-
-  /// Inserts a newly-created Purchase Request (the "Add Purchase
-  /// Request" form's Submit action) and assigns it a sequential id/PR
-  /// number in the same "<ContractPrefix>-<YY>-<seq>" shape as the seed
-  /// data.
-  Future<PurchaseRequest> addPurchaseRequest({
-    required String contract,
-    required String location,
-    required String workOrderNo,
-    required String requestDescription,
-    required DateTime deliveryDate,
-    required String category,
-    required String purpose,
-    required List<PurchaseRequestItem> items,
-    List<String> quotationFileNames = const [],
-  }) async {
-    await Future.delayed(const Duration(milliseconds: 700));
-
-    final nextId =
-        _requests.fold<int>(0, (max, r) => r.id > max ? r.id : max) + 1;
-    final now = DateTime.now();
-    final prefix = contract.split('-').last.trim();
-    final year = (now.year % 100).toString().padLeft(2, '0');
-    final sequence = nextId.toString().padLeft(4, '0');
-
-    final created = PurchaseRequest(
-      id: nextId,
-      prNumber: '$prefix-$year-$sequence',
-      requestDate: now,
-      contract: contract,
-      location: location,
-      workOrderNo: workOrderNo,
-      requestDescription: requestDescription,
-      deliveryDate: deliveryDate,
-      category: category,
-      purpose: purpose,
-      createdBy: 'You',
-      status: PurchaseRequestStatus.pending,
-      nextApprovalName: 'Pending assignment',
-      currentStage: 1,
-      totalStages: 1,
-      items: items,
-      quotationFileNames: quotationFileNames,
-    );
-
-    _requests.insert(0, created);
-    return created;
   }
 }

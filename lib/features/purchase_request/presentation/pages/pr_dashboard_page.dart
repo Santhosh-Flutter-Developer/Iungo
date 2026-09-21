@@ -21,14 +21,23 @@ import 'package:iungo/features/service_request/presentation/widgets/service_requ
 /// Contract/Created-date filter, and the request list. Mirrors
 /// `InventoryRequestListPage`'s chrome/refresh/filter/search flow.
 ///
-/// The "Add" button (requestor only) is gated by [PrRoleController],
-/// which derives the role from the login response's
-/// `add_purchase_request` flag (1 = Requestor, 0 = Approver) — there is
-/// no in-app role picker. Approve/Reject also show inline on each card for the
-/// approver role's pending tab (see [PurchaseRequestCard]), in addition
-/// to the Detail View's action bar.
+/// The "Add" button shows only for the requestor role
+/// ([PrRoleController], derived from the login response's
+/// `add_purchase_request` flag — there is no in-app role picker) AND only
+/// when the list API itself reports `add_purchase_request == 1`.
+/// Approve/Reject also show inline on each card for the approver role's
+/// Action Required tab (see [PurchaseRequestCard]), in addition to the
+/// Detail View's action bar.
+///
+/// The list is lazy-loaded: scrolling near the bottom fetches the next
+/// page (see [PrDashboardController.loadMore]) and pull-to-refresh
+/// reloads page 1.
 class PrDashboardPage extends GetView<PrDashboardController> {
   const PrDashboardPage({super.key});
+
+  /// How close to the bottom (in pixels) the user has to scroll before
+  /// the next page is requested.
+  static const double _loadMoreThreshold = 240;
 
   @override
   Widget build(BuildContext context) {
@@ -71,7 +80,11 @@ class PrDashboardPage extends GetView<PrDashboardController> {
       ),
       drawer: const AppDrawer(selected: DrawerMenuItem.prDashboard),
       floatingActionButton: Obx(() {
-        if (!roleController.isRequestor) return const SizedBox.shrink();
+        // Never for an approver; for a requestor only when the API says so.
+        if (!roleController.isRequestor ||
+            !controller.canAddPurchaseRequest.value) {
+          return const SizedBox.shrink();
+        }
         return FloatingActionButton.extended(
           backgroundColor: AppColors.primary,
           foregroundColor: AppColors.white,
@@ -95,9 +108,9 @@ class PrDashboardPage extends GetView<PrDashboardController> {
                   pendingLabel: roleController.isRequestor
                       ? 'pr_status_submitted'.tr
                       : 'pr_status_action_required'.tr,
-                  pendingCount: controller.pendingCount,
-                  completedCount: controller.completedCount,
-                  rejectedCount: controller.rejectedCount,
+                  pendingCount: controller.pendingCount.value,
+                  completedCount: controller.completedCount.value,
+                  rejectedCount: controller.rejectedCount.value,
                   selectedIndex: controller.selectedTab.value,
                   onSelect: controller.selectTab,
                 ),
@@ -132,47 +145,99 @@ class PrDashboardPage extends GetView<PrDashboardController> {
                 }
 
                 if (controller.hasError.value) {
-                  return _PrErrorState(onRetry: controller.reload);
+                  return _PrErrorState(
+                    message: controller.errorMessage.value,
+                    onRetry: controller.reload,
+                  );
                 }
 
-                final requests = controller.visibleRequests;
+                final requests = controller.records.toList();
 
                 if (requests.isEmpty) {
-                  return const ServiceRequestEmptyState();
+                  // Still pull-to-refreshable so an empty list can be
+                  // re-checked.
+                  return LayoutBuilder(
+                    builder: (context, constraints) => RefreshIndicator(
+                      onRefresh: controller.refreshList,
+                      color: AppColors.primary,
+                      child: SingleChildScrollView(
+                        physics: const AlwaysScrollableScrollPhysics(),
+                        child: SizedBox(
+                          height: constraints.maxHeight,
+                          child: const ServiceRequestEmptyState(),
+                        ),
+                      ),
+                    ),
+                  );
                 }
 
+                // A footer row (spinner, or Retry after a failed page)
+                // sits after the last card while more pages exist.
+                final showFooter = controller.isLoadingMore.value ||
+                    controller.loadMoreFailed.value;
+
                 return RefreshIndicator(
-                  onRefresh: controller.reload,
+                  onRefresh: controller.refreshList,
                   color: AppColors.primary,
-                  child: ListView.builder(
-                    padding: const EdgeInsets.fromLTRB(16, 16, 16, 100),
-                    itemCount: requests.length,
-                    itemBuilder: (context, index) {
-                      final request = requests[index];
-                      return Obx(() {
-                        // Approve/Reject only ever show for the
-                        // approver role's pending tab (index 0) — the
-                        // requestor's "Submitted" tab and the
-                        // Completed/Rejected tabs never get the
-                        // buttons. Read both reactively so a change in
-                        // the session's role updates this immediately.
-                        final showActions = roleController.isApprover &&
-                            controller.selectedTab.value == 0;
-                        return PurchaseRequestCard(
-                          request: request,
-                          onTap: () => Get.to(
-                            () => const PrDetailPage(),
-                            binding: PrDetailBinding(request),
-                          )?.then((_) => controller.reload()),
-                          showApprovalActions: showActions,
-                          isSubmitting: controller.isSubmitting(request.id),
-                          onApprove: () =>
-                              controller.approveFromList(context, request),
-                          onReject: () =>
-                              controller.rejectFromList(context, request),
-                        );
-                      });
+                  child: NotificationListener<ScrollNotification>(
+                    onNotification: (notification) {
+                      // Near the bottom -> next page. loadMore() ignores
+                      // the call while a page is already loading, so
+                      // repeated scroll ticks can't fire duplicates.
+                      if (notification.metrics.axis == Axis.vertical &&
+                          notification.metrics.extentAfter <
+                              _loadMoreThreshold) {
+                        controller.loadMore();
+                      }
+                      return false;
                     },
+                    child: ListView.builder(
+                      physics: const AlwaysScrollableScrollPhysics(),
+                      padding: const EdgeInsets.fromLTRB(16, 16, 16, 100),
+                      itemCount: requests.length + (showFooter ? 1 : 0),
+                      itemBuilder: (context, index) {
+                        if (index >= requests.length) {
+                          return _LoadMoreFooter(
+                            failed: controller.loadMoreFailed.value,
+                            onRetry: controller.retryLoadMore,
+                          );
+                        }
+
+                        final request = requests[index];
+                        return Obx(() {
+                          // Approve/Reject only ever show for the
+                          // approver role's Action Required tab (index
+                          // 0) on a request that is still actionable —
+                          // never for the requestor, and never on the
+                          // Completed/Rejected tabs. Read both reactively
+                          // so a change in the session's role updates
+                          // this immediately.
+                          final showActions = roleController.isApprover &&
+                              controller.selectedTab.value == 0 &&
+                              request.isActionable;
+                          return PurchaseRequestCard(
+                            request: request,
+                            onTap: () => Get.to(
+                              () => const PrDetailPage(),
+                              binding: PrDetailBinding(
+                                request,
+                                canDecide: controller.isActionRequiredTab,
+                              ),
+                            )?.then((result) {
+                              // The request was approved/rejected on the
+                              // detail screen -> reload from the server.
+                              if (result == true) controller.reload();
+                            }),
+                            showApprovalActions: showActions,
+                            isSubmitting: controller.isSubmitting(request.id),
+                            onApprove: () =>
+                                controller.approveFromList(context, request),
+                            onReject: () =>
+                                controller.rejectFromList(context, request),
+                          );
+                        });
+                      },
+                    ),
                   ),
                 );
               }),
@@ -238,8 +303,11 @@ class _ExportButton extends StatelessWidget {
 /// Full-screen state shown when the list fails to load — matches
 /// `ServiceRequestEmptyState`'s layout with a retry action.
 class _PrErrorState extends StatelessWidget {
-  const _PrErrorState({required this.onRetry});
+  const _PrErrorState({required this.message, required this.onRetry});
 
+  /// The API's/translated failure message; falls back to the generic
+  /// "Unable to load purchase requests" text when empty.
+  final String message;
   final Future<void> Function() onRetry;
 
   @override
@@ -257,7 +325,7 @@ class _PrErrorState extends StatelessWidget {
             ),
             const SizedBox(height: 20),
             Text(
-              'something_went_wrong'.tr,
+              message.isEmpty ? 'pr_load_failed'.tr : message,
               textAlign: TextAlign.center,
               style: const TextStyle(
                 fontSize: 16,
@@ -280,6 +348,41 @@ class _PrErrorState extends StatelessWidget {
             ),
           ],
         ),
+      ),
+    );
+  }
+}
+
+/// The row after the last card while the next page loads (spinner) or
+/// after it failed (Retry).
+class _LoadMoreFooter extends StatelessWidget {
+  const _LoadMoreFooter({required this.failed, required this.onRetry});
+
+  final bool failed;
+  final Future<void> Function() onRetry;
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 12),
+      child: Center(
+        child: failed
+            ? TextButton.icon(
+                onPressed: onRetry,
+                icon: const Icon(Icons.refresh, color: AppColors.primary),
+                label: Text(
+                  'retry'.tr,
+                  style: const TextStyle(color: AppColors.primary),
+                ),
+              )
+            : const SizedBox(
+                width: 26,
+                height: 26,
+                child: CircularProgressIndicator(
+                  strokeWidth: 2.5,
+                  color: AppColors.primary,
+                ),
+              ),
       ),
     );
   }
