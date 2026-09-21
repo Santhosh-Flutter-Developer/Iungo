@@ -1,5 +1,4 @@
 import 'package:iungo/features/purchase_request/data/purchase_request_seed_data.dart';
-import 'package:iungo/features/purchase_request/domain/entities/material_option.dart';
 import 'package:iungo/features/purchase_request/domain/entities/purchase_request.dart';
 import 'package:iungo/features/purchase_request/domain/entities/purchase_request_item.dart';
 import 'package:iungo/features/purchase_request/domain/entities/purchase_request_status.dart';
@@ -26,51 +25,6 @@ class PurchaseRequestRepository {
     'Riyadh - RYD',
     'Jeddah - JED',
     'Dammam - DMM',
-  ];
-
-  static const List<String> categories = [
-    'Electrical',
-    'Mechanical',
-    'Plumbing',
-    'Civil',
-    'HVAC',
-    'General',
-  ];
-
-  /// Material picklist behind the "Add Items → Material Code" search
-  /// field when the item Type is Inventory — representative values in
-  /// the same shape as the reference video's dropdown.
-  static const List<MaterialOption> materialOptions = [
-    MaterialOption(
-      code: 'MIN-DR-ELE-1832',
-      description: 'Electrical Spareparts-F2 power supply',
-      unitPrice: 75,
-    ),
-    MaterialOption(
-      code: 'MIN-DR-ELE-1824',
-      description: 'Electrical spare part Philips Electronic',
-      unitPrice: 42,
-    ),
-    MaterialOption(
-      code: 'MIN-DR-ELE-1811',
-      description: 'Electrical Spareparts-30w F2 power supply',
-      unitPrice: 58,
-    ),
-    MaterialOption(
-      code: 'MIN-DR-MCH-0567',
-      description: 'Door closer heavy duty',
-      unitPrice: 159,
-    ),
-    MaterialOption(
-      code: 'MIN-RY-PLB-0231',
-      description: 'PPR pipe fitting set 1/2"',
-      unitPrice: 53,
-    ),
-    MaterialOption(
-      code: 'MIN-JD-HVC-0098',
-      description: 'Compressor capacitor 45uF',
-      unitPrice: 2450,
-    ),
   ];
 
   Future<List<PurchaseRequest>> fetchAll() async {

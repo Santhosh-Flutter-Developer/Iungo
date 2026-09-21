@@ -375,6 +375,44 @@ class AppTranslations extends Translations {
       'pr_select_contract_required': 'Please select a contract',
       'pr_add_at_least_one_item': 'Please add at least one item',
       'pr_submitted_success': 'Purchase Request submitted successfully',
+      'pr_submit_failed': 'Could not submit the Purchase Request',
+      'pr_location_required': 'Please enter a location',
+      'pr_work_order_required': 'Please enter the work order number',
+      'pr_request_description_required': 'Please enter a request description',
+      'pr_category_required': 'Please select a category',
+      'pr_purpose_required': 'Please enter the purpose',
+
+      // PR Create — API states
+      'pr_contract_load_failed': 'Could not load contract codes',
+      'pr_no_contracts_found': 'No contract codes available',
+      'pr_materials_load_failed': 'Could not load materials',
+      'pr_no_materials_found': 'No materials found',
+      'pr_err_no_internet':
+          'No internet connection. Please check your network and try again.',
+      'pr_err_timeout': 'The request timed out. Please try again.',
+      'pr_err_session_expired': 'Your session has expired. Please sign in again.',
+      'pr_err_forbidden': "You don't have permission to do this.",
+      'pr_err_invalid_response':
+          'Unexpected response from the server. Please try again.',
+      'pr_err_server': 'Server error. Please try again later.',
+
+      // PR Create — categories
+      'pr_category_cleaning': 'Cleaning',
+      'pr_category_civil': 'Civil',
+      'pr_category_mechanical': 'Mechanical',
+      'pr_category_electrical': 'Electrical',
+      'pr_category_fire_life_safely': 'Fire life safely',
+      'pr_category_pest_control': 'Pest control',
+      'pr_category_landscaping': 'Landscaping',
+
+      // PR Create — quotation attachments
+      'pr_attachment_uploading': 'Uploading',
+      'pr_attachment_upload_failed': 'Upload failed',
+      'pr_attachment_upload_in_progress':
+          'Please wait for the attachments to finish uploading',
+      'pr_attachment_upload_failed_block':
+          'Remove or retry the failed attachments before submitting',
+      'pr_attachment_duplicate': 'This file is already attached',
 
       // PR Dashboard — Excel export
       'export_excel': 'Export',
@@ -763,6 +801,45 @@ class AppTranslations extends Translations {
       'pr_select_contract_required': 'الرجاء اختيار العقد',
       'pr_add_at_least_one_item': 'الرجاء إضافة صنف واحد على الأقل',
       'pr_submitted_success': 'تم إرسال طلب الشراء بنجاح',
+      'pr_submit_failed': 'تعذر إرسال طلب الشراء',
+      'pr_location_required': 'الرجاء إدخال الموقع',
+      'pr_work_order_required': 'الرجاء إدخال رقم أمر العمل',
+      'pr_request_description_required': 'الرجاء إدخال وصف الطلب',
+      'pr_category_required': 'الرجاء اختيار الفئة',
+      'pr_purpose_required': 'الرجاء إدخال الغرض',
+
+      // PR Create — API states
+      'pr_contract_load_failed': 'تعذر تحميل رموز العقود',
+      'pr_no_contracts_found': 'لا توجد رموز عقود متاحة',
+      'pr_materials_load_failed': 'تعذر تحميل المواد',
+      'pr_no_materials_found': 'لم يتم العثور على مواد',
+      'pr_err_no_internet':
+          'لا يوجد اتصال بالإنترنت. يرجى التحقق من الشبكة والمحاولة مرة أخرى.',
+      'pr_err_timeout': 'انتهت مهلة الطلب. يرجى المحاولة مرة أخرى.',
+      'pr_err_session_expired':
+          'انتهت صلاحية جلستك. يرجى تسجيل الدخول مرة أخرى.',
+      'pr_err_forbidden': 'ليس لديك صلاحية للقيام بذلك.',
+      'pr_err_invalid_response':
+          'استجابة غير متوقعة من الخادم. يرجى المحاولة مرة أخرى.',
+      'pr_err_server': 'خطأ في الخادم. يرجى المحاولة لاحقًا.',
+
+      // PR Create — categories
+      'pr_category_cleaning': 'التنظيف',
+      'pr_category_civil': 'الأعمال المدنية',
+      'pr_category_mechanical': 'الأعمال الميكانيكية',
+      'pr_category_electrical': 'الأعمال الكهربائية',
+      'pr_category_fire_life_safely': 'الحماية من الحريق وسلامة الأرواح',
+      'pr_category_pest_control': 'مكافحة الآفات',
+      'pr_category_landscaping': 'تنسيق المواقع',
+
+      // PR Create — quotation attachments
+      'pr_attachment_uploading': 'جارٍ الرفع',
+      'pr_attachment_upload_failed': 'فشل الرفع',
+      'pr_attachment_upload_in_progress':
+          'يرجى انتظار اكتمال رفع المرفقات',
+      'pr_attachment_upload_failed_block':
+          'أزل المرفقات التي فشل رفعها أو أعد المحاولة قبل الإرسال',
+      'pr_attachment_duplicate': 'هذا الملف مرفق بالفعل',
 
       // PR Dashboard — Excel export
       'export_excel': 'تصدير',

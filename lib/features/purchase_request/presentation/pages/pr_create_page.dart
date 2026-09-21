@@ -2,8 +2,11 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:iungo/core/constants/app_colors.dart';
 import 'package:iungo/core/utils/app_date_format.dart';
+import 'package:iungo/core/widgets/app_snackbar.dart';
+import 'package:iungo/features/purchase_request/domain/entities/contract_option.dart';
 import 'package:iungo/features/purchase_request/domain/entities/material_option.dart';
 import 'package:iungo/features/purchase_request/domain/entities/purchase_request_item.dart';
+import 'package:iungo/features/purchase_request/presentation/controllers/pr_attachment_upload.dart';
 import 'package:iungo/features/purchase_request/presentation/controllers/pr_create_controller.dart';
 import 'package:iungo/features/purchase_request/presentation/widgets/pr_searchable_select_field.dart';
 import 'package:iungo/features/service_request/presentation/widgets/attachment_upload_box.dart';
@@ -47,13 +50,17 @@ class PrCreatePage extends GetView<PrCreateController> {
               const _SectionHeader(labelKey: 'pr_general_specification'),
               const SizedBox(height: 16),
               Obx(
-                () => PrSearchableSelectField<String>(
+                () => PrSearchableSelectField<ContractOption>(
                   label: 'pr_contract_code'.tr,
                   hint: 'pr_select_contract_code'.tr,
-                  options: controller.contractOptions,
-                  optionLabel: (o) => o,
-                  value: controller.contract.value,
-                  onChanged: (v) => controller.contract.value = v,
+                  options: controller.contracts.toList(),
+                  optionLabel: (o) => o.displayLabel,
+                  value: controller.selectedContract.value,
+                  onChanged: controller.onContractSelected,
+                  isLoading: controller.isLoadingContracts.value,
+                  errorText: controller.contractsError.value,
+                  onRetry: controller.loadContracts,
+                  emptyText: 'pr_no_contracts_found'.tr,
                 ),
               ),
               const SizedBox(height: 20),
@@ -94,7 +101,6 @@ class PrCreatePage extends GetView<PrCreateController> {
                 label: 'pr_work_order_no'.tr,
                 controller: controller.workOrderController,
                 hint: 'pr_enter_work_order_no'.tr,
-                keyboardType: TextInputType.number,
               ),
               const SizedBox(height: 20),
               _LabeledField(
@@ -149,7 +155,7 @@ class PrCreatePage extends GetView<PrCreateController> {
                   label: 'pr_category'.tr,
                   hint: 'pr_select_category'.tr,
                   options: controller.categoryOptions,
-                  optionLabel: (o) => o,
+                  optionLabel: (o) => prCategoryLabelKey(o).tr,
                   value: controller.category.value,
                   onChanged: (v) => controller.category.value = v,
                 ),
@@ -185,10 +191,22 @@ class PrCreatePage extends GetView<PrCreateController> {
                     ? PrSearchableSelectField<MaterialOption>(
                         label: 'pr_material_code'.tr,
                         hint: 'pr_select_material_code'.tr,
-                        options: controller.materialOptions,
+                        options: controller.materials.toList(),
                         optionLabel: (o) => o.displayLabel,
                         value: controller.selectedMaterial.value,
                         onChanged: controller.onMaterialSelected,
+                        isLoading: controller.isLoadingMaterials.value,
+                        errorText: controller.materialsError.value,
+                        onRetry: controller.retryMaterials,
+                        emptyText: 'pr_no_materials_found'.tr,
+                        onOpened: controller.onMaterialDropdownOpened,
+                        onSearchChanged: controller.onMaterialSearchChanged,
+                        onLoadMore: controller.hasMoreMaterials.value
+                            ? controller.loadMoreMaterials
+                            : null,
+                        isLoadingMore: controller.isLoadingMoreMaterials.value,
+                        loadMoreFailed:
+                            controller.materialsLoadMoreFailed.value,
                       )
                     : _LabeledField(
                         label: 'pr_material_description'.tr,
@@ -286,52 +304,27 @@ class PrCreatePage extends GetView<PrCreateController> {
                 ),
               ),
               const SizedBox(height: 8),
-              AttachmentUploadBox(onTap: controller.pickQuotation),
+              Obx(
+                () => AttachmentUploadBox(
+                  onTap: controller.pickQuotation,
+                  loading: controller.isPickingAttachment.value,
+                ),
+              ),
               Obx(() {
-                if (controller.quotationFileNames.isEmpty) {
+                if (controller.attachments.isEmpty) {
                   return const SizedBox.shrink();
                 }
                 return Padding(
                   padding: const EdgeInsets.only(top: 12),
                   child: Column(
                     children: [
-                      for (var i = 0;
-                          i < controller.quotationFileNames.length;
-                          i++)
-                        Padding(
-                          padding: const EdgeInsets.only(bottom: 10),
-                          child: Container(
-                            padding: const EdgeInsets.all(14),
-                            decoration: BoxDecoration(
-                              color: AppColors.white,
-                              borderRadius: BorderRadius.circular(10),
-                              border: Border.all(color: AppColors.divider),
-                            ),
-                            child: Row(
-                              children: [
-                                const Icon(Icons.insert_drive_file_outlined,
-                                    size: 20, color: AppColors.primary),
-                                const SizedBox(width: 10),
-                                Expanded(
-                                  child: Text(
-                                    controller.quotationFileNames[i],
-                                    maxLines: 1,
-                                    overflow: TextOverflow.ellipsis,
-                                    style: const TextStyle(
-                                      fontSize: 14,
-                                      fontWeight: FontWeight.w500,
-                                      color: AppColors.textDark,
-                                    ),
-                                  ),
-                                ),
-                                InkWell(
-                                  onTap: () => controller.removeQuotationAt(i),
-                                  child: const Icon(Icons.close,
-                                      size: 18, color: AppColors.textMuted),
-                                ),
-                              ],
-                            ),
-                          ),
+                      for (final attachment in controller.attachments)
+                        _AttachmentTile(
+                          key: ValueKey(attachment.id),
+                          attachment: attachment,
+                          onRemove: () =>
+                              controller.removeAttachment(attachment),
+                          onRetry: () => controller.retryUpload(attachment),
                         ),
                     ],
                   ),
@@ -376,7 +369,13 @@ class PrCreatePage extends GetView<PrCreateController> {
                             ? null
                             : () async {
                                 final ok = await controller.submit();
-                                if (ok) Get.back(result: true);
+                                if (!ok) return;
+                                final message = controller.successMessage;
+                                // Close first, then show the API's
+                                // message — a SnackBar that is already
+                                // open would otherwise swallow the pop.
+                                Get.back(result: true);
+                                AppSnackbar.showSuccess(message);
                               },
                         style: ElevatedButton.styleFrom(
                           backgroundColor: AppColors.primary,
@@ -694,7 +693,7 @@ class _TotalsCard extends StatelessWidget {
           _row('pr_total_lines'.tr, '${totalLines.toStringAsFixed(2)} SAR'),
           const SizedBox(height: 12),
           _row('pr_administrative_expenses'.tr,
-              '${administrativeExpensesPercent.toStringAsFixed(0)} %'),
+              '${_formatPercent(administrativeExpensesPercent)} %'),
           const SizedBox(height: 12),
           _row('pr_total_before_vat'.tr,
               '${totalBeforeVat.toStringAsFixed(2)} SAR'),
@@ -711,6 +710,17 @@ class _TotalsCard extends StatelessWidget {
         ],
       ),
     );
+  }
+
+  /// `6` → "6", `6.5` → "6.5" (the margin comes from the contract).
+  static String _formatPercent(double percent) {
+    if (percent == percent.truncateToDouble()) {
+      return percent.toInt().toString();
+    }
+    return percent
+        .toStringAsFixed(2)
+        .replaceFirst(RegExp(r'0+$'), '')
+        .replaceFirst(RegExp(r'\.$'), '');
   }
 
   Widget _row(String label, String value, {bool emphasized = false}) {
@@ -734,6 +744,134 @@ class _TotalsCard extends StatelessWidget {
           ),
         ),
       ],
+    );
+  }
+}
+
+/// One quotation attachment with its live upload state — a progress bar
+/// while uploading, "Uploaded" on success, or the error plus a Retry
+/// action if the upload failed (which also blocks Submit).
+class _AttachmentTile extends StatelessWidget {
+  const _AttachmentTile({
+    super.key,
+    required this.attachment,
+    required this.onRemove,
+    required this.onRetry,
+  });
+
+  final PrAttachmentUpload attachment;
+  final VoidCallback onRemove;
+  final VoidCallback onRetry;
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 10),
+      child: Container(
+        padding: const EdgeInsets.all(14),
+        decoration: BoxDecoration(
+          color: AppColors.white,
+          borderRadius: BorderRadius.circular(10),
+          border: Border.all(
+            color: attachment.isFailed
+                ? AppColors.attachmentDeleteText
+                : AppColors.divider,
+          ),
+        ),
+        child: Obx(() {
+          final status = attachment.status.value;
+          return Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
+                  const Icon(Icons.insert_drive_file_outlined,
+                      size: 20, color: AppColors.primary),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: Text(
+                      attachment.name,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: const TextStyle(
+                        fontSize: 14,
+                        fontWeight: FontWeight.w500,
+                        color: AppColors.textDark,
+                      ),
+                    ),
+                  ),
+                  if (status == PrAttachmentStatus.uploaded)
+                    const Padding(
+                      padding: EdgeInsets.only(right: 10),
+                      child: Icon(Icons.check_circle,
+                          size: 18, color: AppColors.prStatusGreen),
+                    ),
+                  InkWell(
+                    onTap: onRemove,
+                    child: const Icon(Icons.close,
+                        size: 18, color: AppColors.textMuted),
+                  ),
+                ],
+              ),
+              if (status == PrAttachmentStatus.uploading) ...[
+                const SizedBox(height: 10),
+                // Once every byte is sent the server may still be busy
+                // saving the file — show an indeterminate bar then.
+                LinearProgressIndicator(
+                  value: attachment.progress.value < 1
+                      ? attachment.progress.value
+                      : null,
+                  minHeight: 4,
+                  color: AppColors.primary,
+                  backgroundColor: AppColors.drawerSelectedBackground,
+                ),
+                const SizedBox(height: 6),
+                Text(
+                  attachment.progress.value < 1
+                      ? '${'pr_attachment_uploading'.tr} '
+                          '${(attachment.progress.value * 100).toStringAsFixed(0)}%'
+                      : 'pr_attachment_uploading'.tr,
+                  style: const TextStyle(
+                    fontSize: 12,
+                    color: AppColors.textMuted,
+                  ),
+                ),
+              ],
+              if (status == PrAttachmentStatus.failed) ...[
+                const SizedBox(height: 8),
+                Row(
+                  children: [
+                    Expanded(
+                      child: Text(
+                        attachment.errorMessage.value ??
+                            'pr_attachment_upload_failed'.tr,
+                        style: const TextStyle(
+                          fontSize: 12,
+                          color: AppColors.attachmentDeleteText,
+                        ),
+                      ),
+                    ),
+                    InkWell(
+                      onTap: onRetry,
+                      child: Padding(
+                        padding: const EdgeInsets.only(left: 12),
+                        child: Text(
+                          'retry'.tr,
+                          style: const TextStyle(
+                            fontSize: 13,
+                            fontWeight: FontWeight.w600,
+                            color: AppColors.primary,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ],
+          );
+        }),
+      ),
     );
   }
 }

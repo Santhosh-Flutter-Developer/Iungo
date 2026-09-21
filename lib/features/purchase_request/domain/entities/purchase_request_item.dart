@@ -22,6 +22,7 @@ class PurchaseRequestItem {
   const PurchaseRequestItem({
     required this.type,
     this.materialCode,
+    this.materialId,
     required this.materialDescription,
     this.remarks = '',
     required this.quantity,
@@ -33,6 +34,11 @@ class PurchaseRequestItem {
   /// Only set for [PurchaseRequestItemType.inventory] items — the
   /// catalog code shown alongside the description (e.g. "MIN-DR-ELE-041").
   final String? materialCode;
+
+  /// Facilio inventory record id of the picked material — sent as `ids`
+  /// on save. Only set for [PurchaseRequestItemType.inventory] items
+  /// created through the Add Purchase Request form.
+  final int? materialId;
   final String materialDescription;
   final String remarks;
   final double quantity;

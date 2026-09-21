@@ -11,6 +11,12 @@ import 'package:iungo/core/constants/app_colors.dart';
 /// the shared `FilterSelectField`) so this doesn't change behavior for
 /// the Inventory Request/Service Request/Work Order filter screens that
 /// already depend on that widget's current behavior.
+///
+/// With only the required arguments it is a plain, locally-filtered
+/// dropdown. The optional "remote data" arguments below let a list that
+/// comes from an API (Contract Code, Material Code) show loading /
+/// error / empty states, search on the server, and load more pages as
+/// the user scrolls.
 class PrSearchableSelectField<T> extends StatefulWidget {
   const PrSearchableSelectField({
     super.key,
@@ -21,6 +27,15 @@ class PrSearchableSelectField<T> extends StatefulWidget {
     required this.value,
     required this.onChanged,
     this.allowClear = true,
+    this.isLoading = false,
+    this.errorText,
+    this.onRetry,
+    this.emptyText,
+    this.onOpened,
+    this.onSearchChanged,
+    this.onLoadMore,
+    this.isLoadingMore = false,
+    this.loadMoreFailed = false,
   });
 
   final String label;
@@ -36,6 +51,34 @@ class PrSearchableSelectField<T> extends StatefulWidget {
   /// Set false for dropdowns that must always hold a value (e.g. Type).
   final bool allowClear;
 
+  // ---- Remote-data options (all optional) ----------------------------
+
+  /// The options are still being fetched — shows a spinner (in the field
+  /// and, while [options] is empty, in the open list).
+  final bool isLoading;
+
+  /// Set when fetching failed and [options] is empty — shown in the open
+  /// list, with a Retry action when [onRetry] is given.
+  final String? errorText;
+  final VoidCallback? onRetry;
+
+  /// Replaces the default "No Results Found" text when the list is empty.
+  final String? emptyText;
+
+  /// Fired each time the dropdown is opened (lets the owner lazily load
+  /// its first page).
+  final VoidCallback? onOpened;
+
+  /// When non-null the search box is applied on the server: typing
+  /// reports the query here instead of filtering [options] locally.
+  final ValueChanged<String>? onSearchChanged;
+
+  /// Non-null while more pages exist. Called when the list is scrolled
+  /// near its end, and by the footer's Retry after [loadMoreFailed].
+  final VoidCallback? onLoadMore;
+  final bool isLoadingMore;
+  final bool loadMoreFailed;
+
   @override
   State<PrSearchableSelectField<T>> createState() =>
       _PrSearchableSelectFieldState<T>();
@@ -45,22 +88,41 @@ class _PrSearchableSelectFieldState<T>
     extends State<PrSearchableSelectField<T>> {
   bool _expanded = false;
   final TextEditingController _searchController = TextEditingController();
+  final ScrollController _scrollController = ScrollController();
   String _query = '';
 
   @override
+  void initState() {
+    super.initState();
+    _scrollController.addListener(_onScroll);
+  }
+
+  @override
   void dispose() {
+    _scrollController.dispose();
     _searchController.dispose();
     super.dispose();
   }
 
+  /// Asks the owner for the next page once the list is near its end.
+  void _onScroll() {
+    final loadMore = widget.onLoadMore;
+    if (loadMore == null || widget.isLoadingMore || widget.loadMoreFailed) {
+      return;
+    }
+    if (_scrollController.position.extentAfter < 120) loadMore();
+  }
+
   void _toggle() {
+    final opening = !_expanded;
     setState(() {
-      _expanded = !_expanded;
+      _expanded = opening;
       if (!_expanded) {
         _searchController.clear();
         _query = '';
       }
     });
+    if (opening) widget.onOpened?.call();
   }
 
   void _select(T option) {
@@ -78,7 +140,7 @@ class _PrSearchableSelectFieldState<T>
 
   @override
   Widget build(BuildContext context) {
-    final filtered = _query.trim().isEmpty
+    final filtered = (widget.onSearchChanged != null || _query.trim().isEmpty)
         ? widget.options
         : widget.options
             .where((o) => widget
@@ -141,6 +203,17 @@ class _PrSearchableSelectFieldState<T>
                   ),
                   const SizedBox(width: 6),
                 ],
+                if (widget.isLoading) ...[
+                  const SizedBox(
+                    width: 16,
+                    height: 16,
+                    child: CircularProgressIndicator(
+                      strokeWidth: 2,
+                      color: AppColors.primary,
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                ],
                 Icon(
                   _expanded
                       ? Icons.keyboard_arrow_up
@@ -170,7 +243,10 @@ class _PrSearchableSelectFieldState<T>
                         child: TextField(
                           controller: _searchController,
                           autofocus: true,
-                          onChanged: (v) => setState(() => _query = v),
+                          onChanged: (v) {
+                            setState(() => _query = v);
+                            widget.onSearchChanged?.call(v);
+                          },
                           style: const TextStyle(fontSize: 14),
                           decoration: InputDecoration(
                             isDense: true,
@@ -190,31 +266,7 @@ class _PrSearchableSelectFieldState<T>
                       ),
                       ConstrainedBox(
                         constraints: const BoxConstraints(maxHeight: 220),
-                        child: filtered.isEmpty
-                            ? Padding(
-                                padding: const EdgeInsets.symmetric(
-                                    vertical: 16),
-                                child: Text(
-                                  'no_results_found'.tr,
-                                  style: const TextStyle(
-                                    fontSize: 13,
-                                    color: AppColors.textMuted,
-                                  ),
-                                ),
-                              )
-                            : SingleChildScrollView(
-                                child: Column(
-                                  mainAxisSize: MainAxisSize.min,
-                                  children: [
-                                    for (final option in filtered)
-                                      _OptionTile(
-                                        label: widget.optionLabel(option),
-                                        selected: option == widget.value,
-                                        onTap: () => _select(option),
-                                      ),
-                                  ],
-                                ),
-                              ),
+                        child: _buildBody(filtered),
                       ),
                     ],
                   ),
@@ -222,6 +274,113 @@ class _PrSearchableSelectFieldState<T>
               : const SizedBox(width: double.infinity),
         ),
       ],
+    );
+  }
+
+  Widget _buildBody(List<T> filtered) {
+    if (filtered.isEmpty) {
+      if (widget.isLoading) {
+        return const _StatusRow(child: _Spinner());
+      }
+      final error = widget.errorText;
+      if (error != null) {
+        return _StatusRow(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text(
+                error,
+                textAlign: TextAlign.center,
+                style: const TextStyle(
+                  fontSize: 13,
+                  color: AppColors.attachmentDeleteText,
+                ),
+              ),
+              if (widget.onRetry != null) ...[
+                const SizedBox(height: 8),
+                TextButton(
+                  onPressed: widget.onRetry,
+                  child: Text('retry'.tr),
+                ),
+              ],
+            ],
+          ),
+        );
+      }
+      return _StatusRow(
+        child: Text(
+          // The custom empty text describes "nothing to choose from"; a
+          // search that just matches nothing keeps the standard message.
+          (widget.options.isEmpty ? widget.emptyText : null) ??
+              'no_results_found'.tr,
+          style: const TextStyle(fontSize: 13, color: AppColors.textMuted),
+        ),
+      );
+    }
+
+    final showFooter = widget.isLoadingMore || widget.loadMoreFailed;
+    return ListView.builder(
+      controller: _scrollController,
+      shrinkWrap: true,
+      padding: EdgeInsets.zero,
+      itemCount: filtered.length + (showFooter ? 1 : 0),
+      itemBuilder: (context, index) {
+        if (index >= filtered.length) {
+          return widget.loadMoreFailed
+              ? InkWell(
+                  onTap: widget.onLoadMore,
+                  child: _StatusRow(
+                    child: Text(
+                      'retry'.tr,
+                      style: const TextStyle(
+                        fontSize: 13,
+                        fontWeight: FontWeight.w600,
+                        color: AppColors.primary,
+                      ),
+                    ),
+                  ),
+                )
+              : const _StatusRow(child: _Spinner());
+        }
+        final option = filtered[index];
+        return _OptionTile(
+          label: widget.optionLabel(option),
+          selected: option == widget.value,
+          onTap: () => _select(option),
+        );
+      },
+    );
+  }
+}
+
+class _Spinner extends StatelessWidget {
+  const _Spinner();
+
+  @override
+  Widget build(BuildContext context) {
+    return const SizedBox(
+      width: 20,
+      height: 20,
+      child: CircularProgressIndicator(
+        strokeWidth: 2,
+        color: AppColors.primary,
+      ),
+    );
+  }
+}
+
+class _StatusRow extends StatelessWidget {
+  const _StatusRow({required this.child});
+
+  final Widget child;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 16),
+      alignment: Alignment.center,
+      child: child,
     );
   }
 }
