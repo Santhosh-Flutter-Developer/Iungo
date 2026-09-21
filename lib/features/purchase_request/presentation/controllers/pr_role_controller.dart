@@ -1,17 +1,32 @@
 import 'package:get/get.dart';
+import 'package:iungo/core/services/session_service.dart';
 import 'package:iungo/features/purchase_request/domain/entities/pr_view_role.dart';
 
-/// Holds which PR Dashboard UI (Requestor/Approver) is currently being
-/// previewed. See [PrViewRole] for why this exists and why it's
-/// dev-only: it will be replaced by a real value resolved from the
-/// logged-in user's session once the API is wired up. Registered once,
-/// permanently, in `PrDashboardBinding.ensureRepositoryRegistered` so
-/// the dashboard, detail, and create screens all read the same value.
+/// Which UI the logged-in user gets on the PR, GRN and Invoice
+/// dashboards (and their detail screens): Requestor or Approver.
+///
+/// The role is not chosen in the UI — it comes from the login
+/// response's `add_purchase_request` flag, kept in [SessionService]:
+///
+///   * `1` -> [PrViewRole.requestor] (sees "Add", no approve/reject)
+///   * `0` -> [PrViewRole.approver]  (sees approve/reject, no "Add")
+///
+/// If the flag is unknown (a session saved before it was stored, or the
+/// API omitted it) the user is treated as a requestor, as before. Every
+/// getter reads the session's reactive value, so an `Obx` using them
+/// rebuilds when the session changes (e.g. signing in as someone else).
+///
+/// Registered once, permanently, in `PrDashboardBinding` and shared by
+/// all three dashboards.
 class PrRoleController extends GetxService {
-  final Rx<PrViewRole> role = PrViewRole.requestor.obs;
+  PrRoleController(this._session);
 
-  bool get isApprover => role.value == PrViewRole.approver;
-  bool get isRequestor => role.value == PrViewRole.requestor;
+  final SessionService _session;
 
-  void setRole(PrViewRole value) => role.value = value;
+  PrViewRole get role => _session.canAddPurchaseRequest.value == false
+      ? PrViewRole.approver
+      : PrViewRole.requestor;
+
+  bool get isApprover => role == PrViewRole.approver;
+  bool get isRequestor => role == PrViewRole.requestor;
 }

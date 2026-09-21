@@ -6,9 +6,9 @@ import 'package:iungo/features/purchase_request/presentation/controllers/pr_role
 
 /// Registers the shared [GrnRequestRepository] and the
 /// [GrnDashboardController] backing the GRN Dashboard screen. Mirrors
-/// `PrDashboardBinding`. Reuses [PrRoleController] for the
-/// Requestor/Approver preview switch so a single toggle (see
-/// `PrRoleSwitch`) governs both the PR and GRN dashboards consistently.
+/// `PrDashboardBinding`. Reuses [PrRoleController], so the login-derived
+/// Requestor/Approver role applies to both the PR and GRN dashboards
+/// consistently.
 class GrnDashboardBinding extends Bindings {
   @override
   void dependencies() {

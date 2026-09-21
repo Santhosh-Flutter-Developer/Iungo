@@ -260,6 +260,45 @@ void main() {
       });
     }
 
+    group('add_purchase_request flag', () {
+      Future<bool?> flagFor(Map<String, dynamic> body) async {
+        final ds = _dataSource((_) => _json(body));
+        final creds = await ds.authenticate(username: 'u', password: 'p');
+        return creds.addPurchaseRequest;
+      }
+
+      Map<String, dynamic> withFlag(Object? value) {
+        final body = _success();
+        (body['data'] as Map)['add_purchase_request'] = value;
+        return body;
+      }
+
+      test('1 -> true (Requestor)', () async {
+        expect(await flagFor(withFlag(1)), isTrue);
+      });
+
+      test('0 -> false (Approver)', () async {
+        expect(await flagFor(withFlag(0)), isFalse);
+      });
+
+      test('"1" / "0" strings are understood', () async {
+        expect(await flagFor(withFlag('1')), isTrue);
+        expect(await flagFor(withFlag('0')), isFalse);
+      });
+
+      test('missing or unrecognised value -> null (unknown)', () async {
+        expect(await flagFor(_success()), isNull);
+        expect(await flagFor(withFlag(null)), isNull);
+        expect(await flagFor(withFlag('maybe')), isNull);
+        expect(await flagFor(withFlag(7)), isNull);
+      });
+
+      test('a flag next to `data` (top level) is also accepted', () async {
+        final body = _success()..['add_purchase_request'] = 0;
+        expect(await flagFor(body), isFalse);
+      });
+    });
+
     test('unexpected error -> unknown', () async {
       final ds = _dataSource((_) => throw StateError('boom'));
       await _expectFailure(

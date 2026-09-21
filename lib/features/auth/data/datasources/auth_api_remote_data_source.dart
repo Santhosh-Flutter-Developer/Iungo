@@ -103,6 +103,7 @@ class AuthApiRemoteDataSourceImpl implements AuthApiRemoteDataSource {
         userType: data?.userType,
         loginRecordId: data?.loginRecordId,
         redirectionPage: data?.redirectionPage,
+        addPurchaseRequest: data?.addPurchaseRequest,
       );
     } on DioException catch (e) {
       throw _fromDioException(e);

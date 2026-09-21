@@ -17,6 +17,7 @@ class SessionService extends GetxService {
   static const _keyUserType = 'auth_user_type';
   static const _keyLoginRecordId = 'auth_login_record_id';
   static const _keyRedirectionPage = 'auth_redirection_page';
+  static const _keyAddPurchaseRequest = 'auth_add_purchase_request';
   static const _keyLanguageCode = 'app_language_code';
   static const _keyCountryCode = 'app_country_code';
 
@@ -33,6 +34,12 @@ class SessionService extends GetxService {
   final Rx<String?> userType = Rx<String?>(null);
   final Rx<int?> loginRecordId = Rx<int?>(null);
   final Rx<String?> redirectionPage = Rx<String?>(null);
+
+  /// Login's `add_purchase_request` flag: `true` (1) = Requestor,
+  /// `false` (0) = Approver, `null` = unknown (e.g. a session saved
+  /// before this flag was stored). Drives the PR / GRN / Invoice
+  /// dashboards' role via `PrRoleController`.
+  final Rx<bool?> canAddPurchaseRequest = Rx<bool?>(null);
 
   late final SharedPreferences _prefs;
 
@@ -52,6 +59,7 @@ class SessionService extends GetxService {
     userType.value = _prefs.getString(_keyUserType);
     loginRecordId.value = _prefs.getInt(_keyLoginRecordId);
     redirectionPage.value = _prefs.getString(_keyRedirectionPage);
+    canAddPurchaseRequest.value = _prefs.getBool(_keyAddPurchaseRequest);
 
     return this;
   }
@@ -86,12 +94,14 @@ class SessionService extends GetxService {
     String? userType,
     int? loginRecordId,
     String? redirectionPage,
+    bool? addPurchaseRequest,
   }) async {
     authUserId.value = userId;
     authUsername.value = username;
     this.userType.value = userType;
     this.loginRecordId.value = loginRecordId;
     this.redirectionPage.value = redirectionPage;
+    canAddPurchaseRequest.value = addPurchaseRequest;
 
     await _setOrRemoveString(_keyAuthUserId, userId);
     await _setOrRemoveString(_keyAuthUsername, username);
@@ -101,6 +111,11 @@ class SessionService extends GetxService {
       await _prefs.remove(_keyLoginRecordId);
     } else {
       await _prefs.setInt(_keyLoginRecordId, loginRecordId);
+    }
+    if (addPurchaseRequest == null) {
+      await _prefs.remove(_keyAddPurchaseRequest);
+    } else {
+      await _prefs.setBool(_keyAddPurchaseRequest, addPurchaseRequest);
     }
   }
 
@@ -122,7 +137,9 @@ class SessionService extends GetxService {
     userType.value = null;
     loginRecordId.value = null;
     redirectionPage.value = null;
+    canAddPurchaseRequest.value = null;
 
+    await _prefs.remove(_keyAddPurchaseRequest);
     await _prefs.remove(_keyAuthUserId);
     await _prefs.remove(_keyAuthUsername);
     await _prefs.remove(_keyUserType);

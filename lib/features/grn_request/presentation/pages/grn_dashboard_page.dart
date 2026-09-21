@@ -10,7 +10,6 @@ import 'package:iungo/features/grn_request/presentation/pages/grn_filter_page.da
 import 'package:iungo/features/grn_request/presentation/pages/grn_search_page.dart';
 import 'package:iungo/features/grn_request/presentation/widgets/grn_request_card.dart';
 import 'package:iungo/features/purchase_request/presentation/controllers/pr_role_controller.dart';
-import 'package:iungo/features/purchase_request/presentation/widgets/pr_role_switch.dart';
 import 'package:iungo/features/purchase_request/presentation/widgets/pr_status_tabs.dart';
 import 'package:iungo/features/service_request/presentation/widgets/filter_pill_button.dart';
 import 'package:iungo/features/service_request/presentation/widgets/service_request_empty_state.dart';
@@ -22,9 +21,10 @@ import 'package:iungo/features/service_request/presentation/widgets/service_requ
 /// minus the "Add" FAB — GRN records are only ever created downstream
 /// of an approved Purchase Request, never directly from this screen.
 ///
-/// The role switch in the AppBar is the same shared [PrRoleController]
-/// the PR Dashboard uses, so switching Requestor/Approver there is
-/// reflected here too. Approve/Reject show inline on each card for the
+/// The Requestor/Approver role comes from the same shared
+/// [PrRoleController] the PR Dashboard uses (login's
+/// `add_purchase_request`: 1 = Requestor, 0 = Approver). Approve/Reject
+/// show inline on each card for the
 /// approver role's pending ("Submitted"/"Action required") tab, in
 /// addition to the Detail View's action bar.
 class GrnDashboardPage extends GetView<GrnDashboardController> {
@@ -55,7 +55,6 @@ class GrnDashboardPage extends GetView<GrnDashboardController> {
           ),
         ),
         actions: [
-          const PrRoleSwitch(),
           IconButton(
             icon: const Icon(Icons.notifications_none),
             onPressed: controller.onNotificationsTap,
@@ -140,8 +139,8 @@ class GrnDashboardPage extends GetView<GrnDashboardController> {
                         // approver role's pending tab (index 0) — the
                         // requestor's "Submitted" tab and the
                         // Completed/Rejected tabs never get the
-                        // buttons. Read both reactively so toggling the
-                        // dev-only role switch updates this immediately.
+                        // buttons. Read both reactively so a change in
+                        // the session's role updates this immediately.
                         final showActions = roleController.isApprover &&
                             controller.selectedTab.value == 0;
                         return GrnRequestCard(

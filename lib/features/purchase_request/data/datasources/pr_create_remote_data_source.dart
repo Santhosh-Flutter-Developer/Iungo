@@ -1,5 +1,3 @@
-import 'dart:developer';
-
 import 'package:dio/dio.dart';
 import 'package:iungo/core/constants/app_urls.dart';
 import 'package:iungo/features/purchase_request/data/datasources/pr_create_exceptions.dart';
@@ -49,7 +47,10 @@ class PrCreateRemoteDataSourceImpl implements PrCreateRemoteDataSource {
     try {
       final response = await _dio.request<dynamic>(
         AppUrls.purchaseRequestApi,
-        data: {'action': 'fetch_contract_code', 'user_id': userId},
+        data: {
+          'action': 'fetch_contract_code',
+          'user_id': userId,
+        },
         options: Options(
           method: 'GET',
           contentType: Headers.jsonContentType,
@@ -123,7 +124,6 @@ class PrCreateRemoteDataSourceImpl implements PrCreateRemoteDataSource {
   @override
   Future<String?> savePurchaseRequest(PrSaveRequestModel request) async {
     try {
-      log("requestbuddy: ${request.toJson()}");
       final response = await _dio.post<dynamic>(
         AppUrls.purchaseRequestApi,
         data: request.toJson(),

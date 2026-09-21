@@ -88,6 +88,7 @@ class LoginController extends GetxController {
         userType: result.auth.userType,
         loginRecordId: result.auth.loginRecordId,
         redirectionPage: result.auth.redirectionPage,
+        addPurchaseRequest: result.auth.addPurchaseRequest,
       );
 
       AppSnackbar.showSuccess('logged_in_success'.tr);

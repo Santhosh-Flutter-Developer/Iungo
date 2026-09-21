@@ -6,9 +6,9 @@ import 'package:iungo/features/purchase_request/presentation/bindings/pr_dashboa
 /// Registers the shared [InvoiceRequestRepository] and the
 /// [InvoiceDashboardController] backing the Invoice Dashboard screen.
 /// Mirrors `GrnDashboardBinding`. Reuses `PrRoleController` (via
-/// [PrDashboardBinding.ensureRepositoryRegistered]) for the
-/// Requestor/Approver preview switch so a single toggle governs the
-/// PR, GRN, and Invoice dashboards consistently.
+/// [PrDashboardBinding.ensureRepositoryRegistered]) so the login-derived
+/// Requestor/Approver role applies to the PR, GRN, and Invoice
+/// dashboards consistently.
 class InvoiceDashboardBinding extends Bindings {
   @override
   void dependencies() {

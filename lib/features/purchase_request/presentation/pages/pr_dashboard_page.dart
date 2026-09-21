@@ -11,7 +11,6 @@ import 'package:iungo/features/purchase_request/presentation/pages/pr_create_pag
 import 'package:iungo/features/purchase_request/presentation/pages/pr_detail_page.dart';
 import 'package:iungo/features/purchase_request/presentation/pages/pr_filter_page.dart';
 import 'package:iungo/features/purchase_request/presentation/pages/pr_search_page.dart';
-import 'package:iungo/features/purchase_request/presentation/widgets/pr_role_switch.dart';
 import 'package:iungo/features/purchase_request/presentation/widgets/pr_status_tabs.dart';
 import 'package:iungo/features/purchase_request/presentation/widgets/purchase_request_card.dart';
 import 'package:iungo/features/service_request/presentation/widgets/filter_pill_button.dart';
@@ -22,9 +21,10 @@ import 'package:iungo/features/service_request/presentation/widgets/service_requ
 /// Contract/Created-date filter, and the request list. Mirrors
 /// `InventoryRequestListPage`'s chrome/refresh/filter/search flow.
 ///
-/// The "Add" button (requestor only) and the role switch in the AppBar
-/// are gated by [PrRoleController] — see [PrRoleSwitch] for why that
-/// exists. Approve/Reject also show inline on each card for the
+/// The "Add" button (requestor only) is gated by [PrRoleController],
+/// which derives the role from the login response's
+/// `add_purchase_request` flag (1 = Requestor, 0 = Approver) — there is
+/// no in-app role picker. Approve/Reject also show inline on each card for the
 /// approver role's pending tab (see [PurchaseRequestCard]), in addition
 /// to the Detail View's action bar.
 class PrDashboardPage extends GetView<PrDashboardController> {
@@ -55,7 +55,6 @@ class PrDashboardPage extends GetView<PrDashboardController> {
           ),
         ),
         actions: [
-          const PrRoleSwitch(),
           IconButton(
             icon: const Icon(Icons.notifications_none),
             onPressed: controller.onNotificationsTap,
@@ -155,8 +154,8 @@ class PrDashboardPage extends GetView<PrDashboardController> {
                         // approver role's pending tab (index 0) — the
                         // requestor's "Submitted" tab and the
                         // Completed/Rejected tabs never get the
-                        // buttons. Read both reactively so toggling the
-                        // dev-only role switch updates this immediately.
+                        // buttons. Read both reactively so a change in
+                        // the session's role updates this immediately.
                         final showActions = roleController.isApprover &&
                             controller.selectedTab.value == 0;
                         return PurchaseRequestCard(

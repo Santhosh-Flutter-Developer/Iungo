@@ -5,7 +5,8 @@
 ///     "data": {
 ///       "user_id": "...", "username": "...", "password": "...",
 ///       "email": "...", "user_type": "employee",
-///       "login_record_id": 3784, "redirection_page": "home.php"
+///       "login_record_id": 3784, "redirection_page": "home.php",
+///       "add_purchase_request": 1
 ///     },
 ///     "message": "Login Successfully"
 ///   }
@@ -30,7 +31,11 @@ class AuthApiResponseModel {
       code: _readInt(json['code']),
       message: _readString(json['message']),
       data: rawData is Map
-          ? AuthApiDataModel.fromJson(Map<String, dynamic>.from(rawData))
+          ? AuthApiDataModel.fromJson(
+              Map<String, dynamic>.from(rawData),
+              // Tolerate the flag sitting beside `data` instead of in it.
+              fallbackAddPurchaseRequest: json['add_purchase_request'],
+            )
           : null,
     );
   }
@@ -45,6 +50,7 @@ class AuthApiDataModel {
     this.userType,
     this.loginRecordId,
     this.redirectionPage,
+    this.addPurchaseRequest,
   });
 
   final String? userId;
@@ -55,7 +61,14 @@ class AuthApiDataModel {
   final int? loginRecordId;
   final String? redirectionPage;
 
-  factory AuthApiDataModel.fromJson(Map<String, dynamic> json) {
+  /// `add_purchase_request`: `true` for `1` (Requestor), `false` for `0`
+  /// (Approver), `null` when absent or not a recognisable 1/0.
+  final bool? addPurchaseRequest;
+
+  factory AuthApiDataModel.fromJson(
+    Map<String, dynamic> json, {
+    dynamic fallbackAddPurchaseRequest,
+  }) {
     return AuthApiDataModel(
       userId: _readString(json['user_id']),
       username: _readString(json['username']),
@@ -64,11 +77,27 @@ class AuthApiDataModel {
       userType: _readString(json['user_type']),
       loginRecordId: _readInt(json['login_record_id']),
       redirectionPage: _readString(json['redirection_page']),
+      addPurchaseRequest: _readFlag(
+        json.containsKey('add_purchase_request')
+            ? json['add_purchase_request']
+            : fallbackAddPurchaseRequest,
+      ),
     );
   }
 }
 
 String? _readString(dynamic value) => value?.toString();
+
+/// PHP may send the flag as `1`, `"1"` or `true`; anything that isn't a
+/// clear 1/0 is treated as unknown rather than guessed.
+bool? _readFlag(dynamic value) {
+  if (value is bool) return value;
+  final number =
+      value is num ? value : num.tryParse(value?.toString().trim() ?? '');
+  if (number == 1) return true;
+  if (number == 0) return false;
+  return null;
+}
 
 int? _readInt(dynamic value) {
   if (value is int) return value;

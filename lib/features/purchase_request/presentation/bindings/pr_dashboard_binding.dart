@@ -1,9 +1,10 @@
 import 'package:get/get.dart';
+import 'package:iungo/core/services/session_service.dart';
 import 'package:iungo/features/purchase_request/data/purchase_request_repository.dart';
 import 'package:iungo/features/purchase_request/presentation/controllers/pr_dashboard_controller.dart';
 import 'package:iungo/features/purchase_request/presentation/controllers/pr_role_controller.dart';
 
-/// Registers the shared [PurchaseRequestRepository], the dev-only
+/// Registers the shared [PurchaseRequestRepository], the session-driven
 /// [PrRoleController], and the [PrDashboardController] backing the PR
 /// Dashboard screen. Mirrors `InventoryRequestListBinding`.
 class PrDashboardBinding extends Bindings {
@@ -26,7 +27,10 @@ class PrDashboardBinding extends Bindings {
       Get.put(PurchaseRequestRepository(), permanent: true);
     }
     if (!Get.isRegistered<PrRoleController>()) {
-      Get.put(PrRoleController(), permanent: true);
+      Get.put(
+        PrRoleController(Get.find<SessionService>()),
+        permanent: true,
+      );
     }
   }
 }
