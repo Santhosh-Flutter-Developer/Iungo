@@ -42,6 +42,7 @@ class PurchaseRequest {
     this.invoices = const [],
     this.pipeline = const [],
     this.pdfPath,
+    this.fileUpload,
   });
 
   /// `id` — sent as `approve_reject_pr_id` when approving/rejecting.
@@ -118,6 +119,11 @@ class PurchaseRequest {
   /// (e.g. `.../reports/rpt_purchase_report_a4.php?view_pr_id=20&type=purchase_return`).
   /// Null when the API sent none.
   final String? pdfPath;
+
+  /// `file_upload` — whether this record's own upload affordance
+  /// (currently: a GRN's "Add Delivery Note") should be shown at all.
+  /// Null when the API didn't send it, which is treated as false.
+  final bool? fileUpload;
 
   /// Σ of the item totals. The API sends no separate "total lines"
   /// value, so it is read from the items (falling back to backing the

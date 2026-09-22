@@ -103,6 +103,7 @@ class PrApiMapper {
       invoices: _attachments(json['invoices']),
       pipeline: _pipeline(json['pipeline']),
       pdfPath: _pdfUrl(json['pdf_path']),
+      fileUpload: _flag(json['file_upload']),
     );
   }
 

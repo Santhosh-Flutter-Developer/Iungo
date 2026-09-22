@@ -42,7 +42,7 @@ class GrnDeliveryNotesTab extends StatelessWidget {
         Obx(() {
           final canEdit = roleController.isApprover &&
               controller.canDecide &&
-              request.isActionable;
+              request.isActionable && request.fileUpload == true;
           final names = controller.deliveryNotes.toList();
 
           if (names.isEmpty && !canEdit) {
