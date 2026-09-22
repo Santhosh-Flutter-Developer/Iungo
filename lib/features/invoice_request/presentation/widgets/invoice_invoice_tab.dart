@@ -1,13 +1,22 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:iungo/core/constants/app_colors.dart';
+import 'package:iungo/core/widgets/attachment_upload_card.dart';
 import 'package:iungo/features/invoice_request/domain/entities/invoice_request.dart';
+import 'package:iungo/features/invoice_request/presentation/controllers/invoice_detail_controller.dart';
 import 'package:iungo/features/invoice_request/presentation/widgets/invoice_financial_breakdown_card.dart';
+import 'package:iungo/features/purchase_request/presentation/controllers/pr_role_controller.dart';
 
 /// The Invoice Detail View's own "Invoice" tab — the invoice
 /// attachment(s) filed at this stage, followed by the same Financial
 /// Breakdown card shown on every other tab. Matches the reference
 /// screenshot exactly (a single "222.pdf" under an "Invoice" heading).
+///
+/// The approver can also add an invoice attachment from here — but
+/// only while this request is theirs to decide on (Approver role,
+/// still pending): the upload card ([AttachmentUploadCard]) is hidden
+/// for the requestor and for a request that's already been
+/// approved/rejected.
 class InvoiceInvoiceTab extends StatelessWidget {
   const InvoiceInvoiceTab({super.key, required this.request});
 
@@ -15,6 +24,9 @@ class InvoiceInvoiceTab extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final controller = Get.find<InvoiceDetailController>();
+    final roleController = Get.find<PrRoleController>();
+
     return ListView(
       padding: const EdgeInsets.fromLTRB(20, 20, 20, 40),
       children: [
@@ -34,6 +46,18 @@ class InvoiceInvoiceTab extends StatelessWidget {
               padding: const EdgeInsets.only(bottom: 10),
               child: _AttachmentTile(fileName: fileName),
             ),
+        Obx(() {
+          if (!roleController.isApprover || !request.isPendingApproval) {
+            return const SizedBox.shrink();
+          }
+          return Padding(
+            padding: const EdgeInsets.only(top: 10),
+            child: AttachmentUploadCard(
+              isUploading: controller.isUploadingAttachment.value,
+              onBrowse: controller.addInvoiceAttachment,
+            ),
+          );
+        }),
         const SizedBox(height: 16),
         InvoiceFinancialBreakdownCard(request: request),
       ],

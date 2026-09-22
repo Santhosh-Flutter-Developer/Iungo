@@ -43,9 +43,9 @@ class PrPipelineStage {
   /// untouched so nothing is lost if the backend adds more.
   final Map<String, dynamic> extras;
 
-  /// [state] as the three-way UI state. Falls back to [label] when the
-  /// state code isn't one of `O` / `C` / `R`; anything still unknown is
-  /// treated as waiting.
+  /// [state] as the four-way UI state. Falls back to [label] when the
+  /// state code isn't one of `O` / `NS` / `C` / `R`; anything still
+  /// unknown is treated as waiting.
   ApprovalStepState get stepState {
     switch (state.trim().toUpperCase()) {
       case 'C':
@@ -54,18 +54,21 @@ class PrPipelineStage {
         return ApprovalStepState.rejected;
       case 'O':
         return ApprovalStepState.waiting;
+      case 'NS':
+        return ApprovalStepState.nextApprover;
     }
     final l = label.trim().toLowerCase();
     if (l.startsWith('approv') || l.startsWith('complet')) {
       return ApprovalStepState.approved;
     }
     if (l.startsWith('reject')) return ApprovalStepState.rejected;
+    if (l.startsWith('next')) return ApprovalStepState.nextApprover;
     return ApprovalStepState.waiting;
   }
 
   /// Whether [state] is one of the codes the API documents.
   bool get hasKnownState {
     final s = state.trim().toUpperCase();
-    return s == 'O' || s == 'C' || s == 'R';
+    return s == 'O' || s == 'C' || s == 'R' || s == 'NS';
   }
 }

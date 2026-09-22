@@ -15,8 +15,13 @@ abstract class PrCreateRemoteDataSource {
   /// `POST file_uploads.php` (multipart) — uploads ONE attachment and
   /// returns the stored filename (`data.saved_name`) that goes into the
   /// save payload's `attachments`.
+  /// [field] tells the server which kind of file this is
+  /// (`attachments` for a PR quotation, `delivery_notes` for a GRN
+  /// delivery note) — the upload endpoint is shared across the Iungo
+  /// flows, only this field name changes.
   Future<String> uploadAttachment(
     AttachmentFile file, {
+    String field = 'attachments',
     ProgressCallback? onProgress,
     CancelToken? cancelToken,
   });
@@ -73,6 +78,7 @@ class PrCreateRemoteDataSourceImpl implements PrCreateRemoteDataSource {
   @override
   Future<String> uploadAttachment(
     AttachmentFile file, {
+    String field = 'attachments',
     ProgressCallback? onProgress,
     CancelToken? cancelToken,
   }) async {
@@ -92,7 +98,7 @@ class PrCreateRemoteDataSourceImpl implements PrCreateRemoteDataSource {
       final size = file.sizeBytes ?? file.bytes?.length ?? 0;
       final formData = FormData.fromMap({
         'file': multipart,
-        'field': 'attachments',
+        'field': field,
         'original_name': file.name,
         'file_size': size.toString(),
       });

@@ -100,6 +100,7 @@ class InvoiceRequest {
     String? nextApprovalName,
     bool clearNextApprovalName = false,
     int? currentStage,
+    List<String>? invoiceFileNames,
   }) {
     return InvoiceRequest(
       id: id,
@@ -123,7 +124,7 @@ class InvoiceRequest {
       items: items,
       quotationFileNames: quotationFileNames,
       deliveryNoteFileNames: deliveryNoteFileNames,
-      invoiceFileNames: invoiceFileNames,
+      invoiceFileNames: invoiceFileNames ?? this.invoiceFileNames,
     );
   }
 }

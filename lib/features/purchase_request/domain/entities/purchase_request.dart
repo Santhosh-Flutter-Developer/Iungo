@@ -159,8 +159,12 @@ class PurchaseRequest {
   /// resolved steps and one waiting.
   int get currentStage {
     if (_pipelineSteps == 0) return 0;
+    // Neither a waiting nor a not-yet-reached (Next Approver) step has
+    // happened yet, so only approved/rejected steps count as resolved.
     final resolved = pipeline
-        .where((s) => s.stepState != ApprovalStepState.waiting)
+        .where((s) =>
+            s.stepState == ApprovalStepState.approved ||
+            s.stepState == ApprovalStepState.rejected)
         .length;
     if (resolved < 1) return 1;
     return resolved > _pipelineSteps ? _pipelineSteps : resolved;

@@ -5,7 +5,6 @@ import 'package:open_filex/open_filex.dart';
 import 'package:path_provider/path_provider.dart';
 
 import 'package:iungo/core/utils/app_date_format.dart';
-import 'package:iungo/features/grn_request/domain/entities/grn_approval_pipeline_builder.dart';
 import 'package:iungo/features/grn_request/domain/entities/grn_request.dart';
 import 'package:iungo/features/purchase_request/domain/entities/purchase_request_status.dart';
 
@@ -55,15 +54,14 @@ class GrnExcelExporter {
     for (var row = 0; row < requests.length; row++) {
       final request = requests[row];
       final rowIndex = row + 1;
-      final pipeline = GrnApprovalPipelineBuilder.build(request);
       final values = <CellValue>[
-        TextCellValue(request.number),
-        TextCellValue(AppDateFormat.mediumDate(request.requestDate)),
+        TextCellValue(request.prNumber),
+        TextCellValue(request.requestDateLabel),
         TextCellValue(request.contract),
         DoubleCellValue(request.totalAmount),
         TextCellValue(request.status.excelLabel),
         TextCellValue(request.nextApprovalName ?? '--'),
-        TextCellValue('${pipeline.currentStage}/${pipeline.totalStages}'),
+        TextCellValue(request.stageLabel),
       ];
       for (var col = 0; col < values.length; col++) {
         sheet

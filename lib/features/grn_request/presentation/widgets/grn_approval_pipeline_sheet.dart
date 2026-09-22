@@ -1,17 +1,19 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:iungo/core/constants/app_colors.dart';
-import 'package:iungo/core/utils/app_date_format.dart';
-import 'package:iungo/features/grn_request/domain/entities/grn_approval_pipeline_builder.dart';
 import 'package:iungo/features/grn_request/domain/entities/grn_request.dart';
 import 'package:iungo/features/purchase_request/domain/entities/approval_pipeline.dart';
+import 'package:iungo/features/purchase_request/domain/entities/pr_attachment.dart';
+import 'package:iungo/features/purchase_request/presentation/widgets/pr_attachment_tile.dart';
 
 /// The "Approval Pipeline" sheet opened by tapping a request's Stage
 /// row on the GRN Dashboard list — a Request Overview box followed by
 /// each pipeline section (Purchase Request / GRN / Invoice) as a
 /// vertical status timeline, with that section's attachments (if any)
-/// underneath. Mirrors `PrApprovalPipelineSheet` exactly, adapted to
-/// read from a [GrnRequest] instead of a `PurchaseRequest`.
+/// underneath. Mirrors `PrApprovalPipelineSheet` — [GrnRequest] IS a
+/// `PurchaseRequest`-shaped record, so this reuses
+/// [ApprovalPipeline.forRequest] directly, the same pipeline data the
+/// PR Dashboard's own sheet builds from.
 class GrnApprovalPipelineSheet extends StatelessWidget {
   const GrnApprovalPipelineSheet({super.key, required this.request});
 
@@ -28,7 +30,7 @@ class GrnApprovalPipelineSheet extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final pipeline = GrnApprovalPipelineBuilder.build(request);
+    final pipeline = ApprovalPipeline.forRequest(request);
 
     return DraggableScrollableSheet(
       initialChildSize: 0.85,
@@ -148,10 +150,10 @@ class _RequestOverviewCard extends StatelessWidget {
             ),
           ),
           const SizedBox(height: 14),
-          _OverviewRow(label: 'pr_number'.tr, value: request.number),
+          _OverviewRow(label: 'pr_number'.tr, value: request.prNumber),
           _OverviewRow(
             label: 'pr_request_date'.tr,
-            value: AppDateFormat.mediumDate(request.requestDate),
+            value: request.requestDateLabel,
           ),
           _OverviewRow(label: 'pr_contract'.tr, value: request.contract),
           _OverviewRow(
@@ -214,7 +216,9 @@ class _PipelineSectionView extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            section.title,
+            section.title.trim().isEmpty
+                ? 'pr_purchase_request'.tr
+                : section.title,
             style: const TextStyle(
               fontSize: 15,
               fontWeight: FontWeight.w700,
@@ -254,10 +258,20 @@ class _PipelineSectionView extends StatelessWidget {
                     ],
                   ),
                   const SizedBox(height: 10),
-                  for (final fileName in section.attachmentFileNames)
+                  for (var i = 0;
+                      i < section.attachmentFileNames.length;
+                      i++)
                     Padding(
                       padding: const EdgeInsets.only(bottom: 8),
-                      child: _AttachmentTile(fileName: fileName),
+                      child: i < section.attachmentUrls.length
+                          ? PrAttachmentTile(
+                              attachment: PrAttachment.fromUrl(
+                                section.attachmentUrls[i],
+                              ),
+                            )
+                          : _AttachmentTile(
+                              fileName: section.attachmentFileNames[i],
+                            ),
                     ),
                 ],
               ),
@@ -297,6 +311,11 @@ class _StepRow extends StatelessWidget {
         icon = Icons.hourglass_empty;
         title = 'pr_waiting_dash'.tr;
         subtitle = 'pr_waiting_in_progress'.tr;
+      case ApprovalStepState.nextApprover:
+        color = const Color(0xFF9AA0A6);
+        icon = Icons.schedule;
+        title = 'pr_next_approver_dash'.tr;
+        subtitle = 'pr_next_approver_by'.trParams({'name': step.approverName});
     }
 
     return Padding(

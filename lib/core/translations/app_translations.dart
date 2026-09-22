@@ -104,6 +104,16 @@ class AppTranslations extends Translations {
       'location_fetch_failed': 'Could not fetch your current location',
       'attachment_camera_failed': 'Could not open the camera',
       'attachment_pick_failed': 'Could not open the file picker',
+      'attachment_upload_hint': 'Add a file from your device',
+      'attachment_browse_files': 'Browse Files',
+      'attachment_uploading': 'Uploading...',
+      'ok': 'OK',
+      'grn_load_failed': 'Unable to load GRN requests. Please try again.',
+      'grn_approve_failed': 'Could not approve the GRN request.',
+      'grn_reject_failed': 'Could not reject the GRN request.',
+      'grn_delivery_note_required_title': 'Delivery Note Required',
+      'grn_delivery_note_required_message':
+          'Please attach at least one delivery note before approving this GRN.',
 
       // My Service Requests list
       'filter': 'Filter',
@@ -428,6 +438,8 @@ class AppTranslations extends Translations {
       'pr_approved_dash': 'Approved',
       'pr_rejected_dash': 'Rejected',
       'pr_waiting_dash': 'Waiting',
+      'pr_next_approver_dash': 'Next Approver',
+      'pr_next_approver_by': 'Next — @name',
       'pr_approved_by': 'Approved — @name',
       'pr_rejected_by': 'Rejected — @name',
       'pr_waiting_in_progress': 'In progress — awaiting review & verification',
@@ -546,6 +558,16 @@ class AppTranslations extends Translations {
       'location_fetch_failed': 'تعذر جلب موقعك الحالي',
       'attachment_camera_failed': 'تعذر فتح الكاميرا',
       'attachment_pick_failed': 'تعذر فتح منتقي الملفات',
+      'attachment_upload_hint': 'أضف ملفًا من جهازك',
+      'attachment_browse_files': 'تصفح الملفات',
+      'attachment_uploading': 'جارٍ الرفع...',
+      'ok': 'موافق',
+      'grn_load_failed': 'تعذر تحميل طلبات الاستلام. يرجى المحاولة مرة أخرى.',
+      'grn_approve_failed': 'تعذرت الموافقة على طلب الاستلام.',
+      'grn_reject_failed': 'تعذر رفض طلب الاستلام.',
+      'grn_delivery_note_required_title': 'مطلوب مذكرة تسليم',
+      'grn_delivery_note_required_message':
+          'يرجى إرفاق مذكرة تسليم واحدة على الأقل قبل الموافقة على هذا الاستلام.',
 
       // My Service Requests list
       'filter': 'تصفية',
@@ -868,6 +890,8 @@ class AppTranslations extends Translations {
       'pr_approved_dash': 'تمت الموافقة',
       'pr_rejected_dash': 'مرفوض',
       'pr_waiting_dash': 'قيد الانتظار',
+      'pr_next_approver_dash': 'المعتمِد التالي',
+      'pr_next_approver_by': 'التالي — @name',
       'pr_approved_by': 'تمت الموافقة — @name',
       'pr_rejected_by': 'مرفوض — @name',
       'pr_waiting_in_progress': 'قيد التنفيذ — بانتظار المراجعة والتحقق',

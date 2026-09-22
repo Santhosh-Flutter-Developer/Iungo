@@ -20,8 +20,12 @@ class AppUrls {
   /// on this one endpoint.
   static const String purchaseRequestApi = '$iungoApiBase/purchase_request.php';
 
-  /// Multipart attachment upload used before saving a PR.
+  /// Multipart attachment upload used before saving a PR (and, with a
+  /// different `field`, before approving a GRN's delivery note).
   static const String fileUploadApi = '$iungoApiBase/file_uploads.php';
+
+  /// GRN list and approve/reject.
+  static const String grnRequestApi = '$iungoApiBase/grn_request.php';
 
   /// Facilio inventory list — source of the Inventory "Material Code"
   /// dropdown on the Create PR form (Bearer-authenticated).

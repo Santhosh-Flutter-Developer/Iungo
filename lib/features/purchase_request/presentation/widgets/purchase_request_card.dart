@@ -327,6 +327,8 @@ class _StageDots extends StatelessWidget {
         return const Color(0xFFB3261E);
       case ApprovalStepState.waiting:
         return const Color(0xFFC77A1E);
+      case ApprovalStepState.nextApprover:
+        return const Color(0xFF9AA0A6);
     }
   }
 

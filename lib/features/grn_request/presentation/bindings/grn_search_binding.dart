@@ -1,6 +1,8 @@
 import 'package:get/get.dart';
+import 'package:iungo/core/services/session_service.dart';
 import 'package:iungo/features/grn_request/data/grn_request_repository.dart';
 import 'package:iungo/features/grn_request/presentation/bindings/grn_dashboard_binding.dart';
+import 'package:iungo/features/grn_request/presentation/controllers/grn_dashboard_controller.dart';
 import 'package:iungo/features/grn_request/presentation/controllers/grn_search_controller.dart';
 
 /// Registers the [GrnSearchController] backing the GRN Dashboard search
@@ -9,6 +11,12 @@ class GrnSearchBinding extends Bindings {
   @override
   void dependencies() {
     GrnDashboardBinding.ensureRepositoryRegistered();
-    Get.put(GrnSearchController(Get.find<GrnRequestRepository>()));
+    Get.put(
+      GrnSearchController(
+        Get.find<GrnRequestRepository>(),
+        Get.find<SessionService>(),
+        Get.find<GrnDashboardController>(),
+      ),
+    );
   }
 }

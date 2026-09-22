@@ -38,7 +38,7 @@ class GrnDetailPage extends GetView<GrnDetailController> {
           ),
           title: Obx(
             () => Text(
-              controller.grn.number,
+              controller.grn.prNumber,
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
               style: const TextStyle(

@@ -1,57 +1,69 @@
-import 'package:iungo/features/grn_request/data/grn_request_seed_data.dart';
-import 'package:iungo/features/grn_request/domain/entities/grn_request.dart';
-import 'package:iungo/features/purchase_request/domain/entities/purchase_request_status.dart';
+import 'package:iungo/features/grn_request/data/datasources/grn_remote_data_source.dart';
+import 'package:iungo/features/grn_request/data/models/grn_decision_request.dart';
+import 'package:iungo/features/purchase_request/data/datasources/pr_create_remote_data_source.dart';
+import 'package:iungo/features/purchase_request/data/models/pr_list_query.dart';
+import 'package:iungo/features/purchase_request/domain/entities/contract_option.dart';
+import 'package:iungo/features/purchase_request/domain/entities/pr_list_page.dart';
+import 'package:iungo/features/service_request/domain/entities/attachment_file.dart';
 
-/// Local, in-memory stand-in for the future GRN API.
-///
-/// UI-only for now: every method already has the async shape (`Future`,
-/// simulated network delay) the real implementation will need, so
-/// swapping the body for a live Dio call later shouldn't require
-/// touching any controller/page that depends on this class. Registered
-/// as a single permanent instance (see `GrnDashboardBinding`) so the
-/// list, detail, search, and filter screens all read/write the same
-/// in-memory data set. Mirrors `PurchaseRequestRepository` shape for
-/// shape.
+/// Everything the GRN Dashboard / Detail / Search screens need from the
+/// GRN API — the paginated list, the contract picklist (reusing the
+/// same `fetch_contract_code` call the PR feature already makes),
+/// delivery-note upload, and the approve/reject actions. Registered as
+/// a single permanent instance (see `GrnDashboardBinding`). Mirrors
+/// `PurchaseRequestRepository` shape for shape.
 class GrnRequestRepository {
-  GrnRequestRepository() : _requests = buildGrnRequestSeed();
+  GrnRequestRepository(this._remote, this._createRemote);
 
-  final List<GrnRequest> _requests;
+  final GrnRemoteDataSource _remote;
 
-  /// Contract picklist — mirrors the PR Dashboard's "Select Contract"
-  /// filter.
-  static const List<String> contracts = [
-    'Diriyah - DIR',
-    'Riyadh - RYD',
-    'Jeddah - JED',
-    'Dammam - DMM',
-  ];
+  /// Reused for `fetch_contract_code` (same contracts as the PR
+  /// Dashboard) and the generic multipart uploader.
+  final PrCreateRemoteDataSource _createRemote;
 
-  Future<List<GrnRequest>> fetchAll() async {
-    await Future.delayed(const Duration(milliseconds: 500));
-    return List.unmodifiable(_requests);
+  Future<PrListPage> fetchGrnRequests(PrListQuery query) =>
+      _remote.fetchGrnRequests(query);
+
+  Future<List<ContractOption>> fetchContracts({required String userId}) =>
+      _createRemote.fetchContracts(userId: userId);
+
+  /// Uploads one delivery-note file and returns its stored filename —
+  /// the same multipart endpoint the PR "Add Purchase Request" flow
+  /// uses for quotation attachments, with `field: 'delivery_notes'` so
+  /// the server files it under the GRN stage.
+  Future<String> uploadDeliveryNote(AttachmentFile file) {
+    return _createRemote.uploadAttachment(file, field: 'delivery_notes');
   }
 
-  /// Approves/rejects [id]'s current pending GRN stage. `remarks` is
-  /// required by the reject flow (enforced by the Reject dialog before
-  /// this is ever called); approve doesn't collect one.
-  Future<GrnRequest> submitDecision({
-    required int id,
-    required bool approve,
-    String? remarks,
-  }) async {
-    await Future.delayed(const Duration(milliseconds: 600));
-    final index = _requests.indexWhere((r) => r.id == id);
-    if (index == -1) {
-      throw StateError('GRN Request $id not found');
-    }
-    final updated = _requests[index].copyWith(
-      status: approve
-          ? PurchaseRequestStatus.approved
-          : PurchaseRequestStatus.rejected,
-      clearNextApprovalName: true,
-      currentStage: approve ? _requests[index].totalStages : null,
+  /// Approves [grnId] with the delivery note filenames attached so far
+  /// (at least one — enforced by [GrnDecisionValidator] before this is
+  /// ever called).
+  Future<String?> approveGrnRequest({
+    required int grnId,
+    required String userId,
+    required List<String> deliveryNoteFileNames,
+  }) {
+    return _remote.submitDecision(
+      GrnDecisionRequest.approve(
+        grnId: grnId,
+        userId: userId,
+        deliveryNoteFileNames: deliveryNoteFileNames,
+      ),
     );
-    _requests[index] = updated;
-    return updated;
+  }
+
+  /// Rejects [grnId] with mandatory [remarks].
+  Future<String?> rejectGrnRequest({
+    required int grnId,
+    required String userId,
+    required String remarks,
+  }) {
+    return _remote.submitDecision(
+      GrnDecisionRequest.reject(
+        grnId: grnId,
+        userId: userId,
+        remarks: remarks,
+      ),
+    );
   }
 }

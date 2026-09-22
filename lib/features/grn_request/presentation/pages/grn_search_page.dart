@@ -46,8 +46,13 @@ class GrnSearchPage extends GetView<GrnSearchController> {
               request: controller.results[index],
               onTap: () => Get.to(
                 () => const GrnDetailPage(),
-                binding: GrnDetailBinding(controller.results[index]),
-              ),
+                binding: GrnDetailBinding(
+                  controller.results[index],
+                  canDecide: controller.canDecide,
+                ),
+              )?.then((result) {
+                if (result == true) controller.refreshResults();
+              }),
             ),
           );
         }),

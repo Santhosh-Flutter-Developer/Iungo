@@ -1,33 +1,10 @@
-/// Everything selected on the GRN Dashboard's Filter screen. Immutable —
-/// the controller swaps in a new instance whenever a value changes.
-/// Mirrors `PurchaseRequestFilter`'s shape exactly.
-class GrnRequestFilter {
-  const GrnRequestFilter({
-    this.contract,
-    this.createdDateStart,
-    this.createdDateEnd,
-  });
+import 'package:iungo/features/purchase_request/domain/entities/purchase_request_filter.dart';
 
-  final String? contract;
-  final DateTime? createdDateStart;
-  final DateTime? createdDateEnd;
+export 'package:iungo/features/purchase_request/domain/entities/purchase_request_filter.dart'
+    show PurchaseRequestFilter;
 
-  bool get isEmpty =>
-      contract == null && createdDateStart == null && createdDateEnd == null;
-
-  GrnRequestFilter copyWith({
-    String? contract,
-    bool clearContract = false,
-    DateTime? createdDateStart,
-    DateTime? createdDateEnd,
-    bool clearCreatedDate = false,
-  }) {
-    return GrnRequestFilter(
-      contract: clearContract ? null : (contract ?? this.contract),
-      createdDateStart:
-          clearCreatedDate ? null : (createdDateStart ?? this.createdDateStart),
-      createdDateEnd:
-          clearCreatedDate ? null : (createdDateEnd ?? this.createdDateEnd),
-    );
-  }
-}
+/// The GRN Filter screen's Contract/Created-date criteria are sent the
+/// same way the PR Dashboard's are (`search_data.contract_search` /
+/// `search_data.pr_date`), so this reuses [PurchaseRequestFilter]
+/// directly instead of a byte-for-byte GRN copy.
+typedef GrnRequestFilter = PurchaseRequestFilter;

@@ -1,18 +1,18 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:iungo/core/constants/app_colors.dart';
-import 'package:iungo/core/utils/app_date_format.dart';
-import 'package:iungo/features/grn_request/domain/entities/grn_approval_pipeline_builder.dart';
 import 'package:iungo/features/grn_request/domain/entities/grn_request.dart';
 import 'package:iungo/features/grn_request/presentation/widgets/grn_approval_pipeline_sheet.dart';
 import 'package:iungo/features/purchase_request/domain/entities/approval_pipeline.dart';
+import 'package:iungo/features/purchase_request/presentation/widgets/pr_attachment_tile.dart';
 import 'package:iungo/features/purchase_request/presentation/widgets/purchase_request_status_badge.dart';
 
 /// One card in the GRN Dashboard list. Tapping it opens the Detail
 /// View. Mirrors `PurchaseRequestCard`'s composition exactly (id/status
 /// row, pill chips, light info-grid box, Stage dots opening the
-/// pipeline sheet) with the GRN feature's own [GrnRequest]/
-/// [GrnApprovalPipelineBuilder].
+/// pipeline sheet, print icon opening `pdf_path`) — [GrnRequest] is the
+/// same [PurchaseRequest]-shaped record the PR Dashboard uses, so this
+/// reuses [ApprovalPipeline.forRequest] directly.
 class GrnRequestCard extends StatelessWidget {
   const GrnRequestCard({
     super.key,
@@ -40,23 +40,17 @@ class GrnRequestCard extends StatelessWidget {
   /// icon in the reference web dashboard's Action column.
   final VoidCallback? onPrint;
 
-  void _handlePrint() {
+  void _handlePrint(BuildContext context) {
     if (onPrint != null) {
       onPrint!();
       return;
     }
-    Get.snackbar(
-      'pr_print'.tr,
-      'pr_print_coming_soon'.tr,
-      snackPosition: SnackPosition.BOTTOM,
-      backgroundColor: AppColors.primary,
-      colorText: AppColors.white,
-    );
+    openPrPdf(context, request);
   }
 
   @override
   Widget build(BuildContext context) {
-    final pipelineSteps = GrnApprovalPipelineBuilder.build(request)
+    final pipelineSteps = ApprovalPipeline.forRequest(request)
         .sections
         .expand((section) => section.steps)
         .map((step) => step.state)
@@ -80,7 +74,7 @@ class GrnRequestCard extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  request.number,
+                  request.prNumber,
                   style: const TextStyle(
                     fontSize: 16,
                     fontWeight: FontWeight.w700,
@@ -93,7 +87,7 @@ class GrnRequestCard extends StatelessWidget {
                 _CardIconButton(
                   icon: Icons.print_outlined,
                   tooltip: 'pr_print'.tr,
-                  onTap: _handlePrint,
+                  onTap: () => _handlePrint(context),
                 ),
               ],
             ),
@@ -105,8 +99,7 @@ class GrnRequestCard extends StatelessWidget {
             const SizedBox(height: 10),
             _PillChip(
               icon: Icons.calendar_today_outlined,
-              label: '${'created'.tr}: '
-                  '${AppDateFormat.mediumDate(request.requestDate)}',
+              label: '${'created'.tr}: ${request.requestDateLabel}',
             ),
             const SizedBox(height: 14),
             Container(
@@ -330,6 +323,8 @@ class _StageDots extends StatelessWidget {
         return const Color(0xFFB3261E);
       case ApprovalStepState.waiting:
         return const Color(0xFFC77A1E);
+      case ApprovalStepState.nextApprover:
+        return const Color(0xFF9AA0A6);
     }
   }
 

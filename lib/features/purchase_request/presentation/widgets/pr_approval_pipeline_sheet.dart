@@ -325,6 +325,11 @@ class _StepRow extends StatelessWidget {
         icon = Icons.hourglass_empty;
         title = 'pr_waiting_dash'.tr;
         subtitle = 'pr_waiting_in_progress'.tr;
+      case ApprovalStepState.nextApprover:
+        color = const Color(0xFF9AA0A6);
+        icon = Icons.schedule;
+        title = 'pr_next_approver_dash'.tr;
+        subtitle = 'pr_next_approver_by'.trParams({'name': step.approverName});
     }
     final decidedAt = step.state == ApprovalStepState.waiting
         ? null

@@ -3,9 +3,14 @@ import 'package:iungo/features/purchase_request/domain/entities/pr_pipeline_stag
 import 'package:iungo/features/purchase_request/domain/entities/purchase_request.dart';
 
 /// State of one step inside an [ApprovalPipelineSection] — drives the
-/// green check / orange dot / red cross shown against each step in the
-/// "Approval Pipeline" sheet.
-enum ApprovalStepState { approved, waiting, rejected }
+/// green check / orange hourglass / grey clock / red cross shown
+/// against each step in the "Approval Pipeline" sheet.
+///
+/// [nextApprover] is the API's `NS` state: this approver is queued
+/// after the current one but the request hasn't reached them yet —
+/// distinct from [waiting], which is the step currently awaiting
+/// action.
+enum ApprovalStepState { approved, waiting, nextApprover, rejected }
 
 /// One approver's decision (or pending decision) inside a pipeline
 /// section, e.g. "Approved — Gladson Aby" or "Waiting — Approver — mari".

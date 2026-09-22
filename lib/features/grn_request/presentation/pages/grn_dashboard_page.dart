@@ -17,18 +17,22 @@ import 'package:iungo/features/service_request/presentation/widgets/service_requ
 
 /// GRN Dashboard — the three status tiles (doubling as tabs), the
 /// Contract/Created-date filter, and the request list. Mirrors
-/// `PrDashboardPage`'s chrome/refresh/filter/search flow exactly,
-/// minus the "Add" FAB — GRN records are only ever created downstream
-/// of an approved Purchase Request, never directly from this screen.
+/// `PrDashboardPage`'s chrome/lazy-loading/refresh/filter/search flow
+/// exactly, minus the "Add" FAB — GRN records are only ever created
+/// downstream of an approved Purchase Request, never directly from
+/// this screen.
 ///
 /// The Requestor/Approver role comes from the same shared
 /// [PrRoleController] the PR Dashboard uses (login's
 /// `add_purchase_request`: 1 = Requestor, 0 = Approver). Approve/Reject
-/// show inline on each card for the
-/// approver role's pending ("Submitted"/"Action required") tab, in
-/// addition to the Detail View's action bar.
+/// show inline on each card for the approver role's Action Required
+/// tab, in addition to the Detail View's action bar.
 class GrnDashboardPage extends GetView<GrnDashboardController> {
   const GrnDashboardPage({super.key});
+
+  /// How close to the bottom (in pixels) the user has to scroll before
+  /// the next page is requested.
+  static const double _loadMoreThreshold = 240;
 
   @override
   Widget build(BuildContext context) {
@@ -80,9 +84,9 @@ class GrnDashboardPage extends GetView<GrnDashboardController> {
                   pendingLabel: roleController.isRequestor
                       ? 'pr_status_submitted'.tr
                       : 'pr_status_action_required'.tr,
-                  pendingCount: controller.pendingCount,
-                  completedCount: controller.completedCount,
-                  rejectedCount: controller.rejectedCount,
+                  pendingCount: controller.pendingCount.value,
+                  completedCount: controller.completedCount.value,
+                  rejectedCount: controller.rejectedCount.value,
                   selectedIndex: controller.selectedTab.value,
                   onSelect: controller.selectTab,
                 ),
@@ -117,47 +121,97 @@ class GrnDashboardPage extends GetView<GrnDashboardController> {
                 }
 
                 if (controller.hasError.value) {
-                  return _GrnErrorState(onRetry: controller.reload);
+                  return _GrnErrorState(
+                    message: controller.errorMessage.value,
+                    onRetry: controller.reload,
+                  );
                 }
 
-                final requests = controller.visibleRequests;
+                final requests = controller.records.toList();
 
                 if (requests.isEmpty) {
-                  return const ServiceRequestEmptyState();
+                  return LayoutBuilder(
+                    builder: (context, constraints) => RefreshIndicator(
+                      onRefresh: controller.refreshList,
+                      color: AppColors.primary,
+                      child: SingleChildScrollView(
+                        physics: const AlwaysScrollableScrollPhysics(),
+                        child: SizedBox(
+                          height: constraints.maxHeight,
+                          child: const ServiceRequestEmptyState(),
+                        ),
+                      ),
+                    ),
+                  );
                 }
 
+                final showFooter = controller.isLoadingMore.value ||
+                    controller.loadMoreFailed.value;
+
                 return RefreshIndicator(
-                  onRefresh: controller.reload,
+                  onRefresh: controller.refreshList,
                   color: AppColors.primary,
-                  child: ListView.builder(
-                    padding: const EdgeInsets.fromLTRB(16, 16, 16, 100),
-                    itemCount: requests.length,
-                    itemBuilder: (context, index) {
-                      final request = requests[index];
-                      return Obx(() {
-                        // Approve/Reject only ever show for the
-                        // approver role's pending tab (index 0) — the
-                        // requestor's "Submitted" tab and the
-                        // Completed/Rejected tabs never get the
-                        // buttons. Read both reactively so a change in
-                        // the session's role updates this immediately.
-                        final showActions = roleController.isApprover &&
-                            controller.selectedTab.value == 0;
-                        return GrnRequestCard(
-                          request: request,
-                          onTap: () => Get.to(
-                            () => const GrnDetailPage(),
-                            binding: GrnDetailBinding(request),
-                          )?.then((_) => controller.reload()),
-                          showApprovalActions: showActions,
-                          isSubmitting: controller.isSubmitting(request.id),
-                          onApprove: () =>
-                              controller.approveFromList(context, request),
-                          onReject: () =>
-                              controller.rejectFromList(context, request),
-                        );
-                      });
+                  child: NotificationListener<ScrollNotification>(
+                    onNotification: (notification) {
+                      if (notification.metrics.axis == Axis.vertical &&
+                          notification.metrics.extentAfter <
+                              _loadMoreThreshold) {
+                        controller.loadMore();
+                      }
+                      return false;
                     },
+                    child: ListView.builder(
+                      physics: const AlwaysScrollableScrollPhysics(),
+                      padding: const EdgeInsets.fromLTRB(16, 16, 16, 100),
+                      itemCount: requests.length + (showFooter ? 1 : 0),
+                      itemBuilder: (context, index) {
+                        if (index >= requests.length) {
+                          return _LoadMoreFooter(
+                            failed: controller.loadMoreFailed.value,
+                            onRetry: controller.retryLoadMore,
+                          );
+                        }
+
+                        final request = requests[index];
+                        return Obx(() {
+                          // Approve/Reject only ever show for the
+                          // approver role's Action Required tab on a
+                          // request that is still actionable.
+                          final showActions = roleController.isApprover &&
+                              controller.selectedTab.value == 0 &&
+                              request.isActionable;
+                          return GrnRequestCard(
+                            request: request,
+                            onTap: () => Get.to(
+                              () => const GrnDetailPage(),
+                              binding: GrnDetailBinding(
+                                request,
+                                canDecide: controller.isActionRequiredTab,
+                              ),
+                            )?.then((result) {
+                              if (result == true) controller.reload();
+                            }),
+                            showApprovalActions: showActions,
+                            isSubmitting: controller.isSubmitting(request.id),
+                            onApprove: () => controller.approveFromList(
+                              context,
+                              request,
+                              openDetail: () => Get.to(
+                                () => const GrnDetailPage(),
+                                binding: GrnDetailBinding(
+                                  request,
+                                  canDecide: controller.isActionRequiredTab,
+                                ),
+                              )?.then((result) {
+                                if (result == true) controller.reload();
+                              }),
+                            ),
+                            onReject: () =>
+                                controller.rejectFromList(context, request),
+                          );
+                        });
+                      },
+                    ),
                   ),
                 );
               }),
@@ -223,8 +277,9 @@ class _ExportButton extends StatelessWidget {
 /// Full-screen state shown when the list fails to load — matches
 /// `ServiceRequestEmptyState`'s layout with a retry action.
 class _GrnErrorState extends StatelessWidget {
-  const _GrnErrorState({required this.onRetry});
+  const _GrnErrorState({required this.message, required this.onRetry});
 
+  final String message;
   final Future<void> Function() onRetry;
 
   @override
@@ -242,7 +297,7 @@ class _GrnErrorState extends StatelessWidget {
             ),
             const SizedBox(height: 20),
             Text(
-              'something_went_wrong'.tr,
+              message.isEmpty ? 'grn_load_failed'.tr : message,
               textAlign: TextAlign.center,
               style: const TextStyle(
                 fontSize: 16,
@@ -265,6 +320,41 @@ class _GrnErrorState extends StatelessWidget {
             ),
           ],
         ),
+      ),
+    );
+  }
+}
+
+/// The row after the last card while the next page loads (spinner) or
+/// after it failed (Retry).
+class _LoadMoreFooter extends StatelessWidget {
+  const _LoadMoreFooter({required this.failed, required this.onRetry});
+
+  final bool failed;
+  final Future<void> Function() onRetry;
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 12),
+      child: Center(
+        child: failed
+            ? TextButton.icon(
+                onPressed: onRetry,
+                icon: const Icon(Icons.refresh, color: AppColors.primary),
+                label: Text(
+                  'retry'.tr,
+                  style: const TextStyle(color: AppColors.primary),
+                ),
+              )
+            : const SizedBox(
+                width: 26,
+                height: 26,
+                child: CircularProgressIndicator(
+                  strokeWidth: 2.5,
+                  color: AppColors.primary,
+                ),
+              ),
       ),
     );
   }

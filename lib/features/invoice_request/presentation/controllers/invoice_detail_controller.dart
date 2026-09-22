@@ -1,3 +1,4 @@
+import 'package:file_picker/file_picker.dart';
 import 'package:get/get.dart';
 import 'package:iungo/core/widgets/app_snackbar.dart';
 import 'package:iungo/features/invoice_request/data/invoice_request_repository.dart';
@@ -19,6 +20,10 @@ class InvoiceDetailController extends GetxController {
   /// the action buttons and shows a spinner so a double-tap can't fire
   /// the request twice once the API is wired up.
   final RxBool isSubmittingApproval = false.obs;
+
+  /// True while the approver's "Browse Files" pick is in flight, on the
+  /// Invoice tab's upload card (see [AttachmentUploadCard]).
+  final RxBool isUploadingAttachment = false.obs;
 
   Future<void> approveRequest() async {
     isSubmittingApproval.value = true;
@@ -48,6 +53,35 @@ class InvoiceDetailController extends GetxController {
       AppSnackbar.showError('something_went_wrong'.tr);
     } finally {
       isSubmittingApproval.value = false;
+    }
+  }
+
+  /// Lets the approver add an invoice attachment while reviewing this
+  /// request (the "Invoice" tab's upload card — approver, Action
+  /// Required only).
+  ///
+  /// UI-only for now, like the rest of [InvoiceRequestRepository]: the
+  /// picked file's name is appended straight to [invoice]'s
+  /// `invoiceFileNames` so it shows up immediately. Swap this for a
+  /// real upload call once the Invoice API exists.
+  Future<void> addInvoiceAttachment() async {
+    if (isUploadingAttachment.value) return;
+    isUploadingAttachment.value = true;
+    try {
+      final result = await FilePicker.platform.pickFiles(allowMultiple: true);
+      final files = result?.files ?? const [];
+      if (files.isEmpty) return;
+
+      request.value = invoice.copyWith(
+        invoiceFileNames: [
+          ...invoice.invoiceFileNames,
+          for (final file in files) file.name,
+        ],
+      );
+    } catch (_) {
+      AppSnackbar.showError('attachment_pick_failed'.tr);
+    } finally {
+      isUploadingAttachment.value = false;
     }
   }
 }

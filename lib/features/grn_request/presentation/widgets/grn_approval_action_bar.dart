@@ -6,8 +6,12 @@ import 'package:iungo/features/grn_request/presentation/controllers/grn_detail_c
 import 'package:iungo/features/purchase_request/presentation/controllers/pr_role_controller.dart';
 
 /// Sticky bottom "Reject" / "Approve" bar for the GRN Detail View — only
-/// shown for the Approver role (shared [PrRoleController]) while the
-/// request is still pending. Mirrors `PrApprovalActionBar` exactly.
+/// shown for the Approver role (shared [PrRoleController]) on a request
+/// opened from the Action Required list that is still actionable.
+/// Mirrors `PrApprovalActionBar`, except Approve first checks that at
+/// least one delivery note is attached ([GrnDetailController]'s
+/// `deliveryNoteValidationError`) and shows a dedicated
+/// "Delivery Note Required" dialog instead of proceeding when none is.
 class GrnApprovalActionBar extends GetView<GrnDetailController> {
   const GrnApprovalActionBar({super.key});
 
@@ -16,7 +20,9 @@ class GrnApprovalActionBar extends GetView<GrnDetailController> {
     final roleController = Get.find<PrRoleController>();
 
     return Obx(() {
-      if (!roleController.isApprover || !controller.grn.isPendingApproval) {
+      if (!roleController.isApprover ||
+          !controller.canDecide ||
+          !controller.grn.isActionable) {
         return const SizedBox.shrink();
       }
 
@@ -91,6 +97,12 @@ class GrnApprovalActionBar extends GetView<GrnDetailController> {
   }
 
   Future<void> _confirmApprove(BuildContext context) async {
+    final validation = controller.deliveryNoteValidationError();
+    if (validation != null) {
+      await showDeliveryNoteRequiredDialog(context);
+      return;
+    }
+
     final confirmed = await showApproveRequestDialog(context);
     if (confirmed == true) {
       await controller.approveRequest();
@@ -99,8 +111,8 @@ class GrnApprovalActionBar extends GetView<GrnDetailController> {
 
   Future<void> _confirmReject(BuildContext context) async {
     final remarks = await showRejectRequestDialog(context);
-    if (remarks != null && remarks.trim().isNotEmpty) {
-      await controller.rejectRequest(remarks.trim());
+    if (remarks != null) {
+      await controller.rejectRequest(remarks);
     }
   }
 }

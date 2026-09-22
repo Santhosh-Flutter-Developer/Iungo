@@ -42,6 +42,83 @@ Future<String?> showRejectRequestDialog(BuildContext context) {
   );
 }
 
+/// Shows the "Delivery Note Required" notice — a GRN can't be approved
+/// without at least one delivery note attached. Single "OK" dismiss,
+/// no confirm/cancel choice since there's nothing to confirm.
+Future<void> showDeliveryNoteRequiredDialog(BuildContext context) {
+  return showDialog<void>(
+    context: context,
+    barrierColor: Colors.black.withValues(alpha: 0.45),
+    builder: (dialogContext) => _NoticeDialog(
+      icon: Icons.warning_amber_rounded,
+      accentColor: AppColors.attachmentDeleteText,
+      iconBackground: const Color(0xFFFBEAEA),
+      title: 'grn_delivery_note_required_title'.tr,
+      message: 'grn_delivery_note_required_message'.tr,
+      onDismiss: () => Navigator.of(dialogContext).pop(),
+    ),
+  );
+}
+
+/// Single-button notice dialog — same frame as [_ConfirmDialog] but
+/// with one full-width "OK" action instead of Cancel/Confirm.
+class _NoticeDialog extends StatelessWidget {
+  const _NoticeDialog({
+    required this.icon,
+    required this.accentColor,
+    required this.iconBackground,
+    required this.title,
+    required this.message,
+    required this.onDismiss,
+  });
+
+  final IconData icon;
+  final Color accentColor;
+  final Color iconBackground;
+  final String title;
+  final String message;
+  final VoidCallback onDismiss;
+
+  @override
+  Widget build(BuildContext context) {
+    return _DialogFrame(
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          _IconBadge(icon: icon, color: accentColor, background: iconBackground),
+          const SizedBox(height: 16),
+          Text(
+            title,
+            textAlign: TextAlign.center,
+            style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w700, color: AppColors.textDark),
+          ),
+          const SizedBox(height: 8),
+          Text(
+            message,
+            textAlign: TextAlign.center,
+            style: const TextStyle(fontSize: 14, height: 1.4, color: AppColors.textMuted),
+          ),
+          const SizedBox(height: 24),
+          SizedBox(
+            width: double.infinity,
+            child: ElevatedButton(
+              onPressed: onDismiss,
+              style: ElevatedButton.styleFrom(
+                backgroundColor: accentColor,
+                foregroundColor: AppColors.white,
+                elevation: 0,
+                padding: const EdgeInsets.symmetric(vertical: 14),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+              ),
+              child: Text('ok'.tr, style: const TextStyle(fontWeight: FontWeight.w600)),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
 /// Common frame both dialogs share: a tinted icon badge, title, spacing,
 /// and a rounded sheet — so the two dialogs read as one family even
 /// though only Approve uses the simple variant directly.
