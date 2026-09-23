@@ -7,10 +7,10 @@ import 'package:iungo/features/invoice_request/presentation/controllers/invoice_
 import 'package:iungo/features/invoice_request/presentation/pages/invoice_detail_page.dart';
 import 'package:iungo/features/invoice_request/presentation/widgets/invoice_request_card.dart';
 
-/// Search screen for the Invoice Dashboard — matches Number and/or
-/// Contract against the local data set, narrowed by a field-scope
-/// dropdown ("All Fields" / "Number" / "Contract"). Mirrors
-/// `GrnSearchPage`'s white AppBar + inline text field chrome exactly.
+/// Search screen for the Invoice Dashboard — matches Number and/or Contract
+/// against the local data set, narrowed by a field-scope dropdown
+/// ("All Fields" / "Number" / "Contract"). Mirrors `PrSearchPage`'s
+/// white AppBar + inline text field chrome exactly.
 class InvoiceSearchPage extends GetView<InvoiceSearchController> {
   const InvoiceSearchPage({super.key});
 
@@ -46,8 +46,13 @@ class InvoiceSearchPage extends GetView<InvoiceSearchController> {
               request: controller.results[index],
               onTap: () => Get.to(
                 () => const InvoiceDetailPage(),
-                binding: InvoiceDetailBinding(controller.results[index]),
-              ),
+                binding: InvoiceDetailBinding(
+                  controller.results[index],
+                  canDecide: controller.canDecide,
+                ),
+              )?.then((result) {
+                if (result == true) controller.refreshResults();
+              }),
             ),
           );
         }),

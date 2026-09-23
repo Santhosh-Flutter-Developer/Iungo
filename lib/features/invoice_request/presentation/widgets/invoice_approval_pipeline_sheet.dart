@@ -1,17 +1,19 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:iungo/core/constants/app_colors.dart';
-import 'package:iungo/core/utils/app_date_format.dart';
-import 'package:iungo/features/invoice_request/domain/entities/invoice_approval_pipeline_builder.dart';
 import 'package:iungo/features/invoice_request/domain/entities/invoice_request.dart';
 import 'package:iungo/features/purchase_request/domain/entities/approval_pipeline.dart';
+import 'package:iungo/features/purchase_request/domain/entities/pr_attachment.dart';
+import 'package:iungo/features/purchase_request/presentation/widgets/pr_attachment_tile.dart';
 
 /// The "Approval Pipeline" sheet opened by tapping a request's Stage
-/// row on the Invoice Dashboard list — a Request Overview box followed
-/// by each pipeline section (Purchase Request / GRN / Invoice) as a
+/// row on the Invoice Dashboard list — a Request Overview box followed by
+/// each pipeline section (Purchase Request / GRN / Invoice) as a
 /// vertical status timeline, with that section's attachments (if any)
-/// underneath. Mirrors `GrnApprovalPipelineSheet` exactly, adapted to
-/// read from an [InvoiceRequest] instead of a `GrnRequest`.
+/// underneath. Mirrors `PrApprovalPipelineSheet` — [InvoiceRequest] IS a
+/// `PurchaseRequest`-shaped record, so this reuses
+/// [ApprovalPipeline.forRequest] directly, the same pipeline data the
+/// PR Dashboard's own sheet builds from.
 class InvoiceApprovalPipelineSheet extends StatelessWidget {
   const InvoiceApprovalPipelineSheet({super.key, required this.request});
 
@@ -28,7 +30,7 @@ class InvoiceApprovalPipelineSheet extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final pipeline = InvoiceApprovalPipelineBuilder.build(request);
+    final pipeline = ApprovalPipeline.forRequest(request);
 
     return DraggableScrollableSheet(
       initialChildSize: 0.85,
@@ -148,10 +150,10 @@ class _RequestOverviewCard extends StatelessWidget {
             ),
           ),
           const SizedBox(height: 14),
-          _OverviewRow(label: 'pr_number'.tr, value: request.number),
+          _OverviewRow(label: 'pr_number'.tr, value: request.prNumber),
           _OverviewRow(
             label: 'pr_request_date'.tr,
-            value: AppDateFormat.mediumDate(request.requestDate),
+            value: request.requestDateLabel,
           ),
           _OverviewRow(label: 'pr_contract'.tr, value: request.contract),
           _OverviewRow(
@@ -214,7 +216,9 @@ class _PipelineSectionView extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            section.title,
+            section.title.trim().isEmpty
+                ? 'pr_purchase_request'.tr
+                : section.title,
             style: const TextStyle(
               fontSize: 15,
               fontWeight: FontWeight.w700,
@@ -254,10 +258,20 @@ class _PipelineSectionView extends StatelessWidget {
                     ],
                   ),
                   const SizedBox(height: 10),
-                  for (final fileName in section.attachmentFileNames)
+                  for (var i = 0;
+                      i < section.attachmentFileNames.length;
+                      i++)
                     Padding(
                       padding: const EdgeInsets.only(bottom: 8),
-                      child: _AttachmentTile(fileName: fileName),
+                      child: i < section.attachmentUrls.length
+                          ? PrAttachmentTile(
+                              attachment: PrAttachment.fromUrl(
+                                section.attachmentUrls[i],
+                              ),
+                            )
+                          : _AttachmentTile(
+                              fileName: section.attachmentFileNames[i],
+                            ),
                     ),
                 ],
               ),

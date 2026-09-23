@@ -1,57 +1,70 @@
-import 'package:iungo/features/invoice_request/data/invoice_request_seed_data.dart';
-import 'package:iungo/features/invoice_request/domain/entities/invoice_request.dart';
-import 'package:iungo/features/purchase_request/domain/entities/purchase_request_status.dart';
+import 'package:iungo/features/invoice_request/data/datasources/invoice_remote_data_source.dart';
+import 'package:iungo/features/invoice_request/data/models/invoice_decision_request.dart';
+import 'package:iungo/features/purchase_request/data/datasources/pr_create_remote_data_source.dart';
+import 'package:iungo/features/purchase_request/data/models/pr_list_query.dart';
+import 'package:iungo/features/purchase_request/domain/entities/contract_option.dart';
+import 'package:iungo/features/purchase_request/domain/entities/pr_list_page.dart';
+import 'package:iungo/features/service_request/domain/entities/attachment_file.dart';
 
-/// Local, in-memory stand-in for the future Invoice API.
-///
-/// UI-only for now: every method already has the async shape (`Future`,
-/// simulated network delay) the real implementation will need, so
-/// swapping the body for a live Dio call later shouldn't require
-/// touching any controller/page that depends on this class. Registered
-/// as a single permanent instance (see `InvoiceDashboardBinding`) so
-/// the list, detail, search, and filter screens all read/write the
-/// same in-memory data set. Mirrors `GrnRequestRepository` shape for
+/// Everything the Invoice Dashboard / Detail / Search screens need from
+/// the Invoice API — the paginated list, the contract picklist (reusing
+/// the same `fetch_contract_code` call the PR/GRN features already
+/// make), invoice-attachment upload, and the approve/reject actions.
+/// Registered as a single permanent instance (see
+/// `InvoiceDashboardBinding`). Mirrors `GrnRequestRepository` shape for
 /// shape.
 class InvoiceRequestRepository {
-  InvoiceRequestRepository() : _requests = buildInvoiceRequestSeed();
+  InvoiceRequestRepository(this._remote, this._createRemote);
 
-  final List<InvoiceRequest> _requests;
+  final InvoiceRemoteDataSource _remote;
 
-  /// Contract picklist — mirrors the GRN/PR Dashboards' "Select
-  /// Contract" filter.
-  static const List<String> contracts = [
-    'Diriyah - DIR',
-    'Riyadh - RYD',
-    'Jeddah - JED',
-    'Dammam - DMM',
-  ];
+  /// Reused for `fetch_contract_code` (same contracts as the PR/GRN
+  /// Dashboards) and the generic multipart uploader.
+  final PrCreateRemoteDataSource _createRemote;
 
-  Future<List<InvoiceRequest>> fetchAll() async {
-    await Future.delayed(const Duration(milliseconds: 500));
-    return List.unmodifiable(_requests);
+  Future<PrListPage> fetchInvoiceRequests(PrListQuery query) =>
+      _remote.fetchInvoiceRequests(query);
+
+  Future<List<ContractOption>> fetchContracts({required String userId}) =>
+      _createRemote.fetchContracts(userId: userId);
+
+  /// Uploads one invoice attachment and returns its stored filename —
+  /// the same multipart endpoint the PR "Add Purchase Request" flow uses
+  /// for quotation attachments, with `field: 'invoices'` so the server
+  /// files it under the Invoice stage.
+  Future<String> uploadInvoiceAttachment(AttachmentFile file) {
+    return _createRemote.uploadAttachment(file, field: 'invoices');
   }
 
-  /// Approves/rejects [id]'s current pending Invoice stage. `remarks`
-  /// is required by the reject flow (enforced by the Reject dialog
-  /// before this is ever called); approve doesn't collect one.
-  Future<InvoiceRequest> submitDecision({
-    required int id,
-    required bool approve,
-    String? remarks,
-  }) async {
-    await Future.delayed(const Duration(milliseconds: 600));
-    final index = _requests.indexWhere((r) => r.id == id);
-    if (index == -1) {
-      throw StateError('Invoice Request $id not found');
-    }
-    final updated = _requests[index].copyWith(
-      status: approve
-          ? PurchaseRequestStatus.approved
-          : PurchaseRequestStatus.rejected,
-      clearNextApprovalName: true,
-      currentStage: approve ? _requests[index].totalStages : null,
+  /// Approves [invoiceId] with the invoice attachment filenames attached
+  /// so far (may be empty — the API guide's own approve example sends
+  /// none).
+  Future<String?> approveInvoiceRequest({
+    required int invoiceId,
+    required String userId,
+    required List<String> invoiceFileNames,
+  }) {
+    return _remote.submitDecision(
+      InvoiceDecisionRequest.approve(
+        invoiceId: invoiceId,
+        userId: userId,
+        invoiceFileNames: invoiceFileNames,
+      ),
     );
-    _requests[index] = updated;
-    return updated;
+  }
+
+  /// Rejects [invoiceId] with mandatory [remarks].
+  Future<String?> rejectInvoiceRequest({
+    required int invoiceId,
+    required String userId,
+    required String remarks,
+  }) {
+    return _remote.submitDecision(
+      InvoiceDecisionRequest.reject(
+        invoiceId: invoiceId,
+        userId: userId,
+        remarks: remarks,
+      ),
+    );
   }
 }

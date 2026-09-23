@@ -27,6 +27,9 @@ class AppUrls {
   /// GRN list and approve/reject.
   static const String grnRequestApi = '$iungoApiBase/grn_request.php';
 
+  /// Invoice list and approve/reject.
+  static const String invoiceRequestApi = '$iungoApiBase/invoice_request.php';
+
   /// Facilio inventory list — source of the Inventory "Material Code"
   /// dropdown on the Create PR form (Bearer-authenticated).
   static const String inventoryMaterialsApi =

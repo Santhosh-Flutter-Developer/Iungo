@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:iungo/core/constants/app_colors.dart';
-import 'package:iungo/core/utils/app_date_format.dart';
 import 'package:iungo/features/invoice_request/domain/entities/invoice_request.dart';
 import 'package:iungo/features/invoice_request/presentation/widgets/invoice_financial_breakdown_card.dart';
+import 'package:iungo/features/purchase_request/presentation/widgets/pr_attachment_tile.dart';
 
 /// Summary tab of the Invoice Detail View — General Specification
 /// fields, the Financial Breakdown card, and the quotation attachment
@@ -39,11 +39,11 @@ class InvoiceSummaryTab extends StatelessWidget {
           leftLabel: 'pr_created_by'.tr,
           leftValue: request.createdBy,
           rightLabel: 'created'.tr,
-          rightValue: AppDateFormat.mediumDate(request.requestDate),
+          rightValue: request.requestDateLabel,
         ),
         _FieldPairRow(
           leftLabel: 'pr_delivery_date'.tr,
-          leftValue: AppDateFormat.mediumDate(request.deliveryDate),
+          leftValue: request.deliveryDateLabel,
           rightLabel: 'pr_contract'.tr,
           rightValue: request.contract,
           isLast: true,
@@ -69,17 +69,17 @@ class InvoiceSummaryTab extends StatelessWidget {
         const Divider(color: AppColors.divider, height: 1),
         const SizedBox(height: 20),
         InvoiceFinancialBreakdownCard(request: request),
-        if (request.quotationFileNames.isNotEmpty) ...[
+        if (request.attachments.isNotEmpty) ...[
           const SizedBox(height: 24),
           Text(
             'pr_quotation'.tr,
             style: const TextStyle(fontSize: 13, color: AppColors.labelGrey),
           ),
           const SizedBox(height: 10),
-          for (final fileName in request.quotationFileNames)
+          for (final attachment in request.attachments)
             Padding(
               padding: const EdgeInsets.only(bottom: 10),
-              child: _AttachmentTile(fileName: fileName),
+              child: PrAttachmentTile(attachment: attachment),
             ),
         ],
       ],
@@ -143,60 +143,6 @@ class _FieldItem extends StatelessWidget {
           ),
         ),
       ],
-    );
-  }
-}
-
-class _AttachmentTile extends StatelessWidget {
-  const _AttachmentTile({required this.fileName});
-
-  final String fileName;
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.all(14),
-      decoration: BoxDecoration(
-        color: AppColors.white,
-        borderRadius: BorderRadius.circular(10),
-        border: Border.all(color: AppColors.divider),
-      ),
-      child: Row(
-        children: [
-          Container(
-            width: 40,
-            height: 40,
-            alignment: Alignment.center,
-            decoration: BoxDecoration(
-              color: AppColors.cardBackground,
-              borderRadius: BorderRadius.circular(8),
-            ),
-            child: const Icon(
-              Icons.insert_drive_file_outlined,
-              size: 20,
-              color: AppColors.primary,
-            ),
-          ),
-          const SizedBox(width: 12),
-          Expanded(
-            child: Text(
-              fileName,
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-              style: const TextStyle(
-                fontSize: 14,
-                fontWeight: FontWeight.w500,
-                color: AppColors.textDark,
-              ),
-            ),
-          ),
-          const Icon(
-            Icons.download_outlined,
-            size: 20,
-            color: AppColors.headingBlueGrey,
-          ),
-        ],
-      ),
     );
   }
 }

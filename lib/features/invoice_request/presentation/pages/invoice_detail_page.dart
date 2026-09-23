@@ -40,7 +40,7 @@ class InvoiceDetailPage extends GetView<InvoiceDetailController> {
           ),
           title: Obx(
             () => Text(
-              controller.invoice.number,
+              controller.invoice.prNumber,
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
               style: const TextStyle(

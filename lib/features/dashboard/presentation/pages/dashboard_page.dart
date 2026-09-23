@@ -29,6 +29,10 @@ class DashboardPage extends GetView<DashboardController> {
   static const _crossAxisCount = 2;
   static const _spacing = 8.0;
   static const _gridPadding = 10.0;
+  // Fixed tile shape so cards keep a comfortable, consistent size no
+  // matter how many there are — once they no longer fit one screen,
+  // the grid simply scrolls instead of shrinking every tile down.
+  static const _tileAspectRatio = 1.1;
 
   @override
   Widget build(BuildContext context) {
@@ -62,41 +66,24 @@ class DashboardPage extends GetView<DashboardController> {
       body: SafeArea(
         child: Padding(
           padding: const EdgeInsets.all(_gridPadding),
-          child: LayoutBuilder(
-            builder: (context, constraints) {
-              // Compute the aspect ratio that makes `rows` of cards
-              // exactly fill the available height — rather than a fixed
-              // childAspectRatio (which scrolls once there are more
-              // tiles than one screen's worth fits at that ratio), this
-              // shrinks each tile just enough for the whole grid,
-              // however many tiles there are, to land in one screen.
-              final rows = (_actions.length / _crossAxisCount).ceil();
-              final tileWidth = (constraints.maxWidth -
-                      _spacing * (_crossAxisCount - 1)) /
-                  _crossAxisCount;
-              final tileHeight =
-                  (constraints.maxHeight - _spacing * (rows - 1)) / rows;
-
-              return GridView.count(
-                physics: const NeverScrollableScrollPhysics(),
-                crossAxisCount: _crossAxisCount,
-                mainAxisSpacing: _spacing,
-                crossAxisSpacing: _spacing,
-                childAspectRatio: tileWidth / tileHeight,
-                children: _actions
-                    .map(
-                      (action) => DashboardCard(
-                        icon: action.icon,
-                        label: action.labelKey.tr,
-                        onTap: () =>
-                            action == DashboardAction.createServiceRequest
-                                ? CreateServiceRequestSheet.show(context)
-                                : controller.onActionTap(action),
-                      ),
-                    )
-                    .toList(),
-              );
-            },
+          child: GridView.count(
+            physics: const AlwaysScrollableScrollPhysics(),
+            crossAxisCount: _crossAxisCount,
+            mainAxisSpacing: _spacing,
+            crossAxisSpacing: _spacing,
+            childAspectRatio: _tileAspectRatio,
+            children: _actions
+                .map(
+                  (action) => DashboardCard(
+                    icon: action.icon,
+                    label: action.labelKey.tr,
+                    onTap: () =>
+                        action == DashboardAction.createServiceRequest
+                            ? CreateServiceRequestSheet.show(context)
+                            : controller.onActionTap(action),
+                  ),
+                )
+                .toList(),
           ),
         ),
       ),

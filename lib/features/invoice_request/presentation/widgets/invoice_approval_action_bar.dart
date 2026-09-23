@@ -6,8 +6,11 @@ import 'package:iungo/features/invoice_request/presentation/controllers/invoice_
 import 'package:iungo/features/purchase_request/presentation/controllers/pr_role_controller.dart';
 
 /// Sticky bottom "Reject" / "Approve" bar for the Invoice Detail View —
-/// only shown for the Approver role (shared `PrRoleController`) while
-/// the request is still pending. Mirrors `GrnApprovalActionBar` exactly.
+/// only shown for the Approver role (shared `PrRoleController`) on a
+/// request opened from the Action Required list that is still
+/// actionable. Mirrors `GrnApprovalActionBar`, except Approve does not
+/// first check for an attachment — unlike GRN, the API guide's approve
+/// example sends an empty `invoices` list, so none is required.
 class InvoiceApprovalActionBar extends GetView<InvoiceDetailController> {
   const InvoiceApprovalActionBar({super.key});
 
@@ -16,7 +19,9 @@ class InvoiceApprovalActionBar extends GetView<InvoiceDetailController> {
     final roleController = Get.find<PrRoleController>();
 
     return Obx(() {
-      if (!roleController.isApprover || !controller.invoice.isPendingApproval) {
+      if (!roleController.isApprover ||
+          !controller.canDecide ||
+          !controller.invoice.isActionable) {
         return const SizedBox.shrink();
       }
 

@@ -1,33 +1,11 @@
-/// Everything selected on the Invoice Dashboard's Filter screen.
-/// Immutable — the controller swaps in a new instance whenever a value
-/// changes. Mirrors `GrnRequestFilter`'s shape exactly.
-class InvoiceRequestFilter {
-  const InvoiceRequestFilter({
-    this.contract,
-    this.createdDateStart,
-    this.createdDateEnd,
-  });
+import 'package:iungo/features/purchase_request/domain/entities/purchase_request_filter.dart';
 
-  final String? contract;
-  final DateTime? createdDateStart;
-  final DateTime? createdDateEnd;
+export 'package:iungo/features/purchase_request/domain/entities/purchase_request_filter.dart'
+    show PurchaseRequestFilter;
 
-  bool get isEmpty =>
-      contract == null && createdDateStart == null && createdDateEnd == null;
-
-  InvoiceRequestFilter copyWith({
-    String? contract,
-    bool clearContract = false,
-    DateTime? createdDateStart,
-    DateTime? createdDateEnd,
-    bool clearCreatedDate = false,
-  }) {
-    return InvoiceRequestFilter(
-      contract: clearContract ? null : (contract ?? this.contract),
-      createdDateStart:
-          clearCreatedDate ? null : (createdDateStart ?? this.createdDateStart),
-      createdDateEnd:
-          clearCreatedDate ? null : (createdDateEnd ?? this.createdDateEnd),
-    );
-  }
-}
+/// The Invoice Filter screen's Contract/Created-date criteria are sent
+/// the same way the PR/GRN Dashboards' are (`search_data.contract_search`
+/// / `search_data.pr_date`), so this reuses [PurchaseRequestFilter]
+/// directly instead of a byte-for-byte Invoice copy. Mirrors
+/// `GrnRequestFilter`.
+typedef InvoiceRequestFilter = PurchaseRequestFilter;

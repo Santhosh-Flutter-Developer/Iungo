@@ -114,6 +114,10 @@ class AppTranslations extends Translations {
       'grn_delivery_note_required_title': 'Delivery Note Required',
       'grn_delivery_note_required_message':
           'Please attach at least one delivery note before approving this GRN.',
+      'invoice_load_failed':
+          'Unable to load Invoice requests. Please try again.',
+      'invoice_approve_failed': 'Could not approve the Invoice request.',
+      'invoice_reject_failed': 'Could not reject the Invoice request.',
 
       // My Service Requests list
       'filter': 'Filter',
@@ -568,6 +572,9 @@ class AppTranslations extends Translations {
       'grn_delivery_note_required_title': 'مطلوب مذكرة تسليم',
       'grn_delivery_note_required_message':
           'يرجى إرفاق مذكرة تسليم واحدة على الأقل قبل الموافقة على هذا الاستلام.',
+      'invoice_load_failed': 'تعذر تحميل طلبات الفواتير. يرجى المحاولة مرة أخرى.',
+      'invoice_approve_failed': 'تعذرت الموافقة على طلب الفاتورة.',
+      'invoice_reject_failed': 'تعذر رفض طلب الفاتورة.',
 
       // My Service Requests list
       'filter': 'تصفية',
