@@ -3,20 +3,16 @@
 /// Approve — takes the invoice attachment filenames:
 /// ```json
 /// { "approve_reject_pr_id": "142", "action_type": "approve",
-///   "user_id": "...", "invoices": [] }
+///   "user_id": "...", "invoices": ["222.pdf"] }
 /// ```
-/// The API guide's own example sends an empty list, so — unlike GRN's
-/// delivery notes — at least one invoice attachment is NOT required to
-/// approve.
 ///
-/// Reject isn't documented for the Invoice endpoint. The API guide
-/// documents PR's own reject on `purchase_request.php` as
-/// `{approve_reject_pr_id, action_type: "reject", user_id, remarks,
-/// selected_attachments: ""}`; this assumes `invoice_request.php` accepts
-/// the same shape with the Invoice id, swapping `selected_attachments`
-/// for an empty `invoices` list for consistency with the approve
-/// payload. **This half is unconfirmed by the API document — please
-/// verify against the backend before relying on it.**
+/// Reject isn't documented for the Invoice endpoint directly, but the
+/// backend rejects an empty `invoices: []` list even on reject
+/// (confirmed against the live server — it responds with "Please
+/// attach invoice before proceeding"). PR's own reject on
+/// `purchase_request.php` (which IS documented) sends
+/// `selected_attachments: ""` — an empty **string**, not a list — so
+/// this mirrors that shape for reject, swapping in `invoices`.
 class InvoiceDecisionRequest {
   const InvoiceDecisionRequest._({
     required this.invoiceId,
@@ -40,7 +36,8 @@ class InvoiceDecisionRequest {
     );
   }
 
-  /// Unconfirmed shape — see the class doc.
+  /// Sends `invoices` as an empty string, not an empty list — the
+  /// backend rejects an empty list even for `action_type: "reject"`.
   factory InvoiceDecisionRequest.reject({
     required int invoiceId,
     required String userId,
@@ -51,7 +48,7 @@ class InvoiceDecisionRequest {
       userId: userId,
       actionType: 'reject',
       remarks: remarks,
-      invoices: const [],
+      invoices: '',
     );
   }
 
@@ -59,7 +56,10 @@ class InvoiceDecisionRequest {
   final String userId;
   final String actionType;
   final String? remarks;
-  final List<String> invoices;
+
+  /// A list of filenames for approve, an empty string for reject —
+  /// matching what the live backend actually accepts.
+  final Object invoices;
 
   Map<String, dynamic> toJson() => {
         'approve_reject_pr_id': '$invoiceId',

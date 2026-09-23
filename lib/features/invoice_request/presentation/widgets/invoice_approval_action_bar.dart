@@ -8,9 +8,11 @@ import 'package:iungo/features/purchase_request/presentation/controllers/pr_role
 /// Sticky bottom "Reject" / "Approve" bar for the Invoice Detail View —
 /// only shown for the Approver role (shared `PrRoleController`) on a
 /// request opened from the Action Required list that is still
-/// actionable. Mirrors `GrnApprovalActionBar`, except Approve does not
-/// first check for an attachment — unlike GRN, the API guide's approve
-/// example sends an empty `invoices` list, so none is required.
+/// actionable. Mirrors `GrnApprovalActionBar` — Approve first checks
+/// that at least one attachment is present
+/// ([InvoiceDetailController]'s `attachmentValidationError`) and shows
+/// a dedicated "Attachment Required" dialog instead of proceeding when
+/// none is. Reject does not require any attachment.
 class InvoiceApprovalActionBar extends GetView<InvoiceDetailController> {
   const InvoiceApprovalActionBar({super.key});
 
@@ -96,6 +98,12 @@ class InvoiceApprovalActionBar extends GetView<InvoiceDetailController> {
   }
 
   Future<void> _confirmApprove(BuildContext context) async {
+    final validation = controller.attachmentValidationError();
+    if (validation != null) {
+      await showInvoiceAttachmentRequiredDialog(context);
+      return;
+    }
+
     final confirmed = await showApproveRequestDialog(context);
     if (confirmed == true) {
       await controller.approveRequest();

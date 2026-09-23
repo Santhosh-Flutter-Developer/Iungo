@@ -172,7 +172,7 @@ void main() {
       expect(json.containsKey('remarks'), isFalse);
     });
 
-    test('reject carries remarks and an empty delivery_notes list', () {
+    test('reject carries remarks and an empty delivery_notes string', () {
       final json = GrnDecisionRequest.reject(
         grnId: 97,
         userId: 'u1',
@@ -180,7 +180,7 @@ void main() {
       ).toJson();
       expect(json['action_type'], 'reject');
       expect(json['remarks'], 'Test');
-      expect(json['delivery_notes'], <String>[]);
+      expect(json['delivery_notes'], '');
     });
   });
 

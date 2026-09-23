@@ -2,14 +2,20 @@
 /// returning a translation key (or null when valid), mirroring
 /// `GrnDecisionValidator`.
 ///
-/// Unlike GRN, the API guide's approve example sends an empty
-/// `"invoices": []`, so approving an Invoice does NOT require an
-/// attachment to already be present — only the reject remarks are
-/// validated.
+/// Approving an Invoice requires AT LEAST ONE invoice attachment — any
+/// number is fine (mirrors GRN's rule). Rejecting does not require any
+/// attachment — only the reject remarks are validated.
 class InvoiceDecisionValidator {
   InvoiceDecisionValidator._();
 
   static const int maxRemarksLength = 250;
+
+  /// Approving an Invoice requires AT LEAST ONE attachment — any number
+  /// is fine (mirrors `GrnDecisionValidator.approveRequiresDeliveryNote`).
+  static String? approveRequiresAttachment(List<String> attachmentNames) {
+    final hasOne = attachmentNames.any((name) => name.trim().isNotEmpty);
+    return hasOne ? null : 'invoice_attachment_required_message';
+  }
 
   static String? rejectRemarksErrorKey(String remarks) {
     final trimmed = remarks.trim();

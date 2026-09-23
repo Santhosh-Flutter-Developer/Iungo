@@ -118,6 +118,9 @@ class AppTranslations extends Translations {
           'Unable to load Invoice requests. Please try again.',
       'invoice_approve_failed': 'Could not approve the Invoice request.',
       'invoice_reject_failed': 'Could not reject the Invoice request.',
+      'invoice_attachment_required_title': 'Attachment Required',
+      'invoice_attachment_required_message':
+          'Please attach at least one file before approving this Invoice.',
 
       // My Service Requests list
       'filter': 'Filter',
@@ -575,6 +578,9 @@ class AppTranslations extends Translations {
       'invoice_load_failed': 'تعذر تحميل طلبات الفواتير. يرجى المحاولة مرة أخرى.',
       'invoice_approve_failed': 'تعذرت الموافقة على طلب الفاتورة.',
       'invoice_reject_failed': 'تعذر رفض طلب الفاتورة.',
+      'invoice_attachment_required_title': 'المرفق مطلوب',
+      'invoice_attachment_required_message':
+          'يرجى إرفاق ملف واحد على الأقل قبل الموافقة على هذه الفاتورة.',
 
       // My Service Requests list
       'filter': 'تصفية',

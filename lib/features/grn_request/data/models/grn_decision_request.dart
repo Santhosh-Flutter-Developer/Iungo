@@ -7,14 +7,13 @@
 ///   "user_id": "...", "delivery_notes": ["converted-image.png"] }
 /// ```
 ///
-/// Reject isn't documented for GRN. The API guide documents PR's own
-/// reject on `purchase_request.php` as
-/// `{approve_reject_pr_id, action_type: "reject", user_id, remarks,
-/// selected_attachments: ""}`; this assumes `grn_request.php` accepts
-/// the same shape with the GRN id, swapping `selected_attachments` for
-/// an empty `delivery_notes` list for consistency with GRN's approve
-/// payload. **This half is unconfirmed by the API document — please
-/// verify against the backend before relying on it.**
+/// Reject isn't documented for GRN directly, but (mirroring the same
+/// issue confirmed on the Invoice endpoint) the backend rejects an
+/// empty `delivery_notes: []` list even on reject, responding with an
+/// "attach before proceeding"-style error. PR's own reject on
+/// `purchase_request.php` (which IS documented) sends
+/// `selected_attachments: ""` — an empty **string**, not a list — so
+/// this mirrors that shape for reject, swapping in `delivery_notes`.
 class GrnDecisionRequest {
   const GrnDecisionRequest._({
     required this.grnId,
@@ -38,7 +37,9 @@ class GrnDecisionRequest {
     );
   }
 
-  /// Unconfirmed shape — see the class doc.
+  /// Sends `delivery_notes` as an empty string, not an empty list —
+  /// the backend rejects an empty list even for `action_type:
+  /// "reject"`.
   factory GrnDecisionRequest.reject({
     required int grnId,
     required String userId,
@@ -49,7 +50,7 @@ class GrnDecisionRequest {
       userId: userId,
       actionType: 'reject',
       remarks: remarks,
-      deliveryNotes: const [],
+      deliveryNotes: '',
     );
   }
 
@@ -57,7 +58,10 @@ class GrnDecisionRequest {
   final String userId;
   final String actionType;
   final String? remarks;
-  final List<String> deliveryNotes;
+
+  /// A list of filenames for approve, an empty string for reject —
+  /// matching what the live backend actually accepts.
+  final Object deliveryNotes;
 
   Map<String, dynamic> toJson() => {
         'approve_reject_pr_id': '$grnId',

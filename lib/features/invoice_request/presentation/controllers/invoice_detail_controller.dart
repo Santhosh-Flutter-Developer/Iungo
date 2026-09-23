@@ -18,11 +18,12 @@ import 'package:iungo/features/service_request/domain/entities/attachment_file.d
 /// View needs (items, attachments, pipeline, ...) — same as PR/GRN,
 /// there is no separate "get one Invoice" endpoint.
 ///
-/// Unlike GRN, approving an Invoice does not require an attachment to
-/// already be present (the API guide's own approve example sends an
-/// empty `invoices` list); [invoiceAttachments] simply tracks whatever
-/// the record already carried plus whatever's been uploaded in this
-/// session, and that combined list is sent to the approve API.
+/// An Invoice can only be approved once at least one attachment is
+/// present ([InvoiceDecisionValidator.approveRequiresAttachment]) — the
+/// approver adds one or more from here; [invoiceAttachments] tracks
+/// both whatever the record already carried and whatever's been
+/// uploaded in this session, and that combined list is what's sent to
+/// the approve API.
 class InvoiceDetailController extends GetxController {
   InvoiceDetailController(
     this._repository,
@@ -57,6 +58,14 @@ class InvoiceDetailController extends GetxController {
   /// True while the approver's "Browse Files" pick is in flight, on the
   /// Invoice tab's upload card (see [AttachmentUploadCard]).
   final RxBool isUploadingAttachment = false.obs;
+
+  /// The validation message for the current attachment state, or null
+  /// when at least one is attached.
+  String? attachmentValidationError() {
+    final key =
+        InvoiceDecisionValidator.approveRequiresAttachment(invoiceAttachments);
+    return key?.tr;
+  }
 
   /// Picks one or more files and uploads each as an invoice attachment,
   /// appending its stored filename to [invoiceAttachments] as soon as it
@@ -101,6 +110,12 @@ class InvoiceDetailController extends GetxController {
 
   Future<void> approveRequest() async {
     if (isSubmittingApproval.value) return;
+
+    final validation = attachmentValidationError();
+    if (validation != null) {
+      AppSnackbar.showError(validation);
+      return;
+    }
 
     isSubmittingApproval.value = true;
     try {

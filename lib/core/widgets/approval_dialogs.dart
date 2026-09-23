@@ -60,6 +60,24 @@ Future<void> showDeliveryNoteRequiredDialog(BuildContext context) {
   );
 }
 
+/// Shows the "Attachment Required" notice — an Invoice can't be
+/// approved without at least one attachment. Single "OK" dismiss, no
+/// confirm/cancel choice since there's nothing to confirm.
+Future<void> showInvoiceAttachmentRequiredDialog(BuildContext context) {
+  return showDialog<void>(
+    context: context,
+    barrierColor: Colors.black.withValues(alpha: 0.45),
+    builder: (dialogContext) => _NoticeDialog(
+      icon: Icons.warning_amber_rounded,
+      accentColor: AppColors.attachmentDeleteText,
+      iconBackground: const Color(0xFFFBEAEA),
+      title: 'invoice_attachment_required_title'.tr,
+      message: 'invoice_attachment_required_message'.tr,
+      onDismiss: () => Navigator.of(dialogContext).pop(),
+    ),
+  );
+}
+
 /// Single-button notice dialog — same frame as [_ConfirmDialog] but
 /// with one full-width "OK" action instead of Cancel/Confirm.
 class _NoticeDialog extends StatelessWidget {

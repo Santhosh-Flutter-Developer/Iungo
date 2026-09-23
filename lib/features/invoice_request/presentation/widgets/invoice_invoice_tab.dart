@@ -19,8 +19,9 @@ import 'package:iungo/features/purchase_request/presentation/widgets/pr_attachme
 /// attachment from here — but only while this request is theirs to
 /// decide on (Action Required, still pending): the upload card
 /// ([AttachmentUploadCard]) is hidden for the requestor and for a
-/// request that's already been approved/rejected. Unlike GRN, at least
-/// one attachment is NOT required to approve.
+/// request that's already been approved/rejected. Mirrors GRN: at
+/// least one attachment is required to approve, but none is required
+/// to reject.
 class InvoiceInvoiceTab extends StatelessWidget {
   const InvoiceInvoiceTab({super.key, required this.request});
 
