@@ -1,6 +1,6 @@
 import 'package:dio/dio.dart';
 import 'package:get/get.dart';
-import 'package:iungo/core/network/dev_certificate_override.dart';
+// import 'package:iungo/core/network/dev_certificate_override.dart';
 import 'package:iungo/core/services/session_service.dart';
 import 'package:iungo/features/auth/data/datasources/auth_api_remote_data_source.dart';
 import 'package:iungo/features/auth/data/datasources/auth_remote_data_source.dart';
@@ -26,7 +26,7 @@ class LoginBinding extends Bindings {
         // TEMPORARY debug-only SSL workaround for iungo.citgroupltd.com
         // (see dev_certificate_override_io.dart). Remove once the server's
         // certificate chain is fixed.
-        applyDevCertificateOverride(dio);
+        // applyDevCertificateOverride(dio);
         return dio;
       },
       fenix: true,

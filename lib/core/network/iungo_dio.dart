@@ -1,5 +1,5 @@
 import 'package:dio/dio.dart';
-import 'package:iungo/core/network/dev_certificate_override.dart';
+// import 'package:iungo/core/network/dev_certificate_override.dart';
 
 /// A single, always-available [Dio] for the Iungo host
 /// (`iungo.citgroupltd.com`), with the debug-only certificate
@@ -27,7 +27,7 @@ class IungoDio {
         receiveTimeout: const Duration(seconds: 30),
       ),
     );
-    applyDevCertificateOverride(dio);
+    // applyDevCertificateOverride(dio);
     return _instance = dio;
   }
 }
