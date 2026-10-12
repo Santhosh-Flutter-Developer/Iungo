@@ -184,31 +184,78 @@ void main() {
       expect(PrCreateMapper.contracts({'code': 200}), isEmpty);
     });
 
-    test('extracts only id, name and description of materials', () {
+    test('keeps only spare-part materials (flag 1 / "1") and dedupes', () {
       final page = PrCreateMapper.materials({
         'code': 0,
         'data': {
           'inventoryrequest': [
             {
               'id': 1922,
-              'name': 'Electrical Consumables-Strip Light Holder',
-              'description': 'Additional material related to 1429539',
-              'orgId': 500000029,
+              'name': 'Electrical',
+              'description': 'Additional material',
+              'is_spare_part_request_or_not_inventoryrequest': 1,
             },
-            {'id': '5', 'name': 'No description'},
-            {'name': 'No id — skipped'},
+            {
+              'id': '5',
+              'name': 'String flag',
+              'is_spare_part_request_or_not_inventoryrequest': '1',
+            },
+            {
+              'id': 6,
+              'name': 'Zero',
+              'is_spare_part_request_or_not_inventoryrequest': 0,
+            },
+            {
+              'id': 7,
+              'name': 'Zero string',
+              'is_spare_part_request_or_not_inventoryrequest': '0',
+            },
+            {
+              'id': 8,
+              'name': 'Null',
+              'is_spare_part_request_or_not_inventoryrequest': null,
+            },
+            {
+              'id': 9,
+              'name': 'True bool',
+              'is_spare_part_request_or_not_inventoryrequest': true,
+            },
+            {'id': 10, 'name': 'Missing flag'},
+            {
+              'name': 'No id',
+              'is_spare_part_request_or_not_inventoryrequest': 1,
+            },
+            {
+              'id': 1922,
+              'name': 'Duplicate',
+              'is_spare_part_request_or_not_inventoryrequest': 1,
+            },
           ],
         },
       });
 
-      expect(page.rawCount, 3);
-      expect(page.items, hasLength(2));
-      expect(page.items.first.id, 1922);
-      expect(page.items.first.name, 'Electrical Consumables-Strip Light Holder');
-      expect(page.items.first.description,
-          'Additional material related to 1429539');
-      expect(page.items.last.id, 5);
+      expect(page.rawCount, 9);
+      expect(page.items.map((m) => m.id), [1922, 5]);
+      expect(page.items.first.name, 'Electrical');
+      expect(page.items.first.description, 'Additional material');
       expect(page.items.last.description, '');
+    });
+
+    test('a page with no eligible rows still reports its raw count', () {
+      final page = PrCreateMapper.materials({
+        'code': 0,
+        'data': {
+          'inventoryrequest': [
+            {
+              'id': 1,
+              'name': 'A',
+              'is_spare_part_request_or_not_inventoryrequest': 0,
+            },
+          ],
+        },
+      });
+      expect(page.items, isEmpty);
+      expect(page.rawCount, 1);
     });
 
     test('uses saved_name from the upload response', () {

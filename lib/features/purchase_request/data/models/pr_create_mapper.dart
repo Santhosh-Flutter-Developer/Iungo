@@ -46,18 +46,26 @@ class PrCreateMapper {
     return result;
   }
 
-  /// Facilio `inventoryrequest` list → only `id`, `name`, `description`.
+  /// Facilio `inventoryrequest` list → `id`, `name`, `description` of rows
+  /// where `is_spare_part_request_or_not_inventoryrequest` is 1 / "1".
   static MaterialPageResult materials(Map<String, dynamic> body) {
     final data = body['data'];
     final raw = (data is Map) ? data['inventoryrequest'] : null;
     final rows = (raw is List) ? raw : const [];
 
     final items = <MaterialOption>[];
+    final seen = <int>{};
     for (final row in rows) {
       if (row is! Map) continue;
+      // Only spare-part rows (flag == 1 / "1") are selectable. `rawCount`
+      // below still counts every row so pagination is unaffected.
+      if (_int(row['is_spare_part_request_or_not_inventoryrequest']) != 1) {
+        continue;
+      }
       final id = _int(row['id']);
       final name = _str(row['name']);
       if (id == null || name.isEmpty) continue;
+      if (!seen.add(id)) continue;
       items.add(
         MaterialOption(
           id: id,
@@ -86,7 +94,7 @@ class PrCreateMapper {
 
   static int? _int(dynamic value) {
     if (value is int) return value;
-    if (value is num) return value.toInt();
+    if (value is num) return value == value.truncate() ? value.toInt() : null;
     if (value is String) return int.tryParse(value.trim());
     return null;
   }

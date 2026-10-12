@@ -35,6 +35,12 @@ class AppUrls {
   static const String inventoryMaterialsApi =
       '$portalHost/client/api/v3/modules/inventoryrequest/view/allinventoryrequests';
 
+  /// Static bearer token used ONLY by the Inventory "Material Code" API
+  /// ([inventoryMaterialsApi]). No other request may use it, and it must
+  /// never be logged or shown in the UI.
+  static const String inventoryMaterialsStaticToken =
+      'eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJzdWIiOiIxNTYjMTc4MjkyMjQzMDQ1MyIsImlzcyI6ImF1dGgwIn0.dGHzcZUrkukHK_-gOPzafmK-vt-bcTF-d_tVVU6Peak';
+
   /// Resolves a possibly host-relative URL against [portalHost]. A URL
   /// that's already absolute is returned unchanged.
   static String resolve(String hostRelativeOrAbsoluteUrl) {

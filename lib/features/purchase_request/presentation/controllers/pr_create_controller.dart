@@ -49,6 +49,12 @@ class PrCreateController extends GetxController {
   /// opened and more only as the user scrolls / searches.
   static const int materialPageSize = 50;
 
+  /// Max consecutive pages fetched while none has an eligible material.
+  static const int _maxEmptyMaterialPages = 20;
+
+  /// Eligible materials to gather before letting the user scroll for more.
+  static const int _minMaterialsToFill = 10;
+
   // ---- General Specification ---------------------------------------
 
   /// Always today — read-only, matches the reference form's "Date"
@@ -323,6 +329,10 @@ class PrCreateController extends GetxController {
       _materialPage = 1;
       hasMoreMaterials.value = page.rawCount >= materialPageSize;
       _materialsLoaded = true;
+
+      // A page can hold rows but none eligible; keep paging so the list
+      // (and its scroll-to-load-more trigger) is not left empty.
+      await _fillMaterialsIfEmpty(seq);
     } on PrCreateException catch (e) {
       if (seq != _materialRequestSeq) return;
       materialsError.value =
@@ -332,6 +342,28 @@ class PrCreateController extends GetxController {
       materialsError.value = 'pr_materials_load_failed'.tr;
     } finally {
       if (seq == _materialRequestSeq) isLoadingMaterials.value = false;
+    }
+  }
+
+  /// While fewer than [_minMaterialsToFill] eligible materials are loaded
+  /// but the server reports more pages, fetches the next page (a short list
+  /// cannot be scrolled, so it could never trigger load-more itself). Bounded so a catalogue with no eligible
+  /// rows cannot loop forever.
+  Future<void> _fillMaterialsIfEmpty(int seq) async {
+    var guard = 0;
+    while (seq == _materialRequestSeq &&
+        materials.length < _minMaterialsToFill &&
+        hasMoreMaterials.value &&
+        guard++ < _maxEmptyMaterialPages) {
+      final page = await _repository.fetchMaterials(
+        page: _materialPage + 1,
+        perPage: materialPageSize,
+        search: _materialSearch,
+      );
+      if (seq != _materialRequestSeq) return;
+      materials.addAll(page.items);
+      _materialPage += 1;
+      hasMoreMaterials.value = page.rawCount >= materialPageSize;
     }
   }
 
@@ -359,6 +391,7 @@ class PrCreateController extends GetxController {
       materials.addAll(page.items.where((m) => known.add(m.id)));
       _materialPage += 1;
       hasMoreMaterials.value = page.rawCount >= materialPageSize;
+      await _fillMaterialsIfEmpty(seq);
     } catch (_) {
       if (seq != _materialRequestSeq) return;
       materialsLoadMoreFailed.value = true;

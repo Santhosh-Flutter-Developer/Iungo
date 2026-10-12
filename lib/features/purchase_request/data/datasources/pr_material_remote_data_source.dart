@@ -1,6 +1,5 @@
 import 'package:dio/dio.dart';
 import 'package:iungo/core/constants/app_urls.dart';
-import 'package:iungo/core/services/session_service.dart';
 import 'package:iungo/features/purchase_request/data/datasources/pr_create_exceptions.dart';
 import 'package:iungo/features/purchase_request/data/models/pr_create_mapper.dart';
 
@@ -13,6 +12,10 @@ abstract class PrMaterialRemoteDataSource {
   ///       viewName=allinventoryrequests&page=<page>&perPage=<perPage>&
   ///       withoutCustomButtons=true&search=<search>
   ///
+  /// Uses a static bearer token (not the login session's), and only rows
+  /// flagged `is_spare_part_request_or_not_inventoryrequest == 1` are
+  /// returned in `items`.
+  ///
   /// [search] is applied server-side, so typing in the dropdown never
   /// needs the whole catalogue in memory.
   Future<MaterialPageResult> fetchMaterials({
@@ -23,10 +26,9 @@ abstract class PrMaterialRemoteDataSource {
 }
 
 class PrMaterialRemoteDataSourceImpl implements PrMaterialRemoteDataSource {
-  PrMaterialRemoteDataSourceImpl(this._dio, this._session);
+  PrMaterialRemoteDataSourceImpl(this._dio);
 
   final Dio _dio;
-  final SessionService _session;
 
   static const String _moduleName = 'inventoryrequest';
   static const String _viewName = 'allinventoryrequests';
@@ -37,12 +39,6 @@ class PrMaterialRemoteDataSourceImpl implements PrMaterialRemoteDataSource {
     required int perPage,
     String search = '',
   }) async {
-    // The bearer token comes from the login session — never hard-coded.
-    final token = _session.token.value;
-    if (token == null || token.isEmpty) {
-      throw const PrCreateException(PrCreateFailure.unauthorized);
-    }
-
     try {
       final response = await _dio.get<dynamic>(
         AppUrls.inventoryMaterialsApi,
@@ -58,7 +54,7 @@ class PrMaterialRemoteDataSourceImpl implements PrMaterialRemoteDataSource {
         options: Options(
           headers: {
             'Accept': 'application/json',
-            'Authorization': 'Bearer $token',
+            'Authorization': 'Bearer ${AppUrls.inventoryMaterialsStaticToken}',
           },
         ),
       );

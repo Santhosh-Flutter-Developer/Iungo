@@ -192,7 +192,7 @@ class PrCreatePage extends GetView<PrCreateController> {
                         label: 'pr_material_code'.tr,
                         hint: 'pr_select_material_code'.tr,
                         options: controller.materials.toList(),
-                        optionLabel: (o) => o.displayLabel,
+                        optionLabel: (o) => '${o.name} (ID: ${o.id})',
                         value: controller.selectedMaterial.value,
                         onChanged: controller.onMaterialSelected,
                         isLoading: controller.isLoadingMaterials.value,

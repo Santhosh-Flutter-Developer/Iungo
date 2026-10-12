@@ -13,8 +13,8 @@ import 'package:iungo/features/purchase_request/presentation/controllers/pr_crea
 /// GetX has registered ambiently: that instance is shared with the rest
 /// of the Purchase Request feature and carries the Iungo host's
 /// debug-only certificate workaround. Auth is not baked into the
-/// client — the Facilio call adds the session's Bearer token per
-/// request and the Iungo calls send the stored `user_id`.
+/// client — the Facilio material call uses its own static Bearer
+/// token and the Iungo calls send the stored `user_id`.
 class PrCreateBinding extends Bindings {
   @override
   void dependencies() {
@@ -22,7 +22,7 @@ class PrCreateBinding extends Bindings {
 
     final repository = PrCreateRepository(
       PrCreateRemoteDataSourceImpl(dio),
-      PrMaterialRemoteDataSourceImpl(dio, Get.find<SessionService>()),
+      PrMaterialRemoteDataSourceImpl(dio),
     );
 
     Get.put(PrCreateController(repository, Get.find<SessionService>()));
