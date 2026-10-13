@@ -38,6 +38,11 @@ class ServiceRequestCreateRemoteDataSourceImpl
   static const _createUrl =
       'https://citgroup.facilioclients.com/client/api/v3/modules/serviceRequest';
 
+  // The shared Dio defaults to 20s, which is too short for file uploads on
+  // mobile data and for the create call when the server is slow to reply.
+  static const _uploadTimeout = Duration(seconds: 120);
+  static const _createTimeout = Duration(seconds: 90);
+
   @override
   Future<List<int>> uploadAttachments(List<AttachmentFile> files) async {
     if (files.isEmpty) return const [];
@@ -65,7 +70,11 @@ class ServiceRequestCreateRemoteDataSourceImpl
       final response = await _dio.post<dynamic>(
         _uploadUrl,
         data: formData,
-        options: Options(headers: _authHeaders()),
+        options: Options(
+          headers: _authHeaders(),
+          sendTimeout: _uploadTimeout,
+          receiveTimeout: _uploadTimeout,
+        ),
       );
 
       final body = _asMap(response.data);
@@ -102,7 +111,11 @@ class ServiceRequestCreateRemoteDataSourceImpl
           'data': data,
           'moduleName': 'serviceRequest',
         },
-        options: Options(headers: _authHeaders()),
+        options: Options(
+          headers: _authHeaders(),
+          sendTimeout: _createTimeout,
+          receiveTimeout: _createTimeout,
+        ),
       );
 
       final body = _asMap(response.data);
@@ -144,6 +157,27 @@ class ServiceRequestCreateRemoteDataSourceImpl
   }
 
   ServiceRequestException _fromDioException(DioException e) {
+    // Never surface Dio's raw timeout text ("The request took longer than
+    // 0:00:20.000000 ...") to the user.
+    switch (e.type) {
+      case DioExceptionType.receiveTimeout:
+        return const ServiceRequestException(
+          'The server is taking longer than expected to respond.',
+          isReceiveTimeout: true,
+        );
+      case DioExceptionType.connectionTimeout:
+      case DioExceptionType.sendTimeout:
+        return const ServiceRequestException(
+          'Slow or unstable connection. Please try again.',
+        );
+      case DioExceptionType.connectionError:
+        return const ServiceRequestException(
+          'No internet connection. Please check your network.',
+        );
+      default:
+        break;
+    }
+
     final errorBody = _asMap(e.response?.data);
     final message = errorBody != null ? _extractMessage(errorBody) : null;
     return ServiceRequestException(

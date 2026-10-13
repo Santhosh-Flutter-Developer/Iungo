@@ -526,9 +526,27 @@ class NewServiceRequestController extends GetxController {
       // "back" into an already-submitted form.
       Get.offNamed(AppRoutes.serviceRequestList);
     } on ServiceRequestException catch (e) {
-      AppSnackbar.showError(
-        e.message.trim().isNotEmpty ? e.message : 'something_went_wrong'.tr,
-      );
+      if (e.isReceiveTimeout) {
+        // The request reached the server but the reply was slow, so the
+        // Service Request has almost certainly been created. Don't show a
+        // failure (and don't let the user resubmit a duplicate): refresh
+        // the list so they can see the record, then go there.
+        try {
+          final result = await _repository.fetchPage(
+            page: 1,
+            perPage: _listPerPage,
+          );
+          _repository.replaceWithPage(result.tickets);
+        } catch (_) {
+          // Ignore — the list page retries the fetch on open.
+        }
+        AppSnackbar.showSuccess('request_submitted'.tr);
+        Get.offNamed(AppRoutes.serviceRequestList);
+      } else {
+        AppSnackbar.showError(
+          e.message.trim().isNotEmpty ? e.message : 'something_went_wrong'.tr,
+        );
+      }
     } catch (_) {
       AppSnackbar.showError('something_went_wrong'.tr);
     } finally {

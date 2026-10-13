@@ -7,10 +7,20 @@ import 'package:dio/dio.dart';
 /// callers can use it to react differently (e.g. force a re-login on a
 /// 401/440) without having to parse [message].
 class ServiceRequestException implements Exception {
-  const ServiceRequestException(this.message, {this.statusCode});
+  const ServiceRequestException(
+    this.message, {
+    this.statusCode,
+    this.isReceiveTimeout = false,
+  });
 
   final String message;
   final int? statusCode;
+
+  /// True when the request was fully sent but the server did not reply
+  /// within the receive timeout. For create calls the record has usually
+  /// already been saved server-side, so callers should verify (refetch)
+  /// instead of showing a hard failure.
+  final bool isReceiveTimeout;
 
   /// True for the two "not authenticated" codes the Portal API Guide
   /// documents (§1.6) — a plain 401 and Facilio's own 440 "session
