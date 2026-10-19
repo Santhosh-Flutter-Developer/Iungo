@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
@@ -469,6 +471,7 @@ class NewServiceRequestController extends GetxController {
 
   Future<void> submit() async {
     if (isSubmitting.value) return;
+    FocusManager.instance.primaryFocus?.unfocus();
 
     final subject = subjectController.text.trim();
     if (subject.isEmpty) {
@@ -504,21 +507,11 @@ class NewServiceRequestController extends GetxController {
         formId: _formId,
       );
 
-      // Re-fetch "My Service Requests" page 1 from the server (rather
-      // than relying solely on the locally-inserted ticket) so the list
-      // reflects the record exactly as the server created it — then
-      // navigate. Best-effort: if this refetch fails, the locally
-      // inserted ticket is still there, and the list page's own onInit
-      // will retry the fetch anyway.
-      try {
-        final result = await _repository.fetchPage(
-          page: 1,
-          perPage: _listPerPage,
-        );
-        _repository.replaceWithPage(result.tickets);
-      } catch (_) {
-        // Ignore — see comment above.
-      }
+      // The repository already inserted the created ticket at the top of
+      // the list, so navigate right away instead of waiting on another
+      // network round trip. The server copy is refreshed in the
+      // background (and the list page re-fetches on open as well).
+      unawaited(_refreshListInBackground());
 
       AppSnackbar.showSuccess('request_submitted'.tr);
       // Go straight to "My Service Requests" — replaces this form
@@ -531,15 +524,7 @@ class NewServiceRequestController extends GetxController {
         // Service Request has almost certainly been created. Don't show a
         // failure (and don't let the user resubmit a duplicate): refresh
         // the list so they can see the record, then go there.
-        try {
-          final result = await _repository.fetchPage(
-            page: 1,
-            perPage: _listPerPage,
-          );
-          _repository.replaceWithPage(result.tickets);
-        } catch (_) {
-          // Ignore — the list page retries the fetch on open.
-        }
+        unawaited(_refreshListInBackground());
         AppSnackbar.showSuccess('request_submitted'.tr);
         Get.offNamed(AppRoutes.serviceRequestList);
       } else {
@@ -551,6 +536,18 @@ class NewServiceRequestController extends GetxController {
       AppSnackbar.showError('something_went_wrong'.tr);
     } finally {
       isSubmitting.value = false;
+    }
+  }
+
+  Future<void> _refreshListInBackground() async {
+    try {
+      final result = await _repository.fetchPage(
+        page: 1,
+        perPage: _listPerPage,
+      );
+      _repository.replaceWithPage(result.tickets);
+    } catch (_) {
+      // Best-effort: the list page retries the fetch on open.
     }
   }
 

@@ -18,15 +18,28 @@ class NewServiceRequestPage extends GetView<NewServiceRequestController> {
 
   @override
   Widget build(BuildContext context) {
+    return Obx(
+      () => PopScope(
+        // Block back/close while the request is being saved.
+        canPop: !controller.isSubmitting.value,
+        child: _buildScaffold(context),
+      ),
+    );
+  }
+
+  Widget _buildScaffold(BuildContext context) {
     return Scaffold(
       backgroundColor: AppColors.background,
       appBar: AppBar(
         backgroundColor: AppColors.formHeaderBackground,
         elevation: 0,
         centerTitle: false,
-        leading: IconButton(
-          icon: const Icon(Icons.close, color: AppColors.primary),
-          onPressed: () => Get.back(),
+        leading: Obx(
+          () => IconButton(
+            icon: const Icon(Icons.close, color: AppColors.primary),
+            onPressed:
+                controller.isSubmitting.value ? null : () => Get.back(),
+          ),
         ),
         titleSpacing: 0,
         title: Text(
@@ -47,7 +60,13 @@ class NewServiceRequestPage extends GetView<NewServiceRequestController> {
       body: SafeArea(
         child: SingleChildScrollView(
           padding: const EdgeInsets.fromLTRB(20, 20, 20, 100),
-          child: Column(
+          child: Obx(
+            () => IgnorePointer(
+              // Form is read-only while the request is being saved.
+              ignoring: controller.isSubmitting.value,
+              child: Opacity(
+                opacity: controller.isSubmitting.value ? 0.6 : 1,
+                child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
               Text(
@@ -170,6 +189,9 @@ class NewServiceRequestPage extends GetView<NewServiceRequestController> {
                       ),
               ),
             ],
+          ),
+              ),
+            ),
           ),
         ),
       ),
