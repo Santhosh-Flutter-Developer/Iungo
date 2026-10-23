@@ -117,6 +117,10 @@ class NewServiceRequestController extends GetxController {
 
   final RxBool isSubmitting = false.obs;
 
+  /// Subject of the request currently being submitted — used to confirm
+  /// the record exists server-side when the create reply times out.
+  String? _lastSubmittedSubject;
+
   @override
   void onInit() {
     super.onInit();
@@ -484,6 +488,7 @@ class NewServiceRequestController extends GetxController {
       return;
     }
 
+    _lastSubmittedSubject = subject;
     isSubmitting.value = true;
     try {
       ServiceRequestListBinding.ensureRepositoryRegistered();
@@ -520,11 +525,12 @@ class NewServiceRequestController extends GetxController {
       Get.offNamed(AppRoutes.serviceRequestList);
     } on ServiceRequestException catch (e) {
       if (e.isReceiveTimeout) {
-        // The request reached the server but the reply was slow, so the
-        // Service Request has almost certainly been created. Don't show a
-        // failure (and don't let the user resubmit a duplicate): refresh
-        // the list so they can see the record, then go there.
-        unawaited(_refreshListInBackground());
+        // The request reached Facilio and the record is saved within ~1s;
+        // only the HTTP reply is delayed by Facilio's post-save automation
+        // (notification webhook). Don't show a failure and don't let the
+        // user resubmit a duplicate: refresh the list (retrying briefly
+        // until the new record shows up), then go to the list.
+        unawaited(_refreshListInBackground(expectSubject: _lastSubmittedSubject));
         AppSnackbar.showSuccess('request_submitted'.tr);
         Get.offNamed(AppRoutes.serviceRequestList);
       } else {
@@ -539,15 +545,27 @@ class NewServiceRequestController extends GetxController {
     }
   }
 
-  Future<void> _refreshListInBackground() async {
-    try {
-      final result = await _repository.fetchPage(
-        page: 1,
-        perPage: _listPerPage,
-      );
-      _repository.replaceWithPage(result.tickets);
-    } catch (_) {
-      // Best-effort: the list page retries the fetch on open.
+  /// Refetches the first page into the shared list. When [expectSubject]
+  /// is given (create reply timed out), retries a few times until a ticket
+  /// with that subject appears, since indexing can lag the save slightly.
+  Future<void> _refreshListInBackground({String? expectSubject}) async {
+    final attempts = expectSubject == null ? 1 : 4;
+    for (var i = 0; i < attempts; i++) {
+      try {
+        final result = await _repository.fetchPage(
+          page: 1,
+          perPage: _listPerPage,
+        );
+        final found = expectSubject == null ||
+            result.tickets.any((t) => t.title.trim() == expectSubject);
+        if (found || i == attempts - 1) {
+          _repository.replaceWithPage(result.tickets);
+          return;
+        }
+      } catch (_) {
+        // Best-effort: the list page retries the fetch on open.
+      }
+      await Future<void>.delayed(const Duration(seconds: 2));
     }
   }
 

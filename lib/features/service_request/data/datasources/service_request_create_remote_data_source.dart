@@ -41,7 +41,13 @@ class ServiceRequestCreateRemoteDataSourceImpl
   // The shared Dio defaults to 20s, which is too short for file uploads on
   // mobile data and for the create call when the server is slow to reply.
   static const _uploadTimeout = Duration(seconds: 120);
-  static const _createTimeout = Duration(seconds: 90);
+  // Facilio saves the SR in ~1s, but its post-save automation rule (the
+  // "New SR" notification webhook) can hold the HTTP response open for
+  // ~134s when that webhook endpoint is unreachable. The app must not
+  // wait on that: after this short window we treat the call as
+  // "saved, reply pending" and verify via the list API instead.
+  static const _createSendTimeout = Duration(seconds: 30);
+  static const _createReceiveTimeout = Duration(seconds: 12);
 
   @override
   Future<List<int>> uploadAttachments(List<AttachmentFile> files) async {
@@ -113,8 +119,8 @@ class ServiceRequestCreateRemoteDataSourceImpl
         },
         options: Options(
           headers: _authHeaders(),
-          sendTimeout: _createTimeout,
-          receiveTimeout: _createTimeout,
+          sendTimeout: _createSendTimeout,
+          receiveTimeout: _createReceiveTimeout,
         ),
       );
 
